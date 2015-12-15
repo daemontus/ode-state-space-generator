@@ -1,0 +1,139 @@
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'maven'
+
+//include antlr and kotlin plugin
+buildscript {
+    ext.kotlin_version = '1.0.0-beta-3595'
+
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+group = "com.github.sybila"
+archivesBaseName = "ode-state-space"
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    compile 'com.intellij:annotations:5.1'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile files('libs/mpj.jar')
+    compile 'com.github.sybila:CTL-Parser:1.0.2'
+    compile 'com.google.guava:guava:18.0'
+
+}
+
+//create a single Jar with all dependencies
+task fullJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Title': 'CTL Parser',
+                'Implementation-Version': version
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+    test.java.srcDirs += 'src/test/kotlin'
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+
+ext {
+    objDir = "build/objs/"
+    binDir = "build/binaries/"
+    srcDir = "src/main/cpp/"
+    nativeName = "ODE"
+    os = "darwin"
+    jdk = "$System.env.JAVA_HOME"
+    compiler = "g++"
+}
+
+
+//create directories for native files build
+task createDirs(type: Exec) {
+    args "-p", binDir, objDir
+    executable "mkdir"
+}
+
+//compile the native state space generator
+task compileGenerator(dependsOn: 'createDirs', type:Exec) {
+    if (os.equals('darwin')) {
+        args    "-std=c++11",
+                "-O3",
+                "-I", jdk+"/include/",
+                "-I", jdk+"/include/darwin/",
+                "-c",
+                "-o", objDir+"generator.o",
+                srcDir+"generator.cpp"
+    } else {
+        args    "-std=c++11",
+                "-fPIC",
+                "-O3",
+                "-I", jdk+"/include/",
+                "-I", jdk+"/include/linux/",
+                "-c",
+                "-o", objDir+"generator.o",
+                srcDir+"generator.cpp"
+    }
+    executable compiler
+}
+
+//compile and link native part of the state space generator
+task buildGenerator(dependsOn: 'compileGenerator', type:Exec) {
+    if (os.equals('darwin')) {
+        args    "-dynamiclib",
+                "-o", binDir+"lib"+nativeName+".jnilib",
+                objDir+"generator.o"
+    } else {
+        args    "-shared",
+                "-o", binDir+"lib"+nativeName+".so",
+                objDir+"generator.o"
+    }
+    executable compiler
+}
+
+//prepare cpp include files from factory class
+task generateFactoryIncludeFiles(dependsOn: 'fullJar', type:Exec) {
+    args    "-o", srcDir+"jni_include/NodeFactory.h",
+            "-classpath", "build/libs/"+project.name+"-full-"+project.version+".jar",
+            "cz.muni.fi.ode.NodeFactory"
+    executable "javah"
+}
+
+//prepare cpp include files from model class
+task generateModelIncludeFiles(dependsOn: 'fullJar', type:Exec) {
+    args    "-o", srcDir+"jni_include/Model.h",
+            "-classpath", "build/libs/"+project.name+"-full-"+project.version+".jar",
+            "cz.muni.fi.ode.OdeModel"
+    executable "javah"
+}
+
+task generateIncludeFiles(dependsOn: [generateModelIncludeFiles, generateFactoryIncludeFiles]) {}
