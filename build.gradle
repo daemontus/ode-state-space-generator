@@ -71,9 +71,9 @@ ext {
     binDir = "build/binaries/"
     srcDir = "src/main/cpp/"
     nativeName = "ODE"
-    os = "linux"
+    os = "darwin"
     jdk = "$System.env.JAVA_HOME"
-    compiler = "g++"
+    compiler = "g++-5"
 }
 
 
@@ -123,7 +123,7 @@ task buildGenerator(dependsOn: 'compileGenerator', type:Exec) {
 //prepare cpp include files from factory class
 task generateFactoryIncludeFiles(dependsOn: 'fullJar', type:Exec) {
     args    "-o", srcDir+"jni_include/NodeFactory.h",
-            "-classpath", "build/libs/"+project.name+"-full-"+project.version+".jar",
+            "-classpath", "build/libs/"+project.name+"-all-"+project.version+".jar",
             "cz.muni.fi.ode.NodeFactory"
     executable "javah"
 }
@@ -131,7 +131,7 @@ task generateFactoryIncludeFiles(dependsOn: 'fullJar', type:Exec) {
 //prepare cpp include files from model class
 task generateModelIncludeFiles(dependsOn: 'fullJar', type:Exec) {
     args    "-o", srcDir+"jni_include/Model.h",
-            "-classpath", "build/libs/"+project.name+"-full-"+project.version+".jar",
+            "-classpath", "build/libs/"+project.name+"-all-"+project.version+".jar",
             "cz.muni.fi.ode.OdeModel"
     executable "javah"
 }
