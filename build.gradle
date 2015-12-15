@@ -137,3 +137,5 @@ task generateModelIncludeFiles(dependsOn: 'fullJar', type:Exec) {
 }
 
 task generateIncludeFiles(dependsOn: [generateModelIncludeFiles, generateFactoryIncludeFiles]) {}
+
+jar.dependsOn buildGenerator
