@@ -71,9 +71,9 @@ ext {
     binDir = "build/binaries/"
     srcDir = "src/main/cpp/"
     nativeName = "ODE"
-    os = "darwin"
+    os = "linux"
     jdk = "$System.env.JAVA_HOME"
-    compiler = "g++-5"
+    compiler = "g++"
 }
 
 
