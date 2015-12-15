@@ -1,7 +1,6 @@
 package cz.muni.fi.ode;
 
-import cz.muni.fi.ctl.formula.Formula;
-import cz.muni.fi.modelchecker.graph.Node;
+import cz.muni.fi.ctl.Formula;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

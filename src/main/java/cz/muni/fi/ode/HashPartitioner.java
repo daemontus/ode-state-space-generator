@@ -1,7 +1,6 @@
 package cz.muni.fi.ode;
 
 import com.google.common.collect.Range;
-import cz.muni.fi.modelchecker.StateSpacePartitioner;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

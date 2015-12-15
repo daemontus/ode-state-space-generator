@@ -1,6 +1,7 @@
 package cz.muni.fi.ode
 
-import java.util.*
+import java.util.Arrays
+import java.util.HashSet
 
 //We need our own interval, because we do not allow single points (i.e. (3,3)) as valid intervals
 //rest is copied from original Kotlin range
@@ -37,10 +38,6 @@ data class Interval(val start: Double, val end: Double) {
     companion object {
         /** An empty range of values of type Double. */
         public val EMPTY: Interval = Interval(0.0, 0.0)
-    }
-
-    override fun toString(): String {
-        return "($start, $end)"
     }
 }
 
@@ -108,31 +105,9 @@ data class Rect(val ranges: Array<Interval>) {
     }
 
     operator fun get(i: Int): Interval = ranges[i]
-
-    /*override fun toString(): String {
-        return "{$ranges}"
-    }*/
 }
 
-public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet/*, Colors<RectParamSpace>*/ {
-
-   /* override fun intersect(other: RectParamSpace): RectParamSpace {
-        val copy = this.copy()
-        copy.intersect(other as ColorSet?)
-        return copy
-    }
-
-    override fun minus(other: RectParamSpace): RectParamSpace {
-        val copy = this.copy()
-        copy.subtract(other)
-        return copy
-    }
-
-    override fun plus(other: RectParamSpace): RectParamSpace {
-        val copy = this.copy()
-        copy.union(other)
-        return copy
-    }*/
+public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet {
 
     companion object {
         fun empty() = RectParamSpace()
@@ -155,7 +130,7 @@ public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet/*, Co
         }
     }
 
-    override fun subtract(set: ColorSet?) {
+    override infix fun subtract(set: ColorSet?) {
         if (set != null && set is RectParamSpace) {
             for (other in set.items) {  //have to update items every iteration so that we perform on space partitioned in previous iteration
                 items = items.flatMap { it subtract other }.toSet()
@@ -166,7 +141,7 @@ public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet/*, Co
         }
     }
 
-    override fun union(set: ColorSet?): Boolean {
+    override infix fun union(set: ColorSet?): Boolean {
         if (set != null && set is RectParamSpace) {
             val new = items.union(set.items)
             val old = items
@@ -202,13 +177,10 @@ public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet/*, Co
 
         for (r in items) {
 
-            var merge = items
-                    .filter { it != r && it !in removed }
-                    .map { r merge it }
-                    .filterNotNull().firstOrNull()
+            var merge = items.firstOrNull { it != r && it !in removed && r merge it != null }
 
             if (merge != null) {
-                merged.add(merge)
+                merged.add(merge.merge(r)!!)
                 removed.add(merge)
             } else {
                 merged.add(r)
@@ -223,15 +195,5 @@ public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet/*, Co
         return items.isEmpty()
     }
 
-    override fun toString(): String {
-        return "[$items]"
-    }
 
-    override fun equals(other: Any?): Boolean {
-        if (other is RectParamSpace) {
-            println("EQ: ${this.items == other.items} ${this.items.javaClass}")
-            return this.items == other.items
-        }
-        return false
-    }
 }

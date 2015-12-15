@@ -1,8 +1,6 @@
 package cz.muni.fi.ode;
 
 import com.google.common.collect.Range;
-import cz.muni.fi.modelchecker.mpi.tasks.BlockingTaskMessenger;
-import cz.muni.fi.modelchecker.mpi.tasks.OnTaskListener;
 import mpi.Comm;
 import mpi.MPI;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +71,7 @@ public class MpiTaskMessenger extends BlockingTaskMessenger<CoordinateNode, Tree
     }
 
     @Override
-    protected boolean blockingReceiveTask(@NotNull OnTaskListener<CoordinateNode, TreeColorSet> taskListener) {
+    public boolean blockingReceiveTask(@NotNull OnTaskListener<CoordinateNode, TreeColorSet> taskListener) {
         //no need to synchronize - this method is only called from one thread
         COMM.Recv(recvBuffer, 0, recvBuffer.length, MPI.INT, MPI.ANY_SOURCE, TAG);
         if (recvBuffer[0] == CREATE) {
@@ -99,7 +97,7 @@ public class MpiTaskMessenger extends BlockingTaskMessenger<CoordinateNode, Tree
     }
 
     @Override
-    protected void finishSelf() {
+    public void finishSelf() {
         @NotNull int[] buffer = new int[2*dimensions + model.parameterCount() + 3];
         buffer[0] = FINISH;
         //we have to finish other nodes because we can't send messages to ourselves (BUG)

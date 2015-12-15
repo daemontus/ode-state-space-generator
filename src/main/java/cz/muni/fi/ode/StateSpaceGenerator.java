@@ -62,10 +62,10 @@ public class StateSpaceGenerator {
      * Compute predecessors of given node. All transitions are bounded by given parameter set.
      * @param from Source node.
      * @param borders Parametric borders.
-     * @return A set of transitions in form of a map with "predecessor->transition borders" pairs.
+     * @return A set of transitions in form of a map with "predecessor-transition borders" pairs.
      */
     @NotNull
-    public Map<CoordinateNode, TreeColorSet> getPredecessors(@NotNull CoordinateNode from, @NotNull TreeColorSet borders) {
+    public Map<CoordinateNode, RectParamSpace> getPredecessors(@NotNull CoordinateNode from, @NotNull TreeColorSet borders) {
         return getDirectedEdges(from, borders, false);
     }
 
@@ -73,10 +73,10 @@ public class StateSpaceGenerator {
      * Compute successors of given node. All transitions are bounded by given parameter set.
      * @param from Source node.
      * @param borders Parametric borders.
-     * @return A set of transitions in form of a map with "successor->transition borders" pairs.
+     * @return A set of transitions in form of a map with "successor-transition borders" pairs.
      */
     @NotNull
-    public Map<CoordinateNode, TreeColorSet> getSuccessors(@NotNull CoordinateNode from, @NotNull TreeColorSet borders) {
+    public Map<CoordinateNode, RectParamSpace> getSuccessors(@NotNull CoordinateNode from, @NotNull TreeColorSet borders) {
         return getDirectedEdges(from, borders, true);
     }
 
@@ -93,8 +93,8 @@ public class StateSpaceGenerator {
         //find index of threshold where proposition valuation changes
         int thresholdIndex = 0;
         for(int i = 0; i < model.getThresholdCountForVariable(variableIndex); i++) {
-           /* TODO port this if(model.getThresholdValueForVariableByIndex(variableIndex, i) > proposition.getValue()) {
-                switch (proposition.getFloatOperator()) {
+            if(model.getThresholdValueForVariableByIndex(variableIndex, i) > proposition.getValue()) {
+                switch (proposition.getFloatOp()) {
                     case GT:
                     case LT_EQ:
                         thresholdIndex = i;
@@ -108,14 +108,14 @@ public class StateSpaceGenerator {
                 }
                 break;
             }
-            if(model.getThresholdValueForVariableByIndex(variableIndex, i) == proposition.getThreshold()) {
+            if(model.getThresholdValueForVariableByIndex(variableIndex, i) == proposition.getValue()) {
                 thresholdIndex = i;
                 break;
-            }*/
+            }
         }
 
         //Return nodes with right combination of thresholds.
-       /* TODO port this switch (proposition.getFloatOperator()) {
+        switch (proposition.getFloatOp()) {
             case GT_EQ:
             case GT:
                 return enumerateStates(variableIndex, thresholdIndex, model.getThresholdCountForVariable(variableIndex) - 1);
@@ -124,8 +124,7 @@ public class StateSpaceGenerator {
                 return enumerateStates(variableIndex, 0, thresholdIndex);
             default:
                 throw new IllegalArgumentException("Unsupported operator.");
-        }*/
-        return null;
+        }
     }
 
     /**
@@ -136,9 +135,9 @@ public class StateSpaceGenerator {
     }
 
     @NotNull
-    private Map<CoordinateNode, TreeColorSet> getDirectedEdges(@NotNull CoordinateNode from, @NotNull TreeColorSet border, boolean successors) {
+    private Map<CoordinateNode, RectParamSpace> getDirectedEdges(@NotNull CoordinateNode from, @NotNull TreeColorSet border, boolean successors) {
 
-        @NotNull Map<CoordinateNode, TreeColorSet> results = new HashMap<>();
+        @NotNull Map<CoordinateNode, RectParamSpace> results = new HashMap<>();
 
         boolean hasSelfLoop = true;
 
@@ -237,7 +236,7 @@ public class StateSpaceGenerator {
                         newPS = TreeColorSet.createCopy(border);
                     }
 
-                    results.put(factory.getNode(newStateCoors), newPS);
+                    results.put(factory.getNode(newStateCoors), newPS.toRectSpace());
                 }
             }
 
@@ -330,7 +329,7 @@ public class StateSpaceGenerator {
                         newPS = TreeColorSet.createCopy(border);
                     }
 
-                    results.put(factory.getNode(newStateCoors), newPS);
+                    results.put(factory.getNode(newStateCoors), newPS.toRectSpace());
                 }
             }
 
@@ -344,7 +343,7 @@ public class StateSpaceGenerator {
         }
 
         if(hasSelfLoop) {
-            results.put(from, border);
+            results.put(from, border.toRectSpace());
         }
 
         return results;

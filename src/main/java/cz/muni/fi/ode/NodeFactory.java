@@ -4,7 +4,6 @@ import cz.muni.fi.ctl.FloatProposition;
 import cz.muni.fi.ctl.Formula;
 import cz.muni.fi.ctl.FormulasKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,22 +26,6 @@ public class NodeFactory implements ModelAdapter<CoordinateNode, RectParamSpace>
         this.model = model;
         this.partitioner = partitioner;
         this.myId = partitioner.getMyId();
-    }
-
-    public CoordinateNode above(CoordinateNode node, int dim) {
-        int[] newCoords = Arrays.copyOf(node.coordinates, node.coordinates.length);
-        newCoords[dim]++;
-        if (model.isValidNode(newCoords)) {
-            return getNode(newCoords);
-        } else return null;
-    }
-
-    public CoordinateNode below(CoordinateNode node, int dim) {
-        int[] newCoords = Arrays.copyOf(node.coordinates, node.coordinates.length);
-        newCoords[dim]--;
-        if (model.isValidNode(newCoords)) {
-            return getNode(newCoords);
-        } else return null;
     }
 
     @NotNull
@@ -69,7 +52,7 @@ public class NodeFactory implements ModelAdapter<CoordinateNode, RectParamSpace>
 
     @NotNull
     @Override
-    public synchronized Map<CoordinateNode, RectParamSpace> predecessorsFor(@NotNull CoordinateNode to, @Nullable RectParamSpace borders) {
+    public synchronized Map<CoordinateNode, RectParamSpace> predecessorsFor(@NotNull CoordinateNode to, @org.jetbrains.annotations.Nullable RectParamSpace borders) {
         if (borders == null) {
             borders = model.getFullColorSet();
         }
@@ -82,7 +65,7 @@ public class NodeFactory implements ModelAdapter<CoordinateNode, RectParamSpace>
 
     @NotNull
     @Override
-    public synchronized Map<CoordinateNode, RectParamSpace> successorsFor(@NotNull CoordinateNode from, @Nullable RectParamSpace borders) {
+    public synchronized Map<CoordinateNode, RectParamSpace> successorsFor(@NotNull CoordinateNode from, @org.jetbrains.annotations.Nullable RectParamSpace borders) {
         if (borders == null) {
             borders = model.getFullColorSet();
         }
@@ -132,7 +115,7 @@ public class NodeFactory implements ModelAdapter<CoordinateNode, RectParamSpace>
 
     @NotNull
     @Override
-    public synchronized Map<CoordinateNode, RectParamSpace> invertNodeSet(@NotNull Map<CoordinateNode, RectParamSpace> nodes) {
+    public Map<CoordinateNode, RectParamSpace> invertNodeSet(@NotNull Map<CoordinateNode, ? extends RectParamSpace> nodes) {
         if (!hasAllNodes) {
             generator.cacheAllNodes();
             hasAllNodes = true;
@@ -183,4 +166,5 @@ public class NodeFactory implements ModelAdapter<CoordinateNode, RectParamSpace>
     public void setGenerator(StateSpaceGenerator generator) {
         this.generator = generator;
     }
+
 }
