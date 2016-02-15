@@ -7,10 +7,10 @@ data class Model(
 
     data class Variable(
             val name: String,
-            val equation: List<Summand>,
+            val range: Pair<Double, Double>,
             val thresholds: List<Double>,
-            val varPoints: Pair<Int, Int>,
-            val range: Pair<Double, Double>
+            val varPoints: Pair<Int, Int>?,
+            val equation: List<Summand>
     )
 
     data class Parameter(
