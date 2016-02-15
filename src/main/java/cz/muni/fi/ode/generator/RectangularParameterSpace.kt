@@ -1,5 +1,6 @@
-package cz.muni.fi.ode
+package cz.muni.fi.ode.generator
 
+import cz.muni.fi.ode.ColorSet
 import java.util.Arrays
 import java.util.HashSet
 
@@ -19,7 +20,7 @@ data class Interval(val start: Double, val end: Double) {
     }
 
     infix fun intersect(other: Interval): Interval = when {
-        this.isEmpty() || other.isEmpty() -> Interval.EMPTY
+        this.isEmpty() || other.isEmpty() -> EMPTY
         else -> Interval(Math.max(this.start, other.start), Math.min(this.end, other.end))
     }
 
@@ -48,9 +49,9 @@ data class Rect(val ranges: Array<Interval>) {
     }
 
     infix fun intersect(other: Rect): Rect =
-        Rect(Array(ranges.size) { i ->
-            this[i] intersect other[i]
-        })
+            Rect(Array(ranges.size) { i ->
+                this[i] intersect other[i]
+            })
 
     fun isEmpty(): Boolean = ranges.any { it.isEmpty() }
 

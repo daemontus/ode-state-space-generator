@@ -1,5 +1,8 @@
-package cz.muni.fi.ode
+package cz.muni.fi.ode.generator
 
+import cz.muni.fi.ode.generator.Interval
+import cz.muni.fi.ode.generator.Rect
+import cz.muni.fi.ode.generator.RectParamSpace
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -9,97 +12,97 @@ class SubtractTest {
 
     val r1 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(0.0,3.0),
-                    Interval(1.0,4.0)
+                    Interval(0.0, 3.0),
+                    Interval(1.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(5.0,8.0),
-                    Interval(1.0,4.0)
+                    Interval(5.0, 8.0),
+                    Interval(1.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(9.0,10.5),
-                    Interval(1.0,3.0)
+                    Interval(9.0, 10.5),
+                    Interval(1.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(10.0,11.0),
-                    Interval(0.0,2.0)
+                    Interval(10.0, 11.0),
+                    Interval(0.0, 2.0)
             ))
     ))
 
     val r2 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(1.0,2.0),
-                    Interval(2.0,3.0)
+                    Interval(1.0, 2.0),
+                    Interval(2.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(4.0,6.0),
-                    Interval(0.0,2.0)
+                    Interval(4.0, 6.0),
+                    Interval(0.0, 2.0)
             )),
             Rect(arrayOf(
-                    Interval(7.0,10.5),
-                    Interval(2.0,3.0)
+                    Interval(7.0, 10.5),
+                    Interval(2.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(10.0,12.0),
-                    Interval(0.0,1.0)
+                    Interval(10.0, 12.0),
+                    Interval(0.0, 1.0)
             ))
     ))
 
     val r1r2 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(0.0,1.0),
-                    Interval(1.0,4.0)
+                    Interval(0.0, 1.0),
+                    Interval(1.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(2.0,3.0),
-                    Interval(1.0,4.0)
+                    Interval(2.0, 3.0),
+                    Interval(1.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(1.0,2.0),
-                    Interval(1.0,2.0)
+                    Interval(1.0, 2.0),
+                    Interval(1.0, 2.0)
             )),
             Rect(arrayOf(
-                    Interval(1.0,2.0),
-                    Interval(3.0,4.0)
+                    Interval(1.0, 2.0),
+                    Interval(3.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(5.0,6.0),
-                    Interval(2.0,4.0)
+                    Interval(5.0, 6.0),
+                    Interval(2.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(6.0,7.0),
-                    Interval(1.0,4.0)
+                    Interval(6.0, 7.0),
+                    Interval(1.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(7.0,8.0),
-                    Interval(1.0,2.0)
+                    Interval(7.0, 8.0),
+                    Interval(1.0, 2.0)
             )),
             Rect(arrayOf(
-                    Interval(7.0,8.0),
-                    Interval(3.0,4.0)
+                    Interval(7.0, 8.0),
+                    Interval(3.0, 4.0)
             )),
             Rect(arrayOf(
-                    Interval(9.0,11.0),
-                    Interval(1.0,2.0)
+                    Interval(9.0, 11.0),
+                    Interval(1.0, 2.0)
             ))
     ))
 
     val r2r1 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(4.0,5.0),
-                    Interval(0.0,2.0)
+                    Interval(4.0, 5.0),
+                    Interval(0.0, 2.0)
             )),
             Rect(arrayOf(
-                    Interval(5.0,6.0),
-                    Interval(0.0,1.0)
+                    Interval(5.0, 6.0),
+                    Interval(0.0, 1.0)
             )),
             Rect(arrayOf(
-                    Interval(8.0,9.0),
-                    Interval(2.0,3.0)
+                    Interval(8.0, 9.0),
+                    Interval(2.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(11.0,12.0),
-                    Interval(0.0,1.0)
+                    Interval(11.0, 12.0),
+                    Interval(0.0, 1.0)
             ))
     ))
 
@@ -107,14 +110,14 @@ class SubtractTest {
     fun emptyEmpty() {
         val s = RectParamSpace.empty()
         s subtract RectParamSpace.empty()
-        assertEquals(RectParamSpace.empty(), s)
+        assertEquals(RectParamSpace.Companion.empty(), s)
     }
 
     @Test
     fun oneEmpty() {
         val s1 = RectParamSpace.empty()
         s1 subtract r1
-        assertEquals(RectParamSpace.empty(), s1)
+        assertEquals(RectParamSpace.Companion.empty(), s1)
         val s2 = r1.copy()
         s2 subtract RectParamSpace.empty()
         assertEquals(r1, s2)
@@ -124,11 +127,11 @@ class SubtractTest {
     fun identity() {
         val s1 = r1.copy()
         s1 subtract r1
-        assertEquals(RectParamSpace.empty(), s1)
+        assertEquals(RectParamSpace.Companion.empty(), s1)
 
         val s2 = r2.copy()
         s2 subtract r2
-        assertEquals(RectParamSpace.empty(), s2)
+        assertEquals(RectParamSpace.Companion.empty(), s2)
     }
 
     @Test
@@ -207,7 +210,7 @@ class UnionTest {
     fun emptyEmpty() {
         val s = RectParamSpace.empty()
         s union RectParamSpace.empty()
-        assertEquals(RectParamSpace.empty(), s)
+        assertEquals(RectParamSpace.Companion.empty(), s)
     }
 
     @Test
@@ -250,46 +253,46 @@ class IntersectTest {
 
     val r1 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(0.0,1.0),
-                    Interval(0.0,1.0)
+                    Interval(0.0, 1.0),
+                    Interval(0.0, 1.0)
             )),
             Rect(arrayOf(
-                    Interval(0.0,1.0),
-                    Interval(2.0,3.0)
+                    Interval(0.0, 1.0),
+                    Interval(2.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(2.0,7.0),
-                    Interval(2.0,3.0)
+                    Interval(2.0, 7.0),
+                    Interval(2.0, 3.0)
             )),
             Rect(arrayOf(
-                    Interval(3.0,6.0),
-                    Interval(0.0,1.0)
+                    Interval(3.0, 6.0),
+                    Interval(0.0, 1.0)
             ))
     ))
 
     val r2 = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(0.25,0.75),
-                    Interval(0.25,0.75)
+                    Interval(0.25, 0.75),
+                    Interval(0.25, 0.75)
             )),
             Rect(arrayOf(
-                    Interval(4.0,5.0),
-                    Interval(0.5,2.5)
+                    Interval(4.0, 5.0),
+                    Interval(0.5, 2.5)
             ))
     ))
 
     val result = RectParamSpace(setOf(
             Rect(arrayOf(
-                    Interval(0.25,0.75),
-                    Interval(0.25,0.75)
+                    Interval(0.25, 0.75),
+                    Interval(0.25, 0.75)
             )),
             Rect(arrayOf(
-                    Interval(4.0,5.0),
-                    Interval(0.5,1.0)
+                    Interval(4.0, 5.0),
+                    Interval(0.5, 1.0)
             )),
             Rect(arrayOf(
-                    Interval(4.0,5.0),
-                    Interval(2.0,2.5)
+                    Interval(4.0, 5.0),
+                    Interval(2.0, 2.5)
             ))
     ))
 
@@ -298,7 +301,7 @@ class IntersectTest {
     fun emptyEmpty() {
         val space = RectParamSpace.empty()
         space intersect RectParamSpace.empty()
-        assertEquals(RectParamSpace.empty(), space)
+        assertEquals(RectParamSpace.Companion.empty(), space)
     }
 
     @Test
@@ -309,8 +312,8 @@ class IntersectTest {
         val s2 = r1.copy()
         s2 intersect RectParamSpace.empty()
 
-        assertEquals(RectParamSpace.empty(), s1)
-        assertEquals(RectParamSpace.empty(), s2)
+        assertEquals(RectParamSpace.Companion.empty(), s1)
+        assertEquals(RectParamSpace.Companion.empty(), s2)
     }
 
     @Test
