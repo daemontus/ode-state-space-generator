@@ -1,10 +1,30 @@
 package cz.muni.fi.ode.model
 
-import cz.muni.fi.ctl.antlr.ODEBaseListener
-import cz.muni.fi.ctl.antlr.ODEParser
+import cz.muni.fi.ctl.antlr.*
 import cz.muni.fi.ctl.set
+import org.antlr.v4.runtime.ANTLRInputStream
+import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeProperty
+import org.antlr.v4.runtime.tree.ParseTreeWalker
+import java.io.File
 import java.util.*
+
+class Parser {
+
+    fun parse(input: String): Model
+            = processStream(ANTLRInputStream(input.toCharArray(), input.length))
+
+    fun parse(input: File): Model
+            = input.inputStream().use { processStream(ANTLRInputStream(it)) }
+
+    private fun processStream(input: ANTLRInputStream): Model {
+        val root = ODEParser(CommonTokenStream(ODELexer(input))).root()
+        val reader = ModelReader()
+        ParseTreeWalker().walk(reader, root)
+        return reader.toModel()
+    }
+
+}
 
 private class ModelReader : ODEBaseListener() {
 
@@ -100,6 +120,7 @@ private class ModelReader : ODEBaseListener() {
             val s2 = flattenAndResolve(target.e2)
             s1.flatMap { i1 -> s2.map { i2 -> i1 * i2 } }
         }
+        is Minus -> flattenAndResolve(target.e1) + flattenAndResolve(Negation(target.e2))
         else -> throw IllegalStateException("Can't flatten or resolve: $target")
     }
 

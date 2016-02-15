@@ -27,8 +27,8 @@ expr : eval                 # evaluable
      | '-' eval             # negativeEvaluable
      | '(' expr ')'         # parenthesis
      | expr '*' expr        # multiplication
-     | expr '+' expr        # addition
      | expr '-' expr        # subtraction
+     | expr '+' expr        # addition
      ;
 
 eval : NUMBER       # numberEval
