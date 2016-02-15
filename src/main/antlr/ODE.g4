@@ -8,12 +8,12 @@ line :  //empty
     | 'PARAMS:' p_interval (';' p_interval)*
     | 'VARS:' NAME (',' NAME)*
     | 'THRES:' NAME ':' NUMBER (',' NUMBER)*
-    | 'CONSTS:' (const ';')* const
+    | 'CONSTS:' (constant ';')* constant
     | 'INIT:' interval (';' interval)*
     | BA_LINE
     | 'VAR_POINTS:' interval (';' interval)*;
 
-const : NAME ',' NUMBER;
+constant : NAME ',' NUMBER;
 
 interval : NAME ':' NUMBER ',' NUMBER;
 p_interval : NAME ',' NUMBER ',' NUMBER;
