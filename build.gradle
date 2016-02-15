@@ -50,6 +50,7 @@ dependencies {
     compile files('libs/mpj.jar')
     compile 'com.github.sybila:CTL-Parser:1.1.1'
     compile 'com.google.guava:guava:18.0'
+    testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
 
 }
 
