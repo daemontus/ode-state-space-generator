@@ -1,29 +1,37 @@
 
 grammar ODE;
 
-root : (line '\n')*;
+root : fullStop? (line fullStop)*;
 
-line :  //empty
-    | 'EQ:' NAME '=' expr
-    | 'PARAMS:' p_interval (';' p_interval)*
-    | 'VARS:' NAME (',' NAME)*
-    | 'THRES:' NAME ':' NUMBER (',' NUMBER)*
-    | 'CONSTS:' (constant ';')* constant
-    | 'INIT:' interval (';' interval)*
-    | BA_LINE
-    | 'VAR_POINTS:' interval (';' interval)*;
+line : 'EQ:' NAME '=' expr                           # equation
+     | 'PARAMS:' paramInterval (';' paramInterval)*  # parameters
+     | 'VARS:' varName (',' varName)*                # variables
+     | 'THRES:' NAME ':' NUMBER (',' NUMBER)*        # thresholds
+     | 'CONSTS:' (constant ';')* constant            # constants
+     | 'INIT:' initInterval (';' initInterval)*      # initial
+     | BA_LINE                                       # buchi
+     | 'VAR_POINTS:' varInterval (';' varInterval)*  # variablePoints
+     ;
+
+fullStop : NEWLINE+ | EOF;
 
 constant : NAME ',' NUMBER;
 
-interval : NAME ':' NUMBER ',' NUMBER;
-p_interval : NAME ',' NUMBER ',' NUMBER;
+varName : NAME;
 
-expr : summant (('+'|'-') summant)*;
+initInterval : NAME ':' NUMBER ',' NUMBER;
+varInterval : NAME ':' NUMBER ',' NUMBER;
+paramInterval : NAME ',' NUMBER ',' NUMBER;
 
-summant : eval ('*' eval)*;
+expr : eval                 # evaluable
+     | '-' eval             # negativeEvaluable
+     | '(' expr ')'         # parenthesis
+     | expr '+' expr        # addition
+     | expr '-' expr        # subtraction
+     | expr '*' expr        # multiplication
+     ;
 
-eval : NUMBER | '-'? NAME
-    | '-'? RAMP | '-'? SIGM | '-'? STEP | '-'? HILL;
+eval : NUMBER | NAME | RAMP | SIGM | STEP | HILL;
 
 /** Lexer rules **/
 
@@ -43,6 +51,8 @@ NUMBER : [-]?[0-9]+([\.][0-9]+)?;
 NAME : [a-zA-Z]+[_0-9a-zA-Z~{}]*;
 
 WS : [ \t\u]+ -> channel(HIDDEN) ;
+
+NEWLINE : '\r'?'\n';
 
 Block_comment : '/*' (Block_comment|.)*? '*/' -> channel(HIDDEN) ; // nesting allow
 Line_comment : ('//' | '#') .*? '\n' -> channel(HIDDEN) ;
