@@ -1,13 +1,7 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.ode.generator.Interval
-import cz.muni.fi.ode.generator.Rect
-import cz.muni.fi.ode.generator.RectParamSpace
-import org.junit.Test
-import kotlin.test.assertEquals
-
 //see https://www.dropbox.com/s/oe2gpotc3ypeib1/IMG_20150827_210551833.jpg?dl=0
-
+/*
 class SubtractTest {
 
     val r1 = RectParamSpace(setOf(
@@ -340,4 +334,4 @@ class IntersectTest {
         assertEquals(result, s2)
     }
 
-}
+}*/

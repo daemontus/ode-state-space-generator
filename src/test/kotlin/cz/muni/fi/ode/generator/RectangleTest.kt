@@ -1,7 +1,5 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.ode.generator.Interval
-import cz.muni.fi.ode.generator.Rect
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

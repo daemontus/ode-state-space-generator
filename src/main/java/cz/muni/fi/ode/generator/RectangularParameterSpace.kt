@@ -1,6 +1,6 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.ode.ColorSet
+import cz.muni.fi.checker.Colors
 import java.util.Arrays
 import java.util.HashSet
 
@@ -107,52 +107,40 @@ data class Rect(val ranges: Array<Interval>) {
 
     operator fun get(i: Int): Interval = ranges[i]
 }
-
-public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet {
+/*
+data class RectParamSpace(var items: Set<Rect> = setOf()): Colors<RectParamSpace> {
 
     companion object {
         fun empty() = RectParamSpace()
     }
 
-    override infix fun intersect(set: ColorSet?) {
-        if (set != null && set is RectParamSpace) {
-            val newItems = HashSet<Rect>()
-            for (r in items) {
-                for (other in set.items) {
-                  //  println("R: $r O: $other")
-                    val intersection = r intersect other
-                    if (!intersection.isEmpty()) newItems.add(intersection)
-                }
+    override fun intersect(other: RectParamSpace): RectParamSpace {
+        val newItems = HashSet<Rect>()
+        for (r in items) {
+            for (other in other.items) {
+                //  println("R: $r O: $other")
+                val intersection = r intersect other
+                if (!intersection.isEmpty()) newItems.add(intersection)
             }
-            this.items = newItems
-            normalize()
-        } else {
-            throw IllegalStateException("Illegal set: $set")
         }
+        this.items = newItems
+        normalize()
     }
 
-    override infix fun subtract(set: ColorSet?) {
-        if (set != null && set is RectParamSpace) {
-            for (other in set.items) {  //have to update items every iteration so that we perform on space partitioned in previous iteration
-                items = items.flatMap { it subtract other }.toSet()
-            }
-            normalize()
-        } else {
-            throw IllegalStateException("Illegal set: $set")
+    override fun minus(other: RectParamSpace): RectParamSpace {
+        for (other in other.items) {  //have to update items every iteration so that we perform on space partitioned in previous iteration
+            items = items.flatMap { it subtract other }.toSet()
         }
+        normalize()
     }
 
-    override infix fun union(set: ColorSet?): Boolean {
-        if (set != null && set is RectParamSpace) {
-            val new = items.union(set.items)
-            val old = items
-            this.items = new
-            normalize()
-            return new != old
-        } else {
-            throw IllegalStateException("Illegal set: $set")
-        }
+    override fun plus(other: RectParamSpace): RectParamSpace {
+        val new = items.union(other.items)
+        val old = items
+        this.items = new
+        normalize()
     }
+
 
     fun encloses(set: RectParamSpace): Boolean {
         val o = this.copy()
@@ -197,4 +185,4 @@ public data class RectParamSpace(var items: Set<Rect> = setOf()): ColorSet {
     }
 
 
-}
+}*/
