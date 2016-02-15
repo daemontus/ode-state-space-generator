@@ -22,10 +22,8 @@ data class Summand(
     }
 
     override fun toString(): String {
-        val root = "$constant*Param($paramIndex)}"
-        val elements = listOf(
-                variableIndices.map { "Var($it)" }, evaluable
-        ).map { it.joinToString(separator = "*") }
+        val root = "$constant*Param($paramIndex)"
+        val elements = variableIndices.map { "Var($it)" } + evaluable
         if (elements.isNotEmpty()) {
             return "$root*${elements.joinToString(separator = "*")}"
         } else return root
