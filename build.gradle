@@ -1,10 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'antlr'
 apply plugin: 'maven'
 
 //include antlr and kotlin plugin
 buildscript {
-    ext.kotlin_version = '1.0.0-beta-3595'
+    ext.kotlin_version = '1.0.0'
 
     repositories {
         jcenter()
@@ -17,8 +18,24 @@ buildscript {
 }
 
 group = "com.github.sybila"
-archivesBaseName = "ode-state-space"
+archivesBaseName = "ode-state-space-generator"
 version = '0.0.1'
+
+//antlr config
+generateGrammarSource {
+    arguments += [
+            "-no-visitor",
+            "-listener",
+            "-package", "cz.muni.fi.ctl.antlr"
+    ]
+    outputDirectory = new File('src/main/gen/cz/muni/fi/ctl/antlr')
+}
+
+// make the Java compile task depend on the antlr4 task
+compileKotlin.dependsOn generateGrammarSource
+
+// add the generated source files to the list of java sources
+sourceSets.main.java.srcDirs += new File('src/main/gen')
 
 repositories {
     mavenCentral()
@@ -28,9 +45,10 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     compile 'com.intellij:annotations:5.1'
+    antlr "org.antlr:antlr4:4.5.1-1"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile files('libs/mpj.jar')
-    compile 'com.github.sybila:CTL-Parser:1.0.2'
+    compile 'com.github.sybila:CTL-Parser:1.1.1'
     compile 'com.google.guava:guava:18.0'
 
 }
