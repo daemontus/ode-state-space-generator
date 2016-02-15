@@ -31,19 +31,33 @@ expr : eval                 # evaluable
      | expr '*' expr        # multiplication
      ;
 
-eval : NUMBER | NAME | RAMP | SIGM | STEP | HILL;
+eval : NUMBER       # numberEval
+     | NAME         # nameEval
+     | ramp         # rampEval
+     | sigm         # sigmEval
+     | step         # stepEval
+     | hill         # hillEval
+     ;
 
 /** Lexer rules **/
 
-//make no mistake, we actually do not allow whitespace between arguemnts!
+arg : NAME | NUMBER;
 
-RAMP : [Rr][mp]('coor')?'('NAME','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)')';
+ramp : RAMP'('NAME','arg','arg','arg','arg')';
 
-SIGM : [Ss][mp]('inv')*('['([0-9]+|NAME)']')*'('NAME','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)')';
+step : STEP'('NAME','arg','arg','arg')';
 
-STEP : [Hh][mp]'('NAME','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)')';
+hill : HILL'('NAME','arg','arg','arg','arg')';
 
-HILL : [Hh]'ill'[mp]'('NAME','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)','(NAME|NUMBER)')';
+//sigm : SIGM('['index']')*'('NAME','arg','arg','arg','arg')';
+//index : NAME | INTEGER;
+//For now, use sigmoid without index - we don't know what is it for!
+sigm : SIGM'('NAME','arg','arg','arg','arg')';
+
+RAMP : [Rr][mp]('coor')?;
+STEP : [Hh][mp];
+HILL : [Hh]'ill'[mp];
+SIGM : [Ss][mp]('inv')?;
 
 BA_LINE : 'BA:'~[\n]+;
 
