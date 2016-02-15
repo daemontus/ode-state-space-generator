@@ -26,15 +26,15 @@ paramInterval : NAME ',' NUMBER ',' NUMBER;
 expr : eval                 # evaluable
      | '-' eval             # negativeEvaluable
      | '(' expr ')'         # parenthesis
+     | expr '*' expr        # multiplication
      | expr '+' expr        # addition
      | expr '-' expr        # subtraction
-     | expr '*' expr        # multiplication
      ;
 
 eval : NUMBER       # numberEval
      | NAME         # nameEval
      | ramp         # rampEval
-     | sigm         # sigmEval
+     | sigm         # sigmoidEval
      | step         # stepEval
      | hill         # hillEval
      ;
