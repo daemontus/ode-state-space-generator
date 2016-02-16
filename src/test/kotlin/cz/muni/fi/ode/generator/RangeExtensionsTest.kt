@@ -1,10 +1,6 @@
 package cz.muni.fi.ode.generator
 
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-
+/*
 class RangeIntersectionTest {
 
     @Test
@@ -113,4 +109,4 @@ class RangeEnclosesTest {
         assertFalse(r3 encloses r1)
     }
 
-}
+}*/

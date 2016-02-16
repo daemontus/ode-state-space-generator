@@ -1,10 +1,6 @@
 package cz.muni.fi.ode.generator
 
-import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-
+/*
 class SubtractTests {
 
     val r1 = Rect(Array(3) {
@@ -218,4 +214,4 @@ class IntersectTests {
         assertEquals(k2, r24 intersect r12)
     }
 
-}
+}*/
