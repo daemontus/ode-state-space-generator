@@ -30,12 +30,6 @@ data class Ramp private constructor(
 
     }
 
-    constructor(varIndex: Int, lowThreshold: Double, highThreshold: Double, a: Double, b: Double, positive: Boolean):
-    this(varIndex, lowThreshold, highThreshold,
-            if (positive) Math.min(a,b) else Math.max(a,b),
-            if (positive) Math.max(a,b) else Math.min(a,b)
-    )
-
     init {
         if (lowThreshold >= highThreshold) {
             throw IllegalArgumentException("Invalid Ramp function - wrong thresholds: $lowThreshold >= $highThreshold")
