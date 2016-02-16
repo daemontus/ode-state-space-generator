@@ -1,6 +1,15 @@
 package cz.muni.fi.ode.model
 
-data class Hill(
+/**
+ * Hill function: https://en.wikipedia.org/wiki/Hill_equation_(biochemistry)
+ *
+ * Original hill function has image <0,1)
+ * Values a and b serve as scaling factor so that the image is stretched to <a, b).
+ * In case the function is negative, a and b are switched, and then the
+ * image of the function is <b, a) and whole function is decreasing.
+ *
+ */
+data class Hill private constructor(
         val varIndex: Int,
         val theta: Double,
         val n: Double,
@@ -14,8 +23,9 @@ data class Hill(
                     if (positive) Math.max(a,b) else Math.min(a,b)
             )
 
-    override fun eval(value: Double): Double
-        = a + (b - a) * (Math.pow(theta/value, n))
+    override fun eval(value: Double): Double {
+        return a + (b - a) * (1 / (1 + Math.pow(theta/value, n)))
+    }
 
     override fun toString(): String
         = "Hill(${if(a <= b) '+' else '-'})($varIndex, $theta, $n, $a, $b)"

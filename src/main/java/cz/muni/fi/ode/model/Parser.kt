@@ -334,16 +334,20 @@ private class AbstractRamp(
         val name: String,
         val lowThreshold: Reference, val highThreshold: Reference, val a: Reference, val b: Reference,
         val positive: Boolean,
-        val coor: Boolean
+        val coordinate: Boolean
 ) : AbstractFunction() {
-    fun toRamp(reader: ModelReader): Ramp = Ramp(
-            varIndex = reader.resolveVarName(name),
-            lowThreshold = reader.resolveArgument(lowThreshold),
-            highThreshold = reader.resolveArgument(highThreshold),
-            a = if (coor) reader.resolveArgument(a) else reader.resolveArgument(lowThreshold) * reader.resolveArgument(a) + reader.resolveArgument(b),
-            b = if (coor) reader.resolveArgument(b) else reader.resolveArgument(highThreshold) * reader.resolveArgument(a) + reader.resolveArgument(b),
-            positive = positive
-    )
+    fun toRamp(reader: ModelReader): Ramp {
+        val a = reader.resolveArgument(a)
+        val b = reader.resolveArgument(b)
+        val lowThreshold = reader.resolveArgument(lowThreshold)
+        val highThreshold = reader.resolveArgument(highThreshold)
+        return when {
+            positive && coordinate -> Ramp.positiveCoordinate(reader.resolveVarName(name), lowThreshold, highThreshold, a, b)
+            !positive && coordinate -> Ramp.negativeCoordinate(reader.resolveVarName(name), lowThreshold, highThreshold, a, b)
+            positive && !coordinate -> Ramp.positive(reader.resolveVarName(name), lowThreshold, highThreshold, a, b)
+            else -> Ramp.negative(reader.resolveVarName(name), lowThreshold, highThreshold, a, b)
+        }
+    }
 }
 
 private class AbstractSigmoid(
@@ -352,17 +356,18 @@ private class AbstractSigmoid(
         val positive: Boolean,
         val inverse: Boolean
 ) : AbstractFunction() {
-    fun toSigmoid(reader: ModelReader): Sigmoid = Sigmoid(
-            varIndex = reader.resolveVarName(name),
-            k = reader.resolveArgument(k),
-            theta = if (!inverse)
-                        reader.resolveArgument(theta)
-                    else
-                        reader.resolveArgument(theta) + Math.log(reader.resolveArgument(a)/reader.resolveArgument(b)) / 2*reader.resolveArgument(k),
-            a = if (!inverse) reader.resolveArgument(a) else 1.0/reader.resolveArgument(a),
-            b = if (!inverse) reader.resolveArgument(b) else 1.0/reader.resolveArgument(b),
-            positive = positive
-    )
+    fun toSigmoid(reader: ModelReader): Sigmoid {
+        val a = reader.resolveArgument(a)
+        val b = reader.resolveArgument(b)
+        val k = reader.resolveArgument(k)
+        val theta = reader.resolveArgument(theta)
+        return when {
+            positive && inverse -> Sigmoid.positiveInverse(reader.resolveVarName(name), k, theta, a, b)
+            !positive && inverse -> Sigmoid.negativeInverse(reader.resolveVarName(name), k, theta, a, b)
+            positive && !inverse -> Sigmoid.positive(reader.resolveVarName(name), k, theta, a, b)
+            else -> Sigmoid.negative(reader.resolveVarName(name), k, theta, a, b)
+        }
+    }
 }
 
 private class AbstractStep(

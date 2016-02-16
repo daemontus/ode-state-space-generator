@@ -1,6 +1,6 @@
 package cz.muni.fi.ode.model
 
-data class Step(
+data class Step private constructor(
         val varIndex: Int,
         val theta: Double,
         val a: Double,
