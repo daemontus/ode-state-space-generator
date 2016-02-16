@@ -16,6 +16,14 @@ private fun Sigmoid.alternativeEval(x: Double): Double {
     return a + (b - a) * 0.5 * (1 + Math.tanh(k*(x - theta)))
 }
 
+private fun Step.alternativeEval(x: Double): Double {
+    return if (x < theta) a else b  //really no other way to write this
+}
+
+private fun Ramp.alternativeEval(x: Double): Double {
+    return a + (b - a) * Math.max(Math.min((x - lowThreshold) / (highThreshold - lowThreshold), 1.0), 0.0)
+}
+
 private val error = Math.pow(10.0, -9.0)
 
 class SigmoidTest {
@@ -29,6 +37,7 @@ class SigmoidTest {
     @Test
     fun extendedTest() {
 
+        //can't test zero because of inverse
         val values = listOf(0.005, 0.33, 0.744, 1.0, 1.45, 1.8, 3.14, 5.0)
 
         for (theta in values) {
@@ -135,6 +144,104 @@ class HillTest {
             assertTrue(
                     Math.abs(a + b - realP - realN) < error || realP.isNaN() || realN.isNaN(),
                     "Problem in comparison $positiveHill, $negativeHill: positive $realP, negative $realN for value $e")
+            e += 0.05
+            e *= 1.2
+        }
+    }
+
+}
+
+class RampTest() {
+
+    @Test
+    fun simpleTest() = test(1.0, 2.0, 0.0, 1.0)
+
+    @Test
+    fun complexTest() = test(1.24, 2.12, 0.75, 2.0)
+
+    @Test
+    fun extendedTest() {
+
+        val values = listOf(0.0, 0.005, 0.33, 0.744, 1.0, 1.45, 1.8, 3.14, 5.0)
+
+        for (low in values) {
+            for (high in values) {
+                for (a in values) {
+                    for (b in values) {
+                        if (a > b || low >= high) continue //skip decreasing functions, test method creates them automatically
+                        test(low, high, a, b)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun test(low: Double, high: Double, a: Double, b: Double) {
+        val positiveRamp = Ramp.positiveCoordinate(0, low, high, a, b)
+        val negativeRamp = Ramp.negativeCoordinate(0, low, high, a, b)
+        var e = 0.0
+        while (e < 10) {
+            val expectedP = positiveRamp.alternativeEval(e)
+            val realP = positiveRamp.eval(e)
+            assertTrue(
+                    Math.abs(expectedP - realP) < error || (expectedP.isNaN() && realP.isNaN()),
+                    "Problem in $positiveRamp: expected $expectedP, got $realP for value $e")
+            val expectedN = negativeRamp.alternativeEval(e)
+            val realN = negativeRamp.eval(e)
+            assertTrue(
+                    Math.abs(expectedN - realN) < error || (expectedN.isNaN() && realN.isNaN()),
+                    "Problem in $negativeRamp: expected $expectedN, got $realN for value $e")
+            assertTrue( //can reuse directly a/b because they are changed in construction
+                    Math.abs(positiveRamp.a + positiveRamp.b - realP - realN) < error || realP.isNaN() || realN.isNaN(),
+                    "Problem in comparison $positiveRamp, $negativeRamp: positive $realP, negative $realN for value $e")
+            e += 0.05
+            e *= 1.2
+        }
+    }
+
+}
+
+class StepTest() {
+
+    @Test
+    fun simpleTest() = test(1.0, 1.0, 0.0)
+
+    @Test
+    fun complexTest() = test(1.24, 2.12, 0.75)
+
+    @Test
+    fun extendedTest() {
+
+        val values = listOf(0.0, 0.005, 0.33, 0.744, 1.0, 1.45, 1.8, 3.14, 5.0)
+
+        for (theta in values) {
+            for (a in values) {
+                for (b in values) {
+                    if (a > b) continue //skip decreasing functions, test method creates them automatically
+                    test(theta, a, b)
+                }
+            }
+        }
+    }
+
+    private fun test(theta: Double, a: Double, b: Double) {
+        val positiveStep = Step(0, theta, a, b, true)
+        val negativeStep = Step(0, theta, a, b, false)
+        var e = 0.0
+        while (e < 10) {
+            val expectedP = positiveStep.alternativeEval(e)
+            val realP = positiveStep.eval(e)
+            assertTrue(
+                    Math.abs(expectedP - realP) < error || (expectedP.isNaN() && realP.isNaN()),
+                    "Problem in $positiveStep: expected $expectedP, got $realP for value $e")
+            val expectedN = negativeStep.alternativeEval(e)
+            val realN = negativeStep.eval(e)
+            assertTrue(
+                    Math.abs(expectedN - realN) < error || (expectedN.isNaN() && realN.isNaN()),
+                    "Problem in $negativeStep: expected $expectedN, got $realN for value $e")
+            assertTrue(
+                    Math.abs(a + b - realP - realN) < error || realP.isNaN() || realN.isNaN(),
+                    "Problem in comparison $positiveStep, $negativeStep: positive $realP, negative $realN for value $e")
             e += 0.05
             e *= 1.2
         }
