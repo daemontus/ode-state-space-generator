@@ -11,7 +11,7 @@ data class Summand(
 
     operator fun times(other: Summand): Summand {
         if (paramIndex >= 0 && other.paramIndex >= 0) {
-            throw IllegalStateException("Can't create summand with two parameters or squared parameter! Parameter indices: $paramIndex, $paramIndex")
+            throw IllegalStateException("Can't create summand with two parameters or squared parameter! Parameter indices: $paramIndex, ${other.paramIndex}")
         }
         return Summand(
                 constant * other.constant,
@@ -20,6 +20,20 @@ data class Summand(
                 evaluable + other.evaluable
         )
     }
+
+    operator fun plus(other: Summand): Summand? {
+        if (
+            paramIndex != other.paramIndex ||
+            variableIndices != other.variableIndices ||
+            evaluable != other.evaluable
+        ) {
+            return null
+        } else {
+            return this.copy(constant + other.constant)
+        }
+    }
+
+
 
     override fun toString(): String {
         val root = "$constant*Param($paramIndex)"

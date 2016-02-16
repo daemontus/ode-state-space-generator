@@ -113,15 +113,15 @@ private class ModelReader : ODEBaseListener() {
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
         is AbstractRamp -> listOf(Summand(evaluable = listOf(target.toRamp(this))))
         is AbstractStep -> listOf(Summand(evaluable = listOf(target.toStep(this))))
-        is Plus -> flattenAndResolve(target.e1) + flattenAndResolve(target.e2)
-        is Negation -> flattenAndResolve(target.expr).map { it.copy(constant = -1.0 * it.constant) }
+        is Plus -> simplifySummands(flattenAndResolve(target.e1) + flattenAndResolve(target.e2))
+        is Negation -> simplifySummands(flattenAndResolve(target.expr).map { it.copy(constant = -1.0 * it.constant) })
         is Times -> {
             val s1 = flattenAndResolve(target.e1)
             val s2 = flattenAndResolve(target.e2)
-            s1.flatMap { i1 -> s2.map { i2 -> i1 * i2 } }
+            simplifySummands(s1.flatMap { i1 -> s2.map { i2 -> i1 * i2 } })
         }
-        is Minus -> flattenAndResolve(target.e1) + flattenAndResolve(Negation(target.e2))
-        else -> throw IllegalStateException("Can't flatten or resolve: $target")
+        is Minus -> simplifySummands(flattenAndResolve(target.e1) + flattenAndResolve(Negation(target.e2)))
+        else -> throw IllegalStateException("Can't flatten or resolve: $target")    //can't happen
     }
 
     internal fun resolveArgument(arg: Reference): Double = when(arg) {
@@ -138,8 +138,34 @@ private class ModelReader : ODEBaseListener() {
 
     internal fun resolveVarName(name: String): Int {
         val index = variables.indexOf(name)
-        if (index < 0) throw IllegalStateException("Undefined variable: $name")
+        if (index < 0) {
+            throw IllegalStateException("Undefined variable: $name")
+        }
         return index
+    }
+
+    internal fun simplifySummands(source: List<Summand>): List<Summand> {
+
+        val list = source.toMutableList()
+
+        fun findAndMerge(): Boolean {
+            for (fst in list.indices) {
+                for (snd in list.indices) {
+                    if (fst == snd) continue
+                    val sum = list[fst] + list[snd]
+                    if (sum != null) {
+                        list.removeAll(listOf(fst, snd).map { list[it] })
+                        list.add(sum)
+                        return true
+                    }
+                }
+            }
+            return false
+        }
+
+        while (findAndMerge()) {}
+
+        return list.toList()
     }
 
     /*
@@ -147,34 +173,46 @@ private class ModelReader : ODEBaseListener() {
      */
 
     override fun exitVarName(ctx: ODEParser.VarNameContext) {
-        variables.add(ctx.NAME().text!!)
+        val value = ctx.NAME().text!!
+        if (value in variables) {
+            throw IllegalStateException("Redefinition of variable $value")
+        }
+        variables.add(value)
     }
 
     override fun exitParamInterval(ctx: ODEParser.ParamIntervalContext) {
-        parameters.add(Model.Parameter(ctx.NAME().text!!,
+        val name = ctx.NAME().text!!
+        if (name in parameterNames) {
+            throw IllegalStateException("Redefinition of parameter $name")
+        }
+        parameters.add(Model.Parameter(name,
                 Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())
         ))
-        parameterNames.add(ctx.NAME().text!!)
+        parameterNames.add(name)
     }
 
     override fun exitConstant(ctx: ODEParser.ConstantContext) {
-        constants.put(ctx.NAME().text!!, ctx.NUMBER().text.toDouble())
+        if (constants.put(ctx.NAME().text!!, ctx.NUMBER().text.toDouble()) != null) {
+            throw IllegalStateException("Redefinition of constant ${ctx.NAME().text!!}")
+        }
     }
 
     override fun exitInitInterval(ctx: ODEParser.InitIntervalContext) {
-        initial.put(ctx.NAME().text!!,
-                Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())
-        )
+        if (initial.put(ctx.NAME().text!!, Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())) != null) {
+            throw IllegalStateException("Redefinition of initial interval for ${ctx.NAME().text!!}")
+        }
     }
 
     override fun exitVarInterval(ctx: ODEParser.VarIntervalContext) {
-        varPoints.put(ctx.NAME().text!!,
-                Pair(ctx.NUMBER(0).text.toInt(), ctx.NUMBER(1).text.toInt())
-        )
+        if (varPoints.put(ctx.NAME().text!!, Pair(ctx.NUMBER(0).text.toInt(), ctx.NUMBER(1).text.toInt())) != null) {
+            throw IllegalStateException("Redefinition of var points for ${ctx.NAME().text!!}")
+        }
     }
 
     override fun exitThresholds(ctx: ODEParser.ThresholdsContext) {
-        thresholds.put(ctx.NAME().text!!, ctx.NUMBER().map { it.text!!.toDouble() })
+        if (thresholds.put(ctx.NAME().text!!, ctx.NUMBER().map { it.text!!.toDouble() }) != null) {
+            throw IllegalStateException("Redefinition of thresholds for ${ctx.NAME().text!!}")
+        }
     }
 
     /*
@@ -182,7 +220,9 @@ private class ModelReader : ODEBaseListener() {
      */
 
     override fun exitEquation(ctx: ODEParser.EquationContext) {
-        equations.put(ctx.NAME().text!!, expressionTree[ctx.expr()])
+        if (equations.put(ctx.NAME().text!!, expressionTree[ctx.expr()]) != null) {
+            throw IllegalStateException("Redefinition of equation for ${ctx.NAME().text!!}")
+        }
     }
 
     override fun exitNumberEval(ctx: ODEParser.NumberEvalContext) {
@@ -303,9 +343,12 @@ private sealed class Reference : Resolvable {
 }
 
 private class AbstractHill(
-        val name: String,
-        val theta: Reference, val n: Reference, val a: Reference, val b: Reference,
-        val positive: Boolean
+        private val name: String,
+        private val theta: Reference,
+        private val n: Reference,
+        private val a: Reference,
+        private val b: Reference,
+        private val positive: Boolean
 ) : Resolvable {
     fun toHill(reader: ModelReader): Hill = Hill(
             varIndex = reader.resolveVarName(name),
@@ -318,10 +361,13 @@ private class AbstractHill(
 }
 
 private class AbstractRamp(
-        val name: String,
-        val lowThreshold: Reference, val highThreshold: Reference, val a: Reference, val b: Reference,
-        val positive: Boolean,
-        val coordinate: Boolean
+        private val name: String,
+        private val lowThreshold: Reference,
+        private val highThreshold: Reference,
+        private val a: Reference,
+        private val b: Reference,
+        private val positive: Boolean,
+        private val coordinate: Boolean
 ) : Resolvable {
     fun toRamp(reader: ModelReader): Ramp {
         val a = reader.resolveArgument(a)
@@ -338,10 +384,13 @@ private class AbstractRamp(
 }
 
 private class AbstractSigmoid(
-        val name: String,
-        val k: Reference, val theta: Reference, val a: Reference, val b: Reference,
-        val positive: Boolean,
-        val inverse: Boolean
+        private val name: String,
+        private val k: Reference,
+        private val theta: Reference,
+        private val a: Reference,
+        private val b: Reference,
+        private val positive: Boolean,
+        private val inverse: Boolean
 ) : Resolvable {
     fun toSigmoid(reader: ModelReader): Sigmoid {
         val a = reader.resolveArgument(a)
@@ -358,9 +407,11 @@ private class AbstractSigmoid(
 }
 
 private class AbstractStep(
-        val name: String,
-        val theta: Reference, val a: Reference, val b: Reference,
-        val positive: Boolean
+        private val name: String,
+        private val theta: Reference,
+        private val a: Reference,
+        private val b: Reference,
+        private val positive: Boolean
 ) : Resolvable {
     fun toStep(reader: ModelReader): Step = Step(
             varIndex = reader.resolveVarName(name),
