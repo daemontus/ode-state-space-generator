@@ -1,7 +1,9 @@
 package cz.muni.fi.ode.model
 
-import cz.muni.fi.ctl.antlr.*
 import cz.muni.fi.ctl.set
+import cz.muni.fi.ode.antlr.ODEBaseListener
+import cz.muni.fi.ode.antlr.ODELexer
+import cz.muni.fi.ode.antlr.ODEParser
 import org.antlr.v4.runtime.ANTLRInputStream
 import org.antlr.v4.runtime.CommonTokenStream
 import org.antlr.v4.runtime.tree.ParseTreeProperty
