@@ -28,7 +28,7 @@ class Parser {
 
 private class ModelReader : ODEBaseListener() {
 
-    private val equations = HashMap<String, Evaluable>()
+    private val equations = HashMap<String, Resolvable>()
     private val thresholds = HashMap<String, List<Double>>()
     private val constants = HashMap<String, Double>()
     private val initial = HashMap<String, Pair<Double, Double>>()
@@ -37,7 +37,7 @@ private class ModelReader : ODEBaseListener() {
     private var parameterNames = ArrayList<String>()    //preserve ordering
     private var variables = ArrayList<String>()
 
-    private val expressionTree = ParseTreeProperty<Evaluable>()
+    private val expressionTree = ParseTreeProperty<Resolvable>()
 
     /**
      * Conversion to standard model, with various integrity checks.
@@ -101,7 +101,7 @@ private class ModelReader : ODEBaseListener() {
         )
     }
 
-    private fun flattenAndResolve(target: Evaluable): List<Summand> = when (target) {
+    private fun flattenAndResolve(target: Resolvable): List<Summand> = when (target) {
         is Reference.Number -> listOf(Summand(constant = target.value))
         is Reference.Name -> when (target.value) {
             in variables -> listOf(Summand(variableIndices = listOf(variables.indexOf(target.value))))
@@ -271,55 +271,42 @@ private fun ODEParser.ArgContext.toReference(): Reference {
     else return Reference.Number(NUMBER().text.toDouble())
 }
 
+//Represents one part of expression that needs to be processed before it becomes evaluable
+private interface Resolvable
+
 private data class Negation(
-        val expr: Evaluable
-) : Evaluable {
-    override fun eval(value: Double): Double = -1 * expr.eval(value)
-}
+        val expr: Resolvable
+) : Resolvable
 
 private data class Plus(
-        val e1: Evaluable,
-        val e2: Evaluable
-) : Evaluable {
-    override fun eval(value: Double): Double = e1.eval(value) + e2.eval(value)
-}
+        val e1: Resolvable,
+        val e2: Resolvable
+) : Resolvable
 
 private data class Minus(
-        val e1: Evaluable,
-        val e2: Evaluable
-) : Evaluable {
-    override fun eval(value: Double): Double = e1.eval(value) - e2.eval(value)
-}
+        val e1: Resolvable,
+        val e2: Resolvable
+) : Resolvable
 
 private data class Times(
-        val e1: Evaluable,
-        val e2: Evaluable
-) : Evaluable {
-    override fun eval(value: Double): Double = e1.eval(value) * e2.eval(value)
-}
+        val e1: Resolvable,
+        val e2: Resolvable
+) : Resolvable
 
-private sealed class Reference : Evaluable {
+private sealed class Reference : Resolvable {
     internal class Name(
             val value: String
-    ) : Reference() {
-        override fun eval(value: Double): Double = throw UnsupportedOperationException()
-    }
+    ) : Reference()
     internal class Number(
             val value: Double
-    ) : Reference() {
-        override fun eval(value: Double): Double = value
-    }
-}
-
-private abstract class AbstractFunction : Evaluable {
-    override fun eval(value: Double): Double = throw UnsupportedOperationException()
+    ) : Reference()
 }
 
 private class AbstractHill(
         val name: String,
         val theta: Reference, val n: Reference, val a: Reference, val b: Reference,
         val positive: Boolean
-) : AbstractFunction() {
+) : Resolvable {
     fun toHill(reader: ModelReader): Hill = Hill(
             varIndex = reader.resolveVarName(name),
             theta = reader.resolveArgument(theta),
@@ -335,7 +322,7 @@ private class AbstractRamp(
         val lowThreshold: Reference, val highThreshold: Reference, val a: Reference, val b: Reference,
         val positive: Boolean,
         val coordinate: Boolean
-) : AbstractFunction() {
+) : Resolvable {
     fun toRamp(reader: ModelReader): Ramp {
         val a = reader.resolveArgument(a)
         val b = reader.resolveArgument(b)
@@ -355,7 +342,7 @@ private class AbstractSigmoid(
         val k: Reference, val theta: Reference, val a: Reference, val b: Reference,
         val positive: Boolean,
         val inverse: Boolean
-) : AbstractFunction() {
+) : Resolvable {
     fun toSigmoid(reader: ModelReader): Sigmoid {
         val a = reader.resolveArgument(a)
         val b = reader.resolveArgument(b)
@@ -374,7 +361,7 @@ private class AbstractStep(
         val name: String,
         val theta: Reference, val a: Reference, val b: Reference,
         val positive: Boolean
-) : AbstractFunction() {
+) : Resolvable {
     fun toStep(reader: ModelReader): Step = Step(
             varIndex = reader.resolveVarName(name),
             theta = reader.resolveArgument(theta),
