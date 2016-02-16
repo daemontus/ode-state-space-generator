@@ -49,14 +49,6 @@ private class ModelReader : ODEBaseListener() {
         if (variables.isEmpty()) {
             throw IllegalStateException("Model has no variables!")
         }
-        for (v in variables) {
-            if (v !in thresholds) {
-                throw IllegalStateException("No thresholds for variable $v")
-            }
-            if (v !in equations) {
-                throw IllegalStateException("No equation for variable $v")
-            }
-        }
         for (t in thresholds.entries) {
             if (t.value.size < 2) {
                 throw IllegalStateException("You must provide at least two thresholds for each variable")
@@ -89,12 +81,14 @@ private class ModelReader : ODEBaseListener() {
 
         return Model(
                 variables.map { vName ->
+                    val threshold = thresholds[vName] ?: throw IllegalStateException("No thresholds for variable $vName")
+                    val equation = equations[vName] ?: throw IllegalStateException("No equation for variable $vName")
                     Model.Variable(
                             name = vName,
-                            range = Pair(thresholds[vName]!!.first(), thresholds[vName]!!.last()),
-                            thresholds = thresholds[vName]!!,
+                            range = Pair(threshold.first(), threshold.last()),
+                            thresholds = threshold,
                             varPoints = varPoints[vName],
-                            equation = flattenAndResolve(equations[vName]!!)
+                            equation = flattenAndResolve(equation)
                     )
                 },
                 parameters
@@ -173,7 +167,7 @@ private class ModelReader : ODEBaseListener() {
      */
 
     override fun exitVarName(ctx: ODEParser.VarNameContext) {
-        val value = ctx.NAME().text!!
+        val value = ctx.NAME().text
         if (value in variables) {
             throw IllegalStateException("Redefinition of variable $value")
         }
@@ -181,7 +175,7 @@ private class ModelReader : ODEBaseListener() {
     }
 
     override fun exitParamInterval(ctx: ODEParser.ParamIntervalContext) {
-        val name = ctx.NAME().text!!
+        val name = ctx.NAME().text
         if (name in parameterNames) {
             throw IllegalStateException("Redefinition of parameter $name")
         }
@@ -192,26 +186,26 @@ private class ModelReader : ODEBaseListener() {
     }
 
     override fun exitConstant(ctx: ODEParser.ConstantContext) {
-        if (constants.put(ctx.NAME().text!!, ctx.NUMBER().text.toDouble()) != null) {
-            throw IllegalStateException("Redefinition of constant ${ctx.NAME().text!!}")
+        if (constants.put(ctx.NAME().text, ctx.NUMBER().text.toDouble()) != null) {
+            throw IllegalStateException("Redefinition of constant ${ctx.NAME().text}")
         }
     }
 
     override fun exitInitInterval(ctx: ODEParser.InitIntervalContext) {
-        if (initial.put(ctx.NAME().text!!, Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())) != null) {
-            throw IllegalStateException("Redefinition of initial interval for ${ctx.NAME().text!!}")
+        if (initial.put(ctx.NAME().text, Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())) != null) {
+            throw IllegalStateException("Redefinition of initial interval for ${ctx.NAME().text}")
         }
     }
 
     override fun exitVarInterval(ctx: ODEParser.VarIntervalContext) {
-        if (varPoints.put(ctx.NAME().text!!, Pair(ctx.NUMBER(0).text.toInt(), ctx.NUMBER(1).text.toInt())) != null) {
-            throw IllegalStateException("Redefinition of var points for ${ctx.NAME().text!!}")
+        if (varPoints.put(ctx.NAME().text, Pair(ctx.NUMBER(0).text.toInt(), ctx.NUMBER(1).text.toInt())) != null) {
+            throw IllegalStateException("Redefinition of var points for ${ctx.NAME().text}")
         }
     }
 
     override fun exitThresholds(ctx: ODEParser.ThresholdsContext) {
-        if (thresholds.put(ctx.NAME().text!!, ctx.NUMBER().map { it.text!!.toDouble() }) != null) {
-            throw IllegalStateException("Redefinition of thresholds for ${ctx.NAME().text!!}")
+        if (thresholds.put(ctx.NAME().text, ctx.NUMBER().map { it.text.toDouble() }) != null) {
+            throw IllegalStateException("Redefinition of thresholds for ${ctx.NAME().text}")
         }
     }
 
@@ -220,8 +214,8 @@ private class ModelReader : ODEBaseListener() {
      */
 
     override fun exitEquation(ctx: ODEParser.EquationContext) {
-        if (equations.put(ctx.NAME().text!!, expressionTree[ctx.expr()]) != null) {
-            throw IllegalStateException("Redefinition of equation for ${ctx.NAME().text!!}")
+        if (equations.put(ctx.NAME().text, expressionTree[ctx.expr()]) != null) {
+            throw IllegalStateException("Redefinition of equation for ${ctx.NAME().text}")
         }
     }
 
@@ -235,7 +229,7 @@ private class ModelReader : ODEBaseListener() {
 
     override fun exitRampEval(ctx: ODEParser.RampEvalContext) {
         expressionTree[ctx] = AbstractRamp(
-                ctx.ramp().NAME().text!!,
+                ctx.ramp().NAME().text,
                 ctx.ramp().arg(0).toReference(),
                 ctx.ramp().arg(1).toReference(),
                 ctx.ramp().arg(2).toReference(),
@@ -247,7 +241,7 @@ private class ModelReader : ODEBaseListener() {
 
     override fun exitSigmoidEval(ctx: ODEParser.SigmoidEvalContext) {
         expressionTree[ctx] = AbstractSigmoid(
-                ctx.sigm().NAME().text!!,
+                ctx.sigm().NAME().text,
                 ctx.sigm().arg(0).toReference(),
                 ctx.sigm().arg(1).toReference(),
                 ctx.sigm().arg(2).toReference(),
@@ -259,7 +253,7 @@ private class ModelReader : ODEBaseListener() {
 
     override fun exitStepEval(ctx: ODEParser.StepEvalContext) {
         expressionTree[ctx] = AbstractStep(
-                ctx.step().NAME().text!!,
+                ctx.step().NAME().text,
                 ctx.step().arg(0).toReference(),
                 ctx.step().arg(1).toReference(),
                 ctx.step().arg(2).toReference(),
@@ -269,7 +263,7 @@ private class ModelReader : ODEBaseListener() {
 
     override fun exitHillEval(ctx: ODEParser.HillEvalContext) {
         expressionTree[ctx] = AbstractHill(
-                ctx.hill().NAME().text!!,
+                ctx.hill().NAME().text,
                 ctx.hill().arg(0).toReference(),
                 ctx.hill().arg(1).toReference(),
                 ctx.hill().arg(2).toReference(),
@@ -307,28 +301,28 @@ private class ModelReader : ODEBaseListener() {
 // Helper classes that preserve important parts of parse tree between parsing and validation/conversion
 
 private fun ODEParser.ArgContext.toReference(): Reference {
-    if (NAME() != null) return Reference.Name(NAME().text!!)
+    if (NAME() != null) return Reference.Name(NAME().text)
     else return Reference.Number(NUMBER().text.toDouble())
 }
 
 //Represents one part of expression that needs to be processed before it becomes evaluable
 private interface Resolvable
 
-private data class Negation(
+private class Negation(
         val expr: Resolvable
 ) : Resolvable
 
-private data class Plus(
+private class Plus(
         val e1: Resolvable,
         val e2: Resolvable
 ) : Resolvable
 
-private data class Minus(
+private class Minus(
         val e1: Resolvable,
         val e2: Resolvable
 ) : Resolvable
 
-private data class Times(
+private class Times(
         val e1: Resolvable,
         val e2: Resolvable
 ) : Resolvable
