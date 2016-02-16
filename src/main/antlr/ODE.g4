@@ -49,9 +49,6 @@ step : STEP'('NAME','arg','arg','arg')';
 
 hill : HILL'('NAME','arg','arg','arg','arg')';
 
-//sigm : SIGM('['index']')*'('NAME','arg','arg','arg','arg')';
-//index : NAME | INTEGER;
-//For now, use sigmoid without index - we don't know what is it for!
 sigm : SIGM'('NAME','arg','arg','arg','arg')';
 
 RAMP : [Rr][mp]('coor')?;
