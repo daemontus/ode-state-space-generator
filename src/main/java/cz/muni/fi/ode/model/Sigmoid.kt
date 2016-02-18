@@ -12,7 +12,7 @@ package cz.muni.fi.ode.model
  *
  */
 data class Sigmoid private constructor(
-        val varIndex: Int,
+        override val varIndex: Int,
         val k: Double,
         val theta: Double,
         val a: Double,

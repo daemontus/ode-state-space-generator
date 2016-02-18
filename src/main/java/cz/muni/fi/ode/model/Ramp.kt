@@ -1,7 +1,7 @@
 package cz.muni.fi.ode.model
 
 data class Ramp private constructor(
-        val varIndex: Int,
+        override val varIndex: Int,
         val lowThreshold: Double,
         val highThreshold: Double,
         val a: Double,

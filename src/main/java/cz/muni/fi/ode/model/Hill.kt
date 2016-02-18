@@ -10,7 +10,7 @@ package cz.muni.fi.ode.model
  *
  */
 data class Hill private constructor(
-        val varIndex: Int,
+        override val varIndex: Int,
         val theta: Double,
         val n: Double,
         val a: Double,

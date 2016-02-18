@@ -6,7 +6,7 @@ import java.util.*
  * Approximation of continuous function using linear ramps.
  */
 data class RampApproximation(
-        val varIndex: Int,
+        override val varIndex: Int,
         val thresholds: DoubleArray,   //thresholds between ramps - SORTED!
         val values: DoubleArray        //value of function in corresponding threshold
 ) : Evaluable {
