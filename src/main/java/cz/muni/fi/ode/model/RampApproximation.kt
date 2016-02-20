@@ -18,7 +18,7 @@ data class RampApproximation(
         if (position >= 0) {    //evaluated value is one of the thresholds
             return values[position]
         } else {                //position points to -1 * (upper threshold)
-            val iH = -position  //note that this must be a valid index, otherwise some conditions above would fire
+            val iH = -position-1  //note that this must be a valid index, otherwise some conditions above would fire
             val iL = iH-1
             return values[iL] + (value - thresholds[iL]) / (thresholds[iH] - thresholds[iL]) * (values[iH] - values[iL])
         }
