@@ -126,12 +126,11 @@ data class Model(
 
         val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
 
-        val cost = DoubleArray(xPoints.size) { i ->
+        val cost = DoubleArray(xPoints.size - 1) { i ->
             curves.maxByDouble { curve ->
-                segmentError(xPoints, curve, 0, i)
+                segmentError(xPoints, curve, 0, i + 1)
             }
         }
-        cost[0] = 0.0
 
         val sy = Array(curves.size) { DoubleArray(xPoints.size) { 0.0 } }
         val sy2 = Array(curves.size) { DoubleArray(xPoints.size) { 0.0 } }
@@ -163,7 +162,7 @@ data class Model(
         var minError: Double
         var minIndex: Int
 
-        val newCost = DoubleArray(xPoints.size) { 0.0 }
+        val newCost = DoubleArray(xPoints.size - 1) { 0.0 }
 
         val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
             if (i > n-2 || i == 0) {
@@ -181,12 +180,12 @@ data class Model(
 
             for (n in 2 until xPoints.size) {
 
-                minError = cost[n-1]
+                minError = cost[n-2]
                 minIndex = n - 1
 
                 for (i in m..(n-2)) {
 
-                    val currentError = cost[i] + hCost[n][i];
+                    val currentError = cost[i-1] + hCost[n][i];
 
                     if (currentError < minError) {
                         minError = currentError;
@@ -194,7 +193,7 @@ data class Model(
                     }
                 }
 
-                newCost[n] = minError;
+                newCost[n-1] = minError;
                 father[n][m] = minIndex;
 
             }
