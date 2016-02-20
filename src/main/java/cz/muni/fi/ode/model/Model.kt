@@ -195,18 +195,17 @@ data class Model(
 
         }
 
-        val ib = IntArray(segmentCount+1) { 0 }
-        val xb = DoubleArray(segmentCount+1) { 0.0 }
+        val results = DoubleArray(segmentCount+1) { 0.0 }
 
-        ib[segmentCount] = xPoints.size-1;
-        xb[segmentCount] = xPoints[ib[segmentCount]];
+        var pointIndex = xPoints.size-1;
+        results[segmentCount] = xPoints[pointIndex];
 
         for (i in (segmentCount-1).downTo(0)) {
-            ib[i] = father[ib[i+1]][i];
-            xb[i] = xPoints[ib[i]];
+            pointIndex = father[pointIndex][i];
+            results[i] = xPoints[pointIndex];
         }
 
-        return xb
+        return results
     }
 
     //compute points at which the function should be evaluated
