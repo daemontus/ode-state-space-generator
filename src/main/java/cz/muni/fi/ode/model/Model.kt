@@ -18,53 +18,23 @@ data class Model(
             val range: Pair<Double, Double>
     )
 
-    private fun generateXPoints(from: Double, to: Double, segments: Int): List<Double> {
-        val dx = (to - from) / (segments-1)
-        return (0 until segments).map { i -> from + dx * i }
-    }
-
-    private fun generateSpace(pointCount: Int, segmentCount: Int, functions: List<Evaluable>): List<Double> {
-        val intervalDeviationParam = 1.5;
-        val min = 0.0   //in the old code, there is no way this can be anything else..
-        var max = 0.0
-        for (e in functions) {
-            if (e is Hill) {
-                val newMax = 2.0 * e.theta + (5.0 / e.n) * e.theta
-                if (newMax > max) max = newMax
-            }
-            if (e is Sigmoid) {
-                val newMax = e.theta + (2.0 / e.k) * intervalDeviationParam
-                if (newMax > max) max = newMax
-            }
-        }
-        return generateXPoints(min, max, pointCount)
-    }
-
-    private fun segmentError(x: List<Double>, y: List<Double>): DoubleArray {
-        val result = DoubleArray(3, { 0.0 })
-
-        assert(x.size == y.size)
-
+    private fun segmentError(x: DoubleArray, y: DoubleArray, first: Int, last: Int): Double {
         // Compute line segment coefficients
-        val a = (y.last() - y.first()) / (x.last() - x.first());
-        val b = (y.first() * x.last() - y.last() * x.first()) / (x.last() - x.first());
+        val a = (y[last] - y[first]) / (x[last] - x[first]);
+        val b = (y[first] * x[last] - y[last] * x[first]) / (x[last] - x[first]);
 
         // Compute error for above line segment
-        var e = 0.0;
+        var e = 0.0
 
-        for (k in 0 until x.size) {
+        for (k in first..last) {
             e += Math.pow(y[k] - a * x[k] - b, 2.0)
         }
-        e /= (Math.pow(a,2.0) + 1);
+        e /= (Math.pow(a,2.0) + 1)
 
-        result[0] = e;
-        result[1] = a;
-        result[2] = b;
-
-        return result
+        return e
     }
 
-    private fun linearApproximation(xPoints: List<Double>, curves: List<List<Double>>, segmentCount: Int): List<Double> {
+    private fun linearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
 
         val mCost = Array(xPoints.size) { i -> DoubleArray(segmentCount) { Double.POSITIVE_INFINITY } }
         val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
@@ -78,8 +48,8 @@ data class Model(
             var temp = Double.NEGATIVE_INFINITY
 
             for (curve in curves) {
-                val err = segmentError(xPoints.take(n), curve.take(n))
-                temp = Math.max(err[0], temp)
+                val err = segmentError(xPoints, curve, 0, n-1)
+                temp = Math.max(err, temp)
             }
 
             mCost[n-1][0] = temp;
@@ -101,8 +71,8 @@ data class Model(
                         var temp = Double.NEGATIVE_INFINITY
 
                         for (curve in curves) {
-                            val err = segmentError(xPoints.subList(i, n+1), curve.subList(i, n+1))
-                            temp = Math.max(err[0], temp)
+                            val err = segmentError(xPoints, curve, i, n)
+                            temp = Math.max(err, temp)
                         }
 
                         hCost[i][n] = temp;
@@ -132,10 +102,10 @@ data class Model(
             xb[i] = xPoints[ib[i]];
         }
 
-        return xb.toList()
+        return xb
     }
 
-    private fun fastLinearApproximation(xPoints: List<Double>, curves: List<List<Double>>, segmentCount: Int): List<Double> {
+    private fun fastLinearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
 
         val mCost = Array(xPoints.size) { i -> DoubleArray(segmentCount) { Double.POSITIVE_INFINITY } }
         val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
@@ -147,8 +117,8 @@ data class Model(
         for (n in 2..xPoints.size) {
             var temp = Double.NEGATIVE_INFINITY
             for (curve in curves) {
-                val err = segmentError(xPoints.take(n), curve.take(n))
-                temp = Math.max(err[0], temp)
+                val err = segmentError(xPoints, curve, 0, n-1)
+                temp = Math.max(err, temp)
             }
             mCost[n-1][0] = temp
         }
@@ -231,13 +201,28 @@ data class Model(
             xb[i] = xPoints[ib[i]];
         }
 
-        return xb.toList()
+        return xb
     }
 
-    private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: List<Evaluable>, fast: Boolean): List<Double> {
+    //compute points at which the function should be evaluated
+    private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>): DoubleArray {
+        var max = 0.0
+        for (e in functions) {  //find last evaluation point
+            val newMax = if (e is Hill) {
+                2.0 * e.theta + (5.0 / e.n) * e.theta
+            } else if (e is Sigmoid) {
+                e.theta + (2.0 / e.k) * 1.5
+            } else throw IllegalStateException("Unsupported function $e")
+            max = Math.max(newMax, max)
+        }
+        val dx = max / (pointCount-1)
+        return DoubleArray(pointCount) { i -> dx * i }
+    }
 
-        val xPoints = generateSpace(pointCount, segmentCount, functions)
-        val curves = functions.map { f -> xPoints.map(f) }
+    private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: List<Evaluable>, fast: Boolean): DoubleArray {
+
+        val xPoints = findEvaluationPoints(pointCount, functions)
+        val curves = functions.map { f -> DoubleArray(pointCount) { f(xPoints[it]) } }
 
         return if (fast) {
             fastLinearApproximation(xPoints, curves, segmentCount)
@@ -247,13 +232,13 @@ data class Model(
 
     }
 
-    fun computeApproximation(fast: Boolean = true): Model {
+    fun computeApproximation(fast: Boolean = true, cutToRange: Boolean = false): Model {
 
         val variables = variables.indices.map { vIndex ->
 
             val variable = variables[vIndex]
 
-            //find all dangerous functions
+            //find all functions that need to by approximated
             val functions = variables
                     .flatMap { it.equation }.flatMap { it.evaluable }
                     .filter {
@@ -268,9 +253,11 @@ data class Model(
                         throw IllegalStateException("Can't run abstraction for ${variable.name} without specified var points!")
                 val newThresholds = computeThresholds(pointCount, segmentCount, functions, fast)
 
-                //create a copy with functions replaced with approximation
+                //create a copy replacing functions with approximation
                 variable.copy(
-                        thresholds = (variable.thresholds + newThresholds).toSet().sorted(),
+                        thresholds = (newThresholds + variable.thresholds).filter {
+                            !cutToRange || (it >= variable.range.first && it <= variable.range.second)
+                        }.toSet().sorted(),
                         equation = variable.equation.map {
                             it.copy(
                                     evaluable = it.evaluable.map { f ->
@@ -278,7 +265,7 @@ data class Model(
                                             is Hill, is Sigmoid -> {
                                                 RampApproximation(
                                                         f.varIndex,
-                                                        newThresholds.toDoubleArray(),
+                                                        newThresholds,
                                                         newThresholds.map { x -> f(x) }.toDoubleArray()
                                                 )
                                             }
@@ -291,6 +278,6 @@ data class Model(
             }
         }
 
-        return this.copy( variables = variables )       //parameters stay
+        return this.copy( variables = variables )       //parameters do not change
     }
 }

@@ -459,10 +459,10 @@ class ComplexApproximationTest() {
         }
     }
 
-    @Test
+    @Test   //10s -> 8s
     fun fastComplexTest() = complexTest(fastComplexResults, true)
 
-    @Test
+    @Test   //40s -> 20s
     fun slowComplexTest() = complexTest(slowComplexResults, false)
 
 }
