@@ -73,7 +73,7 @@ data class Model(
 
         val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
 
-        for (n in 2 until xPoints.size) {
+        for (n in 2..xPoints.size) {
 
             var temp = Double.NEGATIVE_INFINITY
 
@@ -82,8 +82,7 @@ data class Model(
                 temp = Math.max(err[0], temp)
             }
 
-            mCost[n][0] = temp;
-            father[n][0] = 0;
+            mCost[n-1][0] = temp;
         }
 
         var minError: Double
@@ -102,7 +101,7 @@ data class Model(
                         var temp = Double.NEGATIVE_INFINITY
 
                         for (curve in curves) {
-                            val err = segmentError(xPoints.take(n), curve.take(n))
+                            val err = segmentError(xPoints.subList(i, n+1), curve.subList(i, n+1))
                             temp = Math.max(err[0], temp)
                         }
 
@@ -145,7 +144,7 @@ data class Model(
 
         val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
 
-        for (n in 2 until xPoints.size) {
+        for (n in 2..xPoints.size) {
             var temp = Double.NEGATIVE_INFINITY
             for (curve in curves) {
                 val err = segmentError(xPoints.take(n), curve.take(n))
