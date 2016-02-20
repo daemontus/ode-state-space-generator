@@ -1,5 +1,7 @@
 package cz.muni.fi.ode.model
 
+import java.util.*
+
 data class Model(
         val variables: List<Variable>,
         val parameters: List<Parameter>
@@ -23,13 +25,12 @@ data class Model(
         val a = (y[last] - y[first]) / (x[last] - x[first]);
         val b = (y[first] * x[last] - y[last] * x[first]) / (x[last] - x[first]);
 
-        // Compute error for above line segment
+        // Compute error for the line segment
         var e = 0.0
-
         for (k in first..last) {
-            e += Math.pow(y[k] - a * x[k] - b, 2.0)
+            e += (y[k] - a * x[k] - b) * (y[k] - a * x[k] - b)
         }
-        e /= (Math.pow(a,2.0) + 1)
+        e /= (a*a + 1)
 
         return e
     }
@@ -105,23 +106,26 @@ data class Model(
         return xb
     }
 
+    private inline fun <T> Iterable<T>.maxByDouble(action: (T) -> Double): Double {
+        var max = Double.NEGATIVE_INFINITY
+        for (e in this) {
+            max = Math.max(max, action(e))
+        }
+        return max
+    }
+
     private fun fastLinearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
 
-        val mCost = Array(xPoints.size) { i -> DoubleArray(segmentCount) { Double.POSITIVE_INFINITY } }
         val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
-
-        mCost[1][0] = 0.0
 
         val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
 
-        for (n in 2..xPoints.size) {
-            var temp = Double.NEGATIVE_INFINITY
-            for (curve in curves) {
-                val err = segmentError(xPoints, curve, 0, n-1)
-                temp = Math.max(err, temp)
+        val cost = DoubleArray(xPoints.size) { i ->
+            curves.maxByDouble { curve ->
+                segmentError(xPoints, curve, 0, i)
             }
-            mCost[n-1][0] = temp
         }
+        cost[0] = 0.0
 
         val sy = Array(curves.size) { DoubleArray(xPoints.size) { 0.0 } }
         val sy2 = Array(curves.size) { DoubleArray(xPoints.size) { 0.0 } }
@@ -153,11 +157,13 @@ data class Model(
         var minError: Double
         var minIndex: Int
 
+        val newCost = DoubleArray(xPoints.size) { 0.0 }
+
         for (m in 1 until segmentCount) {
 
             for (n in 2 until xPoints.size) {
 
-                minError = mCost[n-1][m-1]
+                minError = cost[n-1]
                 minIndex = n - 1
 
                 for (i in m..(n-2)) {
@@ -176,7 +182,7 @@ data class Model(
                         hCost[i][n] = temp;
                     }
 
-                    val currentError = mCost[i][m-1] + hCost[i][n];
+                    val currentError = cost[i] + hCost[i][n];
 
                     if (currentError < minError) {
                         minError = currentError;
@@ -184,10 +190,12 @@ data class Model(
                     }
                 }
 
-                mCost[n][m]  = minError;
+                newCost[n] = minError;
                 father[n][m] = minIndex;
 
             }
+
+            System.arraycopy(newCost, 0, cost, 0, cost.size)
         }
 
         val ib = IntArray(segmentCount+1) { 0 }
