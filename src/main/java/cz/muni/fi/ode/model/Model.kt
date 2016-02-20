@@ -35,7 +35,7 @@ data class Model(
         return e
     }
 
-    private fun linearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
+    private fun linearApproximation(xPoints: DoubleArray, curves: Array<DoubleArray>, segmentCount: Int): DoubleArray {
 
         val mCost = Array(xPoints.size) { i -> DoubleArray(segmentCount) { Double.POSITIVE_INFINITY } }
         val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
@@ -106,14 +106,14 @@ data class Model(
         return xb
     }
 
-    private inline fun <T> Iterable<T>.maxByDouble(action: (T) -> Double): Double {
+    private inline fun <T> Array<T>.maxByDouble(action: (T) -> Double): Double {
         var max = Double.NEGATIVE_INFINITY
         for (e in this) {
             max = Math.max(max, action(e))
         }
         return max
     }
-    private inline fun <T> List<T>.maxByDoubleIndexed(action: (Int) -> Double): Double {
+    private inline fun <T> Array<T>.maxByDoubleIndexed(action: (Int) -> Double): Double {
         var max = Double.NEGATIVE_INFINITY
         for (e in this.indices) {
             max = Math.max(max, action(e))
@@ -121,7 +121,7 @@ data class Model(
         return max
     }
 
-    private fun fastLinearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
+    private fun fastLinearApproximation(xPoints: DoubleArray, curves: Array<DoubleArray>, segmentCount: Int): DoubleArray {
 
 
         val father = Array(segmentCount) { IntArray(xPoints.size) { 0 } }
@@ -228,7 +228,7 @@ data class Model(
     private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: List<Evaluable>, fast: Boolean): DoubleArray {
 
         val xPoints = findEvaluationPoints(pointCount, functions)
-        val curves = functions.map { f -> DoubleArray(pointCount) { f(xPoints[it]) } }
+        val curves = Array(functions.size) { f -> DoubleArray(pointCount) { functions[f](xPoints[it]) } }
 
         return if (fast) {
             fastLinearApproximation(xPoints, curves, segmentCount)
