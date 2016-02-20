@@ -96,3 +96,15 @@ jacocoTestReport {
 }
 
 check.dependsOn jacocoTestReport
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+//travis has some strict RAM restrictions, can't afford to exceed this
+tasks.withType(Test) {
+    maxHeapSize = "1024m"
+    jvmArgs "-Xmx1024m"
+}
