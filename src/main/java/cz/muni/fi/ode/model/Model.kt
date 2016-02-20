@@ -113,10 +113,16 @@ data class Model(
         }
         return max
     }
+    private inline fun <T> List<T>.maxByDoubleIndexed(action: (Int) -> Double): Double {
+        var max = Double.NEGATIVE_INFINITY
+        for (e in this.indices) {
+            max = Math.max(max, action(e))
+        }
+        return max
+    }
 
     private fun fastLinearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
 
-        val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
 
         val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
 
@@ -159,6 +165,18 @@ data class Model(
 
         val newCost = DoubleArray(xPoints.size) { 0.0 }
 
+        val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
+            if (i > n-2 || i == 0) {
+                0.0 //no one will read this!
+            } else {
+                curves.maxByDoubleIndexed { ic ->
+                    val a = (curves[ic][n] - curves[ic][0]) / (xPoints[n] - xPoints[0]);
+                    val b = (curves[ic][0] * xPoints[n] - curves[ic][n] * xPoints[0]) / (xPoints[n] - xPoints[0]);
+                    (sy2[ic][n] - sy2[ic][i-1]) - 2 * a * (sxy[ic][n] - sxy[ic][i-1]) - 2 * b * (sy[ic][n] - sy[ic][i-1]) + a * a * (sx2[n] - sx2[i-1]) + 2 * a * b * (sx[n] - sx[i-1]) + b * (n - i);
+                }
+            }
+        }}
+
         for (m in 1 until segmentCount) {
 
             for (n in 2 until xPoints.size) {
@@ -167,22 +185,8 @@ data class Model(
                 minIndex = n - 1
 
                 for (i in m..(n-2)) {
-                    if (hCost[i][n] == Double.POSITIVE_INFINITY) {
 
-                        var temp = Double.NEGATIVE_INFINITY
-
-                        for (ic in curves.indices) {
-                            val a = (curves[ic][n] - curves[ic][0]) / (xPoints[n] - xPoints[0]);
-                            val b = (curves[ic][0] * xPoints[n] - curves[ic][n] * xPoints[0]) / (xPoints[n] - xPoints[0]);
-                            val seg_err = (sy2[ic][n] - sy2[ic][i-1]) - 2 * a * (sxy[ic][n] - sxy[ic][i-1]) - 2 * b * (sy[ic][n] - sy[ic][i-1]) + a * a * (sx2[n] - sx2[i-1]) + 2 * a * b * (sx[n] - sx[i-1]) + b * (n - i);
-
-                            temp = Math.max(seg_err, temp);
-                        }
-
-                        hCost[i][n] = temp;
-                    }
-
-                    val currentError = cost[i] + hCost[i][n];
+                    val currentError = cost[i] + hCost[n][i];
 
                     if (currentError < minError) {
                         minError = currentError;
