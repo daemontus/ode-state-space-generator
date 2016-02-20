@@ -124,7 +124,7 @@ data class Model(
     private fun fastLinearApproximation(xPoints: DoubleArray, curves: List<DoubleArray>, segmentCount: Int): DoubleArray {
 
 
-        val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
+        val father = Array(segmentCount) { IntArray(xPoints.size) { 0 } }
 
         val cost = DoubleArray(xPoints.size - 1) { i ->
             curves.maxByDouble { curve ->
@@ -159,6 +159,8 @@ data class Model(
             sx [ip] = sx [ip-1]  + xPoints[ip];
         }
 
+        //Note: Flattening this to single array is actually slower.
+        //Also reducing size of the arrays by constant factor(1 and 2) does not help.
         val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
             if (i > n-2 || i == 0) {
                 0.0 //no one will read this!
@@ -189,7 +191,7 @@ data class Model(
                 }
 
                 cost[n-1] = minError;
-                father[n][m] = minIndex;
+                father[m][n] = minIndex;
 
             }
 
@@ -201,7 +203,7 @@ data class Model(
         results[segmentCount] = xPoints[pointIndex];
 
         for (i in (segmentCount-1).downTo(0)) {
-            pointIndex = father[pointIndex][i];
+            pointIndex = father[i][pointIndex];
             results[i] = xPoints[pointIndex];
         }
 
