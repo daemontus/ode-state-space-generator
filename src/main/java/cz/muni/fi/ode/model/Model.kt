@@ -34,76 +34,61 @@ data class Model(
 
         return e
     }
-
+    
     private fun linearApproximation(xPoints: DoubleArray, curves: Array<DoubleArray>, segmentCount: Int): DoubleArray {
 
-        val mCost = Array(xPoints.size) { i -> DoubleArray(segmentCount) { Double.POSITIVE_INFINITY } }
-        val hCost = Array(xPoints.size) { i -> DoubleArray(xPoints.size) { Double.POSITIVE_INFINITY } }
+        val father = Array(segmentCount) { IntArray(xPoints.size) { 0 } }
 
-        mCost[1][0] = 0.0;
-
-        val father = Array(xPoints.size) { IntArray(segmentCount) { 0 } }
-
-        for (n in 2..xPoints.size) {
-
-            var temp = Double.NEGATIVE_INFINITY
-
-            for (curve in curves) {
-                val err = segmentError(xPoints, curve, 0, n-1)
-                temp = Math.max(err, temp)
+        val cost = DoubleArray(xPoints.size - 1) { i ->
+            curves.maxByDouble { curve ->
+                segmentError(xPoints, curve, 0, i + 1)
             }
-
-            mCost[n-1][0] = temp;
         }
 
-        var minError: Double
-        var minIndex: Int
+        val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
+            if (i > n-2 || i == 0) {
+                0.0 //no one will read this!
+            } else {
+                curves.maxByDoubleIndexed { ic -> segmentError(xPoints, curves[ic], i, n) }
+            }
+        }}
 
         for (m in 1 until segmentCount) {
 
-            for (n in 2 until xPoints.size) {
+            for (n in (xPoints.size - 1).downTo(2)) {
 
-                minError = mCost[n-1][m-1];
-                minIndex = n - 1;
+                var minError = cost[n-2]
+                var minIndex = n - 1
 
                 for (i in m..(n-2)) {
 
-                    if (hCost[i][n] == Double.POSITIVE_INFINITY) {
-                        var temp = Double.NEGATIVE_INFINITY
+                    val currentError = cost[i-1] + hCost[n][i];
 
-                        for (curve in curves) {
-                            val err = segmentError(xPoints, curve, i, n)
-                            temp = Math.max(err, temp)
-                        }
-
-                        hCost[i][n] = temp;
-                    }
-
-                    val currErr = mCost[i][m-1] + hCost[i][n];
-
-                    if (currErr < minError) {
-                        minError = currErr;
+                    if (currentError < minError) {
+                        minError = currentError;
                         minIndex = i;
                     }
                 }
 
-                mCost[n][m]  = minError
-                father[n][m] = minIndex
+                cost[n-1] = minError;
+                father[m][n] = minIndex;
+
             }
+
         }
 
-        val ib = IntArray(segmentCount+1) { 0 }
-        val xb = DoubleArray(segmentCount+1) { 0.0 }
 
-        ib[segmentCount] = xPoints.size-1;
-        xb[segmentCount] = xPoints[ib[segmentCount]];
+        val results = DoubleArray(segmentCount+1) { 0.0 }
+
+        var pointIndex = xPoints.size-1;
+        results[segmentCount] = xPoints[pointIndex];
 
         for (i in (segmentCount-1).downTo(0)) {
-            ib[i] = father[ib[i+1]][i];
-            xb[i] = xPoints[ib[i]];
+            pointIndex = father[i][pointIndex];
+            results[i] = xPoints[pointIndex];
         }
 
-        return xb
+        return results
     }
 
     private inline fun <T> Array<T>.maxByDouble(action: (T) -> Double): Double {
