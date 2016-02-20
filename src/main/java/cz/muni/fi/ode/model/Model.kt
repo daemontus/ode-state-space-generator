@@ -159,11 +159,6 @@ data class Model(
             sx [ip] = sx [ip-1]  + xPoints[ip];
         }
 
-        var minError: Double
-        var minIndex: Int
-
-        val newCost = DoubleArray(xPoints.size - 1) { 0.0 }
-
         val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
             if (i > n-2 || i == 0) {
                 0.0 //no one will read this!
@@ -178,10 +173,10 @@ data class Model(
 
         for (m in 1 until segmentCount) {
 
-            for (n in 2 until xPoints.size) {
+            for (n in (xPoints.size - 1).downTo(2)) {
 
-                minError = cost[n-2]
-                minIndex = n - 1
+                var minError = cost[n-2]
+                var minIndex = n - 1
 
                 for (i in m..(n-2)) {
 
@@ -193,12 +188,11 @@ data class Model(
                     }
                 }
 
-                newCost[n-1] = minError;
+                cost[n-1] = minError;
                 father[n][m] = minIndex;
 
             }
 
-            System.arraycopy(newCost, 0, cost, 0, cost.size)
         }
 
         val ib = IntArray(segmentCount+1) { 0 }
