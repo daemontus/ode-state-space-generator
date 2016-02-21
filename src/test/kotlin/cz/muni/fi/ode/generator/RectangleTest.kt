@@ -1,217 +1,260 @@
 package cz.muni.fi.ode.generator
 
-/*
-class SubtractTests {
+import org.junit.Test
+import kotlin.test.assertEquals
 
-    val r1 = Rect(Array(3) {
-        Interval(0.0, 3.0)
-    })
+class SingleDimensionTests {
 
-    val r2 = Rect(Array(3) {
-        Interval(1.0, 2.0)
-    })
+    //All strict tests have three parts:
+    //1. Non-equal intersection - l1..l2..h1..h2
+    //2. One is subset - l1..l2..h2..l1
+    //3. No intersection - l1..h1 l2..h2
 
-    val r3 = Rect(Array(3) {
-        Interval(2.0, 4.0)
-    })
+    //All equal tests have three parts:
+    //1. Invariant - l1=l2..h1=h2
+    //2. No intersection - l1..h1=l2..h2
+    //3. One is subset - l1=l2..h1..h2 || l1..l2..h1=h2
 
     @Test
-    fun emptyEmpty() {
-        assertEquals(setOf(Rect.Companion.empty(3)), Rect.Companion.empty(3) subtract Rect.Companion.empty(3))
+    fun strictTimesTest() {
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(0.0, 2.0) * rectangleOf(1.0, 3.0))
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 3.0) * rectangleOf(0.0, 2.0))
+
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(0.0, 3.0) * rectangleOf(1.0, 2.0))
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 2.0) * rectangleOf(0.0, 3.0))
+
+        assertEquals(null, rectangleOf(0.0, 1.0) * rectangleOf(2.0, 3.0))
+        assertEquals(null, rectangleOf(2.0, 3.0) * rectangleOf(0.0, 1.0))
     }
 
     @Test
-    fun oneEmpty() {
-        assertEquals(setOf(Rect.Companion.empty(3)), Rect.Companion.empty(3) subtract r1)
-        assertEquals(setOf(r1), r1 subtract Rect.Companion.empty(3))
+    fun equalTimesTest() {
+        assertEquals(rectangleOf(0.0, 1.0), rectangleOf(0.0, 1.0) * rectangleOf(0.0, 1.0))
+
+        assertEquals(null, rectangleOf(0.0, 1.0) * rectangleOf(1.0, 2.0))
+        assertEquals(null, rectangleOf(1.0, 2.0) * rectangleOf(0.0, 1.0))
+
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 2.0) * rectangleOf(1.0, 3.0))
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 3.0) * rectangleOf(1.0, 2.0))
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 2.0) * rectangleOf(0.0, 2.0))
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(0.0, 2.0) * rectangleOf(1.0, 2.0))
     }
 
     @Test
-    fun identity() {
-        assertEquals(setOf<Rect>(), r1 subtract r1)
+    fun strictPlusTest() {
+        assertEquals(rectangleOf(0.0, 3.0), rectangleOf(0.0, 2.0) + rectangleOf(1.0, 3.0))
+        assertEquals(rectangleOf(0.0, 3.0), rectangleOf(1.0, 3.0) + rectangleOf(0.0, 2.0))
+
+        assertEquals(rectangleOf(0.0, 3.0), rectangleOf(0.0, 3.0) + rectangleOf(1.0, 2.0))
+        assertEquals(rectangleOf(0.0, 3.0), rectangleOf(1.0, 2.0) + rectangleOf(0.0, 3.0))
+
+        assertEquals(null, rectangleOf(0.0, 1.0) + rectangleOf(2.0, 3.0))
+        assertEquals(null, rectangleOf(2.0, 3.0) + rectangleOf(0.0, 1.0))
     }
 
     @Test
-    fun complex() {
-        assertEquals(setOf(
-                Rect(arrayOf(
-                        Interval(0.0, 1.0),
-                        Interval(0.0, 3.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(2.0, 3.0),
-                        Interval(0.0, 3.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(1.0, 2.0),
-                        Interval(0.0, 1.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(1.0, 2.0),
-                        Interval(2.0, 3.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(1.0, 2.0),
-                        Interval(1.0, 2.0),
-                        Interval(0.0, 1.0)
-                )),
-                Rect(arrayOf(
-                        Interval(1.0, 2.0),
-                        Interval(1.0, 2.0),
-                        Interval(2.0, 3.0)
-                ))
-        ), r1 subtract r2)
+    fun equalPlusTest() {
+        assertEquals(rectangleOf(1.0, 2.0), rectangleOf(1.0, 2.0) + rectangleOf(1.0, 2.0))
 
-        assertEquals(setOf(
-                Rect(arrayOf(
-                        Interval(0.0, 2.0),
-                        Interval(0.0, 3.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(2.0, 3.0),
-                        Interval(0.0, 2.0),
-                        Interval(0.0, 3.0)
-                )),
-                Rect(arrayOf(
-                        Interval(2.0, 3.0),
-                        Interval(2.0, 3.0),
-                        Interval(0.0, 2.0)
-                ))
-        ), r1 subtract r3)
-    }
+        assertEquals(rectangleOf(0.0, 2.0), rectangleOf(0.0, 1.0) + rectangleOf(1.0, 2.0))
+        assertEquals(rectangleOf(0.0, 2.0), rectangleOf(1.0, 2.0) + rectangleOf(0.0, 1.0))
 
-}
-
-class MergeTests {
-
-    val r1 = Rect(Array(3) {
-        Interval(0.0, 3.0)
-    })
-
-    val r2 = Rect(arrayOf(
-            Interval(0.0, 3.0),
-            Interval(1.0, 4.0),
-            Interval(0.0, 3.0)
-    ))
-
-    val r3 = Rect(arrayOf(
-            Interval(0.0, 3.0),
-            Interval(0.0, 4.0),
-            Interval(0.0, 3.0)
-    ))
-
-    @Test
-    fun emptyEmpty() {
-        assertTrue((Rect.Companion.empty(3) merge Rect.Companion.empty(3))!!.isEmpty())
+        assertEquals(rectangleOf(1.0, 3.0), rectangleOf(1.0, 2.0) + rectangleOf(1.0, 3.0))
+        assertEquals(rectangleOf(1.0, 3.0), rectangleOf(1.0, 3.0) + rectangleOf(1.0, 2.0))
+        assertEquals(rectangleOf(0.0, 2.0), rectangleOf(1.0, 2.0) + rectangleOf(0.0, 2.0))
+        assertEquals(rectangleOf(0.0, 2.0), rectangleOf(0.0, 2.0) + rectangleOf(1.0, 2.0))
     }
 
     @Test
-    fun oneEmpty() {
-        assertEquals(r1, r1 merge Rect.Companion.empty(3))
-        assertEquals(r1, Rect.Companion.empty(3) merge r1)
+    fun strictMinusTest() {
+        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 3.0))
+        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(0.0, 2.0))
+
+        assertEquals(setOf(rectangleOf(0.0, 1.0), rectangleOf(2.0, 3.0)), rectangleOf(0.0, 3.0) - rectangleOf(1.0, 2.0))
+        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 3.0))
+
+        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(2.0, 3.0))
+        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(2.0, 3.0) - rectangleOf(0.0, 1.0))
     }
 
     @Test
-    fun identity() {
-        assertEquals(r1, r1 merge r1)
-    }
+    fun equalMinusTest() {
+        assertEquals(setOf(), rectangleOf(0.0, 1.0) - rectangleOf(0.0, 1.0))
 
-    @Test
-    fun complex() {
-        assertEquals(r3, r1 merge r2)
+        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(1.0, 2.0))
+        assertEquals(setOf(rectangleOf(1.0, 2.0)), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 1.0))
+
+        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(1.0, 3.0))
+        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(1.0, 2.0))
+        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 2.0))
+        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 2.0))
     }
 
 }
 
-class EnclosesTests {
+class TwoDimensionsTests {
 
-    val r03 = Rect(Array(3) {
-        Interval(0.0, 3.0)
-    })
+    //Here strict and equal tests are mixed. All tests should test these cases:
+    // - Identity
+    // - No intersection - both different
+    // - No intersection - both different, one equal (line)
+    // - No intersection - both different, both equal (point)
+    // - No intersection - one identical
+    // - No intersection - one identical, other equal (line)
+    // - One is subset - both different
+    // - One is subset - both different, one equal
+    // - One is subset - both different, both equal
+    // - One is subset - one identical
+    // - One is subset - one identical, other equal
+    // - Non-equal intersection - both different
+    // - Non-equal intersection - one identical
+    // When in doubt, draw images!
 
-    val rX = Rect(arrayOf(
-            Interval(0.0, 2.5),
-            Interval(1.5, 2.8),
-            Interval(0.002, 3.0)
-    ))
+    //a = 0, b = 1, c = 2,...
+    val aabb = rectangleFromPoints(0.0,0.0, 1.0,1.0)
+    val aacc = rectangleFromPoints(0.0,0.0, 2.0,2.0)
+    val aadd = rectangleFromPoints(0.0,0.0, 3.0,3.0)
+    val bbcc = rectangleFromPoints(1.0,1.0, 2.0,2.0)
+    val bbdd = rectangleFromPoints(1.0,1.0, 3.0,3.0)
+    val ccdd = rectangleFromPoints(2.0,2.0, 3.0,3.0)
+
+    val aabc = rectangleFromPoints(0.0,0.0, 1.0,2.0)
+    val aabd = rectangleFromPoints(0.0,0.0, 1.0,3.0)
+    val aacb = rectangleFromPoints(0.0,0.0, 2.0,1.0)
+    val aadc = rectangleFromPoints(0.0,0.0, 3.0,2.0)
+    val abbd = rectangleFromPoints(0.0,1.0, 1.0,3.0)
+    val bacb = rectangleFromPoints(1.0,0.0, 2.0,1.0)
+    val bacc = rectangleFromPoints(1.0,0.0, 2.0,2.0)
+    val bacd = rectangleFromPoints(1.0,0.0, 2.0,3.0)
+    val badc = rectangleFromPoints(1.0,0.0, 3.0,2.0)
+    val badd = rectangleFromPoints(1.0,0.0, 3.0,3.0)
+    val bccd = rectangleFromPoints(1.0,2.0, 2.0,3.0)
+    val cadb = rectangleFromPoints(2.0,0.0, 3.0,1.0)
+    val cadc = rectangleFromPoints(2.0,0.0, 3.0,2.0)
+    val cadd = rectangleFromPoints(2.0,0.0, 3.0,3.0)
+    val cbdd = rectangleFromPoints(2.0,1.0, 3.0,3.0)
 
     @Test
-    fun emptyEmpty() {
-        assertTrue(Rect.Companion.empty(3) encloses Rect.Companion.empty(3))
+    fun timesTest() {
+        assertEquals(aabb, aabb * aabb)
+
+        assertEquals(null, aabb * ccdd)
+        assertEquals(null, ccdd * aabb)
+
+        assertEquals(null, bbcc * aabd)
+        assertEquals(null, aabd * bbcc)
+
+        assertEquals(null, aabb * bbcc)
+        assertEquals(null, bbcc * aabb)
+
+        assertEquals(null, aabb * cadb)
+        assertEquals(null, cadb * aabb)
+
+        assertEquals(null, aabb * bacb)
+        assertEquals(null, bacb * aabb)
+
+        assertEquals(bbcc, aadd * bbcc)
+        assertEquals(bbcc, bbcc * aadd)
+
+        assertEquals(bacb, bacb * aacc)
+        assertEquals(bacb, aacc * bacb)
+
+        assertEquals(aabb, aabb * aadd)
+        assertEquals(aabb, aadd * aabb)
+
+        assertEquals(bacd, bacd * aadd)
+        assertEquals(bacd, aadd * bacd)
+
+        assertEquals(aabd, aabd * aadd)
+        assertEquals(aabd, aadd * aabd)
+
+        assertEquals(bbcc, aacc * bbdd)
+        assertEquals(bbcc, bbdd * aacc)
+
+        assertEquals(bacc, aacc * badc)
+        assertEquals(bacc, badc * aacc)
+    }
+
+
+    @Test
+    fun plusTest() {
+        assertEquals(aabb, aabb + aabb)
+
+        assertEquals(null, aabb + ccdd)
+        assertEquals(null, ccdd + aabb)
+
+        assertEquals(null, bbcc + aabd)
+        assertEquals(null, aabd + bbcc)
+
+        assertEquals(null, aabb + bbcc)
+        assertEquals(null, bbcc + aabb)
+
+        assertEquals(null, aabb + cadb)
+        assertEquals(null, cadb + aabb)
+
+        assertEquals(aacb, aabb + bacb)
+        assertEquals(aacb, bacb + aabb)
+
+        assertEquals(aadd, aadd + bbcc)
+        assertEquals(aadd, bbcc + aadd)
+
+        assertEquals(aacc, bacb + aacc)
+        assertEquals(aacc, aacc + bacb)
+
+        assertEquals(aadd, aabb + aadd)
+        assertEquals(aadd, aadd + aabb)
+
+        assertEquals(aadd, bacd + aadd)
+        assertEquals(aadd, aadd + bacd)
+
+        assertEquals(aadd, aabd + aadd)
+        assertEquals(aadd, aadd + aabd)
+
+        assertEquals(null, aacc + bbdd)
+        assertEquals(null, bbdd + aacc)
+
+        assertEquals(aadc, aacc + badc)
+        assertEquals(aadc, badc + aacc)
     }
 
     @Test
-    fun oneEmpty() {
-        assertTrue(r03 encloses Rect.Companion.empty(3))
-        assertFalse(Rect.Companion.empty(3) encloses r03)
-    }
+    fun minusTest() {
+        assertEquals(setOf(), aabb - aabb)
 
-    @Test
-    fun identity() {
-        assertTrue(r03 encloses r03)
-    }
+        assertEquals(setOf(aabb), aabb - ccdd)
+        assertEquals(setOf(ccdd), ccdd - aabb)
 
-    @Test
-    fun complex() {
-        assertTrue(r03 encloses rX)
-        assertFalse(rX encloses r03)
-    }
+        assertEquals(setOf(bbcc), bbcc - aabd)
+        assertEquals(setOf(aabd), aabd - bbcc)
 
+        assertEquals(setOf(aabb), aabb - bbcc)
+        assertEquals(setOf(bbcc), bbcc - aabb)
+
+        assertEquals(setOf(aabb), aabb - cadb)
+        assertEquals(setOf(cadb), cadb - aabb)
+
+        assertEquals(setOf(aabb), aabb - bacb)
+        assertEquals(setOf(bacb), bacb - aabb)
+
+        assertEquals(setOf(), bbcc - aadd)
+        assertEquals(setOf(aabd, cadd, bacb, bccd), aadd - bbcc)
+
+        assertEquals(setOf(), bacb - aacc)
+        assertEquals(setOf(aabc, bbcc), aacc - bacb)
+
+        assertEquals(setOf(), aabb - aadd)
+        assertEquals(setOf(abbd, badd), aadd - aabb)
+
+        assertEquals(setOf(), bacd - aadd)
+        assertEquals(setOf(aabd,cadd), aadd - bacd)
+
+        assertEquals(setOf(), aabd - aadd)
+        assertEquals(setOf(badd), aadd - aabd)
+
+        assertEquals(setOf(aabc, bacb), aacc - bbdd)
+        assertEquals(setOf(bccd, cbdd), bbdd - aacc)
+
+        assertEquals(setOf(aabc), aacc - badc)
+        assertEquals(setOf(cadc), badc - aacc)
+    }
 }
-
-class IntersectTests {
-
-    val r03 = Rect(Array(3) {
-        Interval(0.0, 3.0)
-    })
-
-    val r12 = Rect(Array(3) {
-        Interval(1.0, 2.0)
-    })
-
-    val r24 = Rect(Array(3) {
-        Interval(2.0, 4.0)
-    })
-
-    @Test
-    fun emptyEmpty() {
-        assertEquals(Rect.Companion.empty(3), Rect.Companion.empty(3) intersect Rect.Companion.empty(3))
-    }
-
-    @Test
-    fun oneEmpty() {
-        assertTrue((r03 intersect Rect.Companion.empty(3)).isEmpty())
-        assertTrue((Rect.Companion.empty(3) intersect r03).isEmpty())
-    }
-
-    @Test
-    fun identity() {
-        assertEquals(r03, r03 intersect r03)
-        assertEquals(r12, r12 intersect r12)
-        assertEquals(r24, r24 intersect r24)
-    }
-
-    @Test
-    fun complex() {
-        assertEquals(r12, r03 intersect r12)
-        assertEquals(r12, r12 intersect r03)
-
-        val k1 = Rect(Array(3) {
-            Interval(2.0, 3.0)
-        })
-        assertEquals(k1, r03 intersect r24)
-        assertEquals(k1, r24 intersect r03)
-
-        val k2 = Rect(Array(3) {
-            Interval(2.0, 2.0)
-        })
-        assertEquals(k2, r12 intersect r24)
-        assertEquals(k2, r24 intersect r12)
-    }
-
-}*/
