@@ -35,6 +35,13 @@ data class Model(
             val range: Pair<Double, Double>
     )
 
+    fun dimensionFromName(name: String): Int {
+        for (v in variables.indices) {
+            if (variables[v].name == name) return v
+        }
+        throw IllegalArgumentException("Unknown variable: $name")
+    }
+
     /**
      * Perform linear approximation of continuous functions used in the model
      */

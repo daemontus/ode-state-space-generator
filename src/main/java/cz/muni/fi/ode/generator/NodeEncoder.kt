@@ -61,4 +61,18 @@ class NodeEncoder(
         else return IDNode(from.id - dimensionMultipliers[dim])
     }
 
+    fun upperThreshold(of: IDNode, dim: Int): Int {
+        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + 1
+    }
+
+    fun lowerThreshold(of: IDNode, dim: Int): Int {
+        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+    }
+
+    fun threshold(of: IDNode, dim: Int, upper: Boolean): Int {
+        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + if (upper) 1 else 0
+    }
+
+    fun coordinate(of: IDNode, dim: Int): Int = (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+
 }
