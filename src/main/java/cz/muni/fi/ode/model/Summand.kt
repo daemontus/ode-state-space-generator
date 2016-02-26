@@ -7,6 +7,13 @@ data class Summand(
         val evaluable: List<Evaluable> = listOf()
 ) {
 
+    constructor(
+            constant: Double = 1.0,
+            paramIndex: Int = -1,
+            variableIndices: List<Int> = listOf(),
+            vararg evaluables: Evaluable
+    ) : this(constant, paramIndex, variableIndices, evaluables.toList())
+
     fun hasParam(): Boolean = paramIndex >= 0
 
     operator fun times(other: Summand): Summand {

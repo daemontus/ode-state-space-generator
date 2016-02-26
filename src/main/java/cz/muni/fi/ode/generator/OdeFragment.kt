@@ -13,7 +13,7 @@ class OdeFragment(
     private val encoder = NodeEncoder(model)
 
     private val emptyColors = RectangleColors()
-    private val fullColors = RectangleColors(
+    private val fullColors = if (model.parameters.isEmpty()) RectangleColors() else RectangleColors(
             Rectangle(model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray())
     )
 
@@ -89,6 +89,8 @@ class OdeFragment(
 
         val results = HashMap<IDNode, RectangleColors>()
 
+        var selfLoopColors = fullColors
+
         //go through all dimension of model and compute results for each of them separately
         for (dim in model.variables.indices) {
 
@@ -113,85 +115,101 @@ class OdeFragment(
 
                         val parameterSplitValue = if (-derivationValue / denominator == -0.0) 0.0 else -derivationValue / denominator
 
-                        if (successors) {
+                        //if (successors) {
                             if (denominator < 0 && paramBounds.second >= parameterSplitValue) {
                                 lowerNegativeDirection = true
 
+                                if (successors)
                                 if (lowerParameterSplit == java.lang.Double.NEGATIVE_INFINITY || lowerParameterSplit > parameterSplitValue)
                                     lowerParameterSplit = parameterSplitValue
                             }
-                            if (derivationValue < 0 && denominator > 0 && paramBounds.first <= parameterSplitValue) {
+                            if (/*derivationValue < 0 && */denominator > 0 && paramBounds.first <= parameterSplitValue) {
                                 lowerNegativeDirection = true
 
+                                if (successors)
                                 if (upperParameterSplit == java.lang.Double.POSITIVE_INFINITY || upperParameterSplit < parameterSplitValue) {
                                     upperParameterSplit = parameterSplitValue
                                 }
                             }
-                        } else {
+                        //} else {
                             // !successors
                             if (denominator > 0 && paramBounds.second >= parameterSplitValue) {
                                 lowerPositiveDirection = true
 
+                                if (!successors)
                                 if (lowerParameterSplit == java.lang.Double.NEGATIVE_INFINITY || lowerParameterSplit > parameterSplitValue) {
                                     lowerParameterSplit = parameterSplitValue
                                 }
                             }
-                            if (derivationValue > 0 && denominator < 0 && paramBounds.first <= parameterSplitValue) {
+                            if (/*derivationValue > 0 && */denominator < 0 && paramBounds.first <= parameterSplitValue) {
                                 lowerPositiveDirection = true
 
+                                if (!successors)
                                 if (upperParameterSplit == java.lang.Double.POSITIVE_INFINITY || upperParameterSplit < parameterSplitValue) {
                                     upperParameterSplit = parameterSplitValue
                                 }
                             }
-                        }
+                       // }
                     } else {
                         // abs(denominator) == 0 (ERGO: it might be at border of state space)
-                        if (successors) {
+                        //if (successors) {
                             if (derivationValue < 0) {
                                 lowerNegativeDirection = true
-                                lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
-                                upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                if (successors) {
+                                    lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
+                                    upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                }
                             }
-                        } else {
+                       // } else {
                             // !successors
                             if (derivationValue > 0) {
                                 lowerPositiveDirection = true
-                                lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
-                                upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                if (!successors) {
+                                    lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
+                                    upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                }
                             }
-                        }
+                        //}
                     }
                 } else {
+                  //  println("Lower derivation value: $derivationValue")
                     // paramIndex == -1 (ERGO: no unknown parameter in equation)
                     if (derivationValue < 0) {
                         lowerNegativeDirection = true
-                    } else {
+                    } else if (derivationValue > 0) {
                         lowerPositiveDirection = true
                     }
                 }
-
             }
+
+          //  println("Lower p split $lowerParameterSplit Upper p split $upperParameterSplit")
+
+
+            val lowerParams = if (successors && lowerNegativeDirection || !successors && lowerPositiveDirection) {
+                if (parameterIndex != -1) {
+                    val rectangle = DoubleArray(2*model.parameters.size) { i ->
+                        if (i / 2 == parameterIndex) {
+                            if (i % 2 == 0) Math.max(model.parameters[i/2].range.first, lowerParameterSplit)
+                            else Math.min(model.parameters[i/2].range.second, upperParameterSplit)
+                        } else {
+                            if (i % 2 == 0) model.parameters[i/2].range.first
+                            else model.parameters[i/2].range.second
+                        }
+                    }
+                    RectangleColors(Rectangle(rectangle))
+                } else {
+                    fullColors
+                }
+            } else emptyColors
+
+            val lowerParamsPositive = if (!successors) lowerParams else fullColors - lowerParams
+            val lowerParamsNegative = if (!successors) fullColors - lowerParams else lowerParams
+
 
             val lowerNode = encoder.lowerNode(target, dim)
             if (lowerNode != null) {
                 if (successors && lowerNegativeDirection || !successors && lowerPositiveDirection) {
-
-                    val colors = if (parameterIndex != -1) {
-                        val rectangle = DoubleArray(model.parameters.size) { i ->
-                            if (i / 2 == parameterIndex) {
-                                if (i % 2 == 0) Math.max(model.parameters[i/2].range.first, lowerParameterSplit)
-                                else Math.min(model.parameters[i/2].range.second, upperParameterSplit)
-                            } else {
-                                if (i % 2 == 0) model.parameters[i/2].range.first
-                                else model.parameters[i/2].range.second
-                            }
-                        }
-                        RectangleColors(Rectangle(rectangle))
-                    } else {
-                        fullColors
-                    }
-
-                    results[lowerNode] = colors
+                    results[lowerNode] = lowerParams
                 }
             }
 
@@ -201,6 +219,7 @@ class OdeFragment(
             for (vertex in target.upperFacet(dim)) {
                 evaluate(vertex, dim)
 
+              //  println("${Arrays.toString(vertex)}, -$derivationValue/$denominator")
                 if (parameterIndex != -1) {
 
                     // lowest and highest values of parameter space for chosen variable
@@ -210,93 +229,122 @@ class OdeFragment(
 
                         val parameterSplit = if (-derivationValue / denominator == -0.0) 0.0 else -derivationValue / denominator
 
-                        if (!successors) {
+                      //  println("Split: $parameterSplit")
+                       // if (!successors) {
                             if (denominator < 0 && paramBounds.second >= parameterSplit) {
                                 upperNegativeDirection = true
 
+                                if (!successors)
                                 if (lowerParameterSplit == java.lang.Double.NEGATIVE_INFINITY || lowerParameterSplit > parameterSplit) {
                                     lowerParameterSplit = parameterSplit
                                 }
                             }
-                            if (derivationValue < 0 && denominator > 0 && paramBounds.first <= parameterSplit) {
+                            if (/*derivationValue < 0 && */denominator > 0 && paramBounds.first <= parameterSplit) {
                                 upperNegativeDirection = true
 
+                                if (!successors)
                                 if (upperParameterSplit == java.lang.Double.POSITIVE_INFINITY || upperParameterSplit < parameterSplit) {
                                     upperParameterSplit = parameterSplit
                                 }
                             }
-                        } else {
+                       // } else {
                             // successors
                             if (denominator > 0 && paramBounds.second >= parameterSplit) {
                                 upperPositiveDirection = true
 
+                                if (successors)
                                 if (lowerParameterSplit == java.lang.Double.NEGATIVE_INFINITY || lowerParameterSplit > parameterSplit) {
                                     lowerParameterSplit = parameterSplit
                                 }
                             }
-                            if (derivationValue > 0 && denominator < 0 && paramBounds.first <= parameterSplit) {
+                        //println("$denominator $paramBounds $parameterSplit $upperParameterSplit")
+                            if (/*derivationValue > 0 && */denominator < 0 && paramBounds.first <= parameterSplit) {
                                 upperPositiveDirection = true
 
+                                if (successors)
                                 if (upperParameterSplit == java.lang.Double.POSITIVE_INFINITY || upperParameterSplit < parameterSplit) {
                                     upperParameterSplit = parameterSplit
                                 }
                             }
-                        }
+                       // }
                     } else {
                         // abs(denominator) == 0 (ERGO: it might be at border of state space)
 
-                        if (!successors) {
+                        //if (!successors) {
                             if (derivationValue < 0) {
                                 upperNegativeDirection = true
-                                lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
-                                upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                if (!successors) {
+                                    lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
+                                    upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                }
                             }
-                        } else {
+                        //} else {
                             // successors
                             if (derivationValue > 0) {
                                 upperPositiveDirection = true
-                                lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
-                                upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                if (successors) {
+                                    lowerParameterSplit = paramBounds.first //Double.NEGATIVE_INFINITY;
+                                    upperParameterSplit = paramBounds.second //Double.POSITIVE_INFINITY;
+                                }
                             }
-                        }
+                        //}
                     }
 
                 } else {
                     // paramIndex == -1 (ERGO: no unknown parameter in equation)
+                  //  println("Upper derivation value: $derivationValue")
                     if (derivationValue < 0) {
                         upperNegativeDirection = true
-                    } else {
+                    } else if (derivationValue > 0) {
                         upperPositiveDirection = true
                     }
                 }
             }
 
+            val upperParams = if ((successors && upperPositiveDirection) || (!successors && upperNegativeDirection)) {
+                if (parameterIndex != -1) {
+                    val rectangle = DoubleArray(2*model.parameters.size) { i ->
+                        if (i / 2 == parameterIndex) {
+                            if (i % 2 == 0) Math.max(model.parameters[i/2].range.first, lowerParameterSplit)
+                            else Math.min(model.parameters[i/2].range.second, upperParameterSplit)
+                        } else {
+                            if (i % 2 == 0) model.parameters[i/2].range.first
+                            else model.parameters[i/2].range.second
+                        }
+                    }
+                    RectangleColors(Rectangle(rectangle))
+                } else {
+                    fullColors
+                }
+            } else emptyColors
+
+         //   println("Upper params $upperParams")
+            val upperParamsPositive = if (successors) upperParams else fullColors - upperParams
+            val upperParamsNegative = if (successors) fullColors - upperParams else upperParams
+
+
             val upperNode = encoder.higherNode(target, dim)
             if (upperNode != null) {
                 if (successors && upperPositiveDirection || !successors && upperNegativeDirection) {
-
-                    val colors = if (parameterIndex != -1) {
-                        val rectangle = DoubleArray(model.parameters.size) { i ->
-                            if (i / 2 == parameterIndex) {
-                                if (i % 2 == 0) Math.max(model.parameters[i/2].range.first, lowerParameterSplit)
-                                else Math.min(model.parameters[i/2].range.second, upperParameterSplit)
-                            } else {
-                                if (i % 2 == 0) model.parameters[i/2].range.first
-                                else model.parameters[i/2].range.second
-                            }
-                        }
-                        RectangleColors(Rectangle(rectangle))
-                    } else {
-                        fullColors
-                    }
-
-                    results.put(upperNode, colors)
+                    results.put(upperNode, upperParams)
                 }
+            }
+
+            //we have a flow, screw this!
+          //  println("Directions: ln $lowerNegativeDirection, up $upperPositiveDirection, lp $lowerPositiveDirection, un $upperNegativeDirection")
+          //  println("Lower colors: $lowerParamsNegative, upper colors: $upperParamsNegative")
+            if (lowerNegativeDirection && upperNegativeDirection && lowerNode != null) {
+                selfLoopColors -= (lowerParamsNegative intersect upperParamsNegative)
+            }
+            if (lowerPositiveDirection && upperPositiveDirection && upperNode != null) {
+                selfLoopColors -= (lowerParamsPositive intersect upperParamsPositive)
             }
 
         }
 
-        //TODO: Self loops
+        if (selfLoopColors.isNotEmpty()) {
+            results.put(target, selfLoopColors)
+        }
 
         return results.toNodes(emptyColors)
     }
