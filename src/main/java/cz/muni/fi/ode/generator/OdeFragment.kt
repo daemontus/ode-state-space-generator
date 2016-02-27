@@ -11,6 +11,7 @@ class OdeFragment(
 ) : KripkeFragment<IDNode, RectangleColors>, PartitionFunction<IDNode> by partitioning {
 
     private val encoder = NodeEncoder(model)
+    private val dimensions = model.variables.size
 
     private val emptyColors = RectangleColors()
     private val fullColors = if (model.parameters.isEmpty()) RectangleColors(Rectangle(doubleArrayOf())) else RectangleColors(
@@ -85,17 +86,17 @@ class OdeFragment(
         }
 
         //helper array that holds incomplete coordinates during computation
-        val coordinateBuffer = IntArray(model.variables.size)
+        val coordinateBuffer = IntArray(dimensions)
 
         //helper array that specifies whether the dimension is fully computed
         //A non negative number is a index that still needs to be processed.
         //Negative number means everything is done.
-        val remainingWork = IntArray(model.variables.size)
+        val remainingWork = IntArray(dimensions)
         Arrays.fill(remainingWork, -1)
 
         var activeIndex = 0    //dimension of model being currently explored
         while (activeIndex >= 0) {
-            if (activeIndex == model.variables.size) {
+            if (activeIndex == dimensions) {
                 //if all dimensions are processed, put resulting node in the collection
                 val node = encoder.encodeNode(coordinateBuffer)
                 if (node.ownerId() == myId) {
@@ -143,7 +144,8 @@ class OdeFragment(
     /*** Successor/Predecessor resolving ***/
 
     /**
-     * These arrays will cache all computations so that we can reuse them.
+     * These arrays will cache all equation evaluations so that we can reuse them.
+     * (Each value is used up to 2*|dim| times)
      * Whole operation is controlled by parameters array:
      * -2 - this value hasn't been computed yet
      * -1 - this value is computed and has no parameter
@@ -196,15 +198,21 @@ class OdeFragment(
      */
 
     //First dimension: Nodes
-    //second: model dimension
+    //second: dimensions
     //third: upper/lower facet
     //fourth: Incoming/outgoing
     private val facets = HashMap<IDNode, Array<Array<Array<RectangleColors?>>>>()
 
+    private fun getFacets(from: IDNode) = facets.getOrPut(from) { Array(dimensions) {
+        Array(2) { Array<RectangleColors?>(2) { null } }
+    } }
+
+    /**
+     * Compute colors for which a incoming/outgoing transition is valid on the specified facet.
+     * TODO: This should actually compute all four facets at the same time - we need them to compute self loops anyway...
+     */
     private fun getFacetColors(from: IDNode, dim: Int, upper: Boolean, incoming: Boolean): RectangleColors {
-        val myFacets = facets.getOrPut(from) { Array(model.variables.size) {
-            Array(2) { Array<RectangleColors?>(2) { null } }
-        } }
+        val myFacets = getFacets(from)
         val u = if (upper) 1 else 0
         val i = if (incoming) 1 else 0
         if (myFacets[dim][u][i] != null) {
@@ -217,6 +225,11 @@ class OdeFragment(
 
             var parameterIndex = -1
             var edgeValid = false
+
+            //If there is a vertex and parameter interval for equation is positive/negative
+            //(depends where we want to go), edge should be valid.
+            //upperParameterBound should be maximal parametric value for which this condition holds.
+            //lowerParameterBound should be minimal value for which this holds.
 
             for (coordinates in facet(from, dim, upper)) {
                 val vertex = encoder.encodeVertex(coordinates)
@@ -237,9 +250,7 @@ class OdeFragment(
                     if ((value > 0 && ((upper && !incoming) || (!upper && incoming))) ||
                         (value < 0 && ((upper && incoming) || (!upper && !incoming)))) {
                         edgeValid = true
-                        val bounds = model.parameters[parameter].range
-                        lowerParameterBound = Math.max(bounds.first, lowerParameterBound)
-                        upperParameterBound = Math.min(bounds.second, upperParameterBound)
+                        //parameter bounds will be updated after for loop
                     }
                 } else {
                     parameterIndex = parameter
@@ -265,10 +276,10 @@ class OdeFragment(
                 Pair(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY)
             }
 
+            //If we haven't found any max/min, we substitute bounds from model
             if (lowerParameterBound == Double.POSITIVE_INFINITY) {
                 lowerParameterBound = bounds.first
             }
-
             if (upperParameterBound == Double.NEGATIVE_INFINITY) {
                 upperParameterBound = bounds.second
             }
@@ -279,7 +290,8 @@ class OdeFragment(
                 lowerParameterBound >= bounds.second -> emptyColors
                 upperParameterBound <= bounds.first -> emptyColors
                 else -> {
-                    val rectangle = DoubleArray(2*model.parameters.size) { i ->
+                    //constructs a valid rectangle with specified constrains
+                    val rectangle = DoubleArray(2*dimensions) { i ->
                         if (i / 2 == parameterIndex) {
                             if (i % 2 == 0) Math.max(bounds.first, lowerParameterBound)
                             else Math.min(bounds.second, upperParameterBound)
@@ -295,19 +307,17 @@ class OdeFragment(
             myFacets[dim][u][i] = colors
 
             //also update facets for related nodes
+            //(every facet is shared by two nodes, so if you compute upper incoming facet, you
+            //have also computed lower outgoing facet for your upper neighbor
             if (upper) {
                 encoder.higherNode(from, dim)?.apply {
-                    val alternativeFacets = facets.getOrPut(this) { Array(model.variables.size) {
-                        Array(2) { Array<RectangleColors?>(2) { null } }
-                    } }
+                    val alternativeFacets = getFacets(this)
                     //lower facet, negation of incoming
                     alternativeFacets[dim][0][(i+1) % 2] = colors
                 }
             } else {
                 encoder.lowerNode(from, dim)?.apply {
-                    val alternativeFacets = facets.getOrPut(this) { Array(model.variables.size) {
-                        Array(2) { Array<RectangleColors?>(2) { null } }
-                    } }
+                    val alternativeFacets = getFacets(this)
                     //upper facet, negation of incoming
                     alternativeFacets[dim][1][(i+1) % 2] = colors
                 }
@@ -335,6 +345,7 @@ class OdeFragment(
         val results = HashMap<IDNode, RectangleColors>()
         var selfLoop = fullColors
         for (dim in model.variables.indices) {
+            //we need to compute all of them, because we need them to determine the self loops
             val upperIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = true)
             val upperOutgoing = getFacetColors(from = target, dim = dim, incoming = false, upper = true)
             val lowerIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = false)

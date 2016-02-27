@@ -1,5 +1,5 @@
 package cz.muni.fi.ode.generator
-
+/*
 import cz.muni.fi.checker.IDNode
 import cz.muni.fi.checker.UniformPartitionFunction
 import cz.muni.fi.ode.model.Parser
@@ -7,7 +7,7 @@ import cz.muni.fi.ode.model.computeApproximation
 import org.junit.Test
 import java.io.File
 import kotlin.test.assertEquals
-
+*/
 /**
  * This test takes previously computed results for known models and compares them to values obtained from
  * the new generator.
@@ -36,7 +36,10 @@ import kotlin.test.assertEquals
  * }
  * writer.close()
  *
+ * Tests are disabled by default, because they are not platform independent (ordering of nodes can change).
  */
+
+/*
 class IntegrationTest {
 
     @Test fun TCBBTest() = integrationTest(File("models/tcbb.bio"), File("models/tcbb.transitions.txt"))
@@ -64,3 +67,4 @@ class IntegrationTest {
     }
 
 }
+*/
