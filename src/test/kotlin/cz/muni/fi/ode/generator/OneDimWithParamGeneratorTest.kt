@@ -9,7 +9,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 
 
-class OneDimensionParametersTest {
+class OneDimWithParamGeneratorTest {
 
     //dv1 = p(v1 + 1) - 1
     //This one dimensional model should actually cover most of the behaviour
@@ -111,10 +111,10 @@ class OneDimensionParametersTest {
     @Test
     fun parameterTestTwo() {
         //dv2 = p(v1 - 2) - 1
-        //dv2 = p(-2) - 1 p>-1/2 => - // p < -1/2 => +
-        //dv2 = p(-1) - 1 p>-1 => - // p < -1 => +
-        //dv2 = p(0) - 1 // -1
-        //dv2 = p(1) - 1  p<1 => - // p > 1 => +
+        //(0) dv2 = p(-2) - 1 p>-1/2 => - // p < -1/2 => +
+        //(1) dv2 = p(-1) - 1 p>-1 => - // p < -1 => +
+        //(2) dv2 = p(0) - 1 // -1
+        //(3) dv2 = p(1) - 1  p<1 => - // p > 1 => +
         val s0 = fragmentTwo.successors.invoke(n0)
         assertEquals(nodesOf(c,
                 n0 to RectangleColors(Rectangle(doubleArrayOf(

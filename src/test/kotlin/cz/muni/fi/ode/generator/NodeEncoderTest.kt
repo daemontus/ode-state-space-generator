@@ -46,28 +46,28 @@ class NodeEncoderTest {
 
     @Test
     fun simpleEncodingTest() {
-        assertEquals(0, simpleEncoder.encode(intArrayOf(0)).id)
-        assertEquals(1, simpleEncoder.encode(intArrayOf(1)).id)
-        assertEquals(2, simpleEncoder.encode(intArrayOf(2)).id)
-        assertEquals(3, simpleEncoder.encode(intArrayOf(3)).id)
-        assertEquals(4, simpleEncoder.encode(intArrayOf(4)).id)
-        assertEquals(5, simpleEncoder.encode(intArrayOf(5)).id)
-        assertEquals(6, simpleEncoder.encode(intArrayOf(6)).id)
-        assertEquals(7, simpleEncoder.encode(intArrayOf(7)).id)
-        assertEquals(8, simpleEncoder.encode(intArrayOf(8)).id)
+        assertEquals(0, simpleEncoder.encodeNode(intArrayOf(0)).id)
+        assertEquals(1, simpleEncoder.encodeNode(intArrayOf(1)).id)
+        assertEquals(2, simpleEncoder.encodeNode(intArrayOf(2)).id)
+        assertEquals(3, simpleEncoder.encodeNode(intArrayOf(3)).id)
+        assertEquals(4, simpleEncoder.encodeNode(intArrayOf(4)).id)
+        assertEquals(5, simpleEncoder.encodeNode(intArrayOf(5)).id)
+        assertEquals(6, simpleEncoder.encodeNode(intArrayOf(6)).id)
+        assertEquals(7, simpleEncoder.encodeNode(intArrayOf(7)).id)
+        assertEquals(8, simpleEncoder.encodeNode(intArrayOf(8)).id)
     }
 
     @Test
     fun simpleDecodingTest() {
-        assertTrue(Arrays.equals(intArrayOf(0), simpleEncoder.decode(IDNode(0))))
-        assertTrue(Arrays.equals(intArrayOf(1), simpleEncoder.decode(IDNode(1))))
-        assertTrue(Arrays.equals(intArrayOf(2), simpleEncoder.decode(IDNode(2))))
-        assertTrue(Arrays.equals(intArrayOf(3), simpleEncoder.decode(IDNode(3))))
-        assertTrue(Arrays.equals(intArrayOf(4), simpleEncoder.decode(IDNode(4))))
-        assertTrue(Arrays.equals(intArrayOf(5), simpleEncoder.decode(IDNode(5))))
-        assertTrue(Arrays.equals(intArrayOf(6), simpleEncoder.decode(IDNode(6))))
-        assertTrue(Arrays.equals(intArrayOf(7), simpleEncoder.decode(IDNode(7))))
-        assertTrue(Arrays.equals(intArrayOf(8), simpleEncoder.decode(IDNode(8))))
+        assertTrue(Arrays.equals(intArrayOf(0), simpleEncoder.decodeNode(IDNode(0))))
+        assertTrue(Arrays.equals(intArrayOf(1), simpleEncoder.decodeNode(IDNode(1))))
+        assertTrue(Arrays.equals(intArrayOf(2), simpleEncoder.decodeNode(IDNode(2))))
+        assertTrue(Arrays.equals(intArrayOf(3), simpleEncoder.decodeNode(IDNode(3))))
+        assertTrue(Arrays.equals(intArrayOf(4), simpleEncoder.decodeNode(IDNode(4))))
+        assertTrue(Arrays.equals(intArrayOf(5), simpleEncoder.decodeNode(IDNode(5))))
+        assertTrue(Arrays.equals(intArrayOf(6), simpleEncoder.decodeNode(IDNode(6))))
+        assertTrue(Arrays.equals(intArrayOf(7), simpleEncoder.decodeNode(IDNode(7))))
+        assertTrue(Arrays.equals(intArrayOf(8), simpleEncoder.decodeNode(IDNode(8))))
     }
 
     @Test
@@ -105,7 +105,7 @@ class NodeEncoderTest {
                     for (v5 in 0..1) {
                         assertEquals(
                                 (v1) + (v2 * 9) + (v3 * 9 * 6) + (v5 * 9 * 6 * 9 * 1),
-                                complexEncoder.encode(intArrayOf(v1, v2, v3, v4, v5)).id
+                                complexEncoder.encodeNode(intArrayOf(v1, v2, v3, v4, v5)).id
                         )
                     }
                 }
@@ -122,7 +122,7 @@ class NodeEncoderTest {
                     for (v5 in 0..1) {
                         assertTrue(Arrays.equals(
                                 intArrayOf(v1, v2, v3, v4, v5),
-                                complexEncoder.decode(IDNode(
+                                complexEncoder.decodeNode(IDNode(
                                         (v1) + (v2 * 9) + (v3 * 9 * 6) + (v5 * 9 * 6 * 9 * 1)
                                 ))
                         ))
@@ -139,7 +139,7 @@ class NodeEncoderTest {
                 for (v3 in 0..8) {
                     val v4 = 0
                     for (v5 in 0..1) {
-                        val source = complexEncoder.encode(intArrayOf(v1, v2, v3, v4, v5))
+                        val source = complexEncoder.encodeNode(intArrayOf(v1, v2, v3, v4, v5))
                         assertEquals(
                                 if (v1 == 8) null else (v1+1) + (v2 * 9) + (v3 * 9 * 6) + (v5 * 9 * 6 * 9 * 1),
                                 complexEncoder.higherNode(source, 0)?.id
@@ -173,7 +173,7 @@ class NodeEncoderTest {
                 for (v3 in 0..8) {
                     val v4 = 0
                     for (v5 in 0..1) {
-                        val source = complexEncoder.encode(intArrayOf(v1, v2, v3, v4, v5))
+                        val source = complexEncoder.encodeNode(intArrayOf(v1, v2, v3, v4, v5))
                         assertEquals(
                                 if (v1 == 0) null else (v1 - 1) + (v2 * 9) + (v3 * 9 * 6) + (v5 * 9 * 6 * 9 * 1),
                                 complexEncoder.lowerNode(source, 0)?.id

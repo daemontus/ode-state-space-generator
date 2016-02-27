@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
  *
  * All test cases rely on a one dimensional model with three states and predefined result.
  **/
-class OneDimensionNoParametersTest {
+class OneDimNoParamGeneratorTest {
 
     private val variable = Model.Variable(
             name = "v1", range = Pair(0.0,3.0), varPoints = null,
