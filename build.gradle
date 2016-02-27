@@ -108,6 +108,8 @@ test {
     }
 }
 
+build.dependsOn buildStamp
+
 buildStamp {
     // The git commit SHA will be appended to this url to generate the final url.
     repoBaseUrl "https://github.com/daemontus/ode-state-space-generator/tree/"
