@@ -13,7 +13,7 @@ class OdeFragment(
     private val encoder = NodeEncoder(model)
 
     private val emptyColors = RectangleColors()
-    private val fullColors = if (model.parameters.isEmpty()) RectangleColors() else RectangleColors(
+    private val fullColors = if (model.parameters.isEmpty()) RectangleColors(Rectangle(doubleArrayOf())) else RectangleColors(
             Rectangle(model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray())
     )
 
@@ -331,8 +331,8 @@ class OdeFragment(
             }
 
             //we have a flow, screw this!
-          //  println("Directions: ln $lowerNegativeDirection, up $upperPositiveDirection, lp $lowerPositiveDirection, un $upperNegativeDirection")
-          //  println("Lower colors: $lowerParamsNegative, upper colors: $upperParamsNegative")
+            println("Directions: ln $lowerNegativeDirection, up $upperPositiveDirection, lp $lowerPositiveDirection, un $upperNegativeDirection")
+            println("Lower colors: $lowerParamsNegative, upper colors: $upperParamsNegative")
             if (lowerNegativeDirection && upperNegativeDirection && lowerNode != null) {
                 selfLoopColors -= (lowerParamsNegative intersect upperParamsNegative)
             }
