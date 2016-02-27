@@ -164,7 +164,6 @@ class OdeFragment(
 
     private fun evaluate(dim: Int, coordinates: IntArray, vertex: Int) {
         if (parameters[dim][vertex] == -2) {    //evaluate!
-            val thresholds = model.variables[dim].thresholds
             var derivationValue = 0.0
             var denominator = 0.0
             var parameterIndex = -1
@@ -175,7 +174,8 @@ class OdeFragment(
                 }
                 if (partialSum != 0.0) {
                     for (function in summand.evaluable) {
-                        partialSum *= function(thresholds[coordinates[function.varIndex]])
+                        val index = function.varIndex
+                        partialSum *= function(model.variables[index].thresholds[coordinates[index]])
                     }
                 }
                 if (summand.hasParam()) {
@@ -225,8 +225,6 @@ class OdeFragment(
                 val denominator = denominators[dim][vertex]
                 val parameter = parameters[dim][vertex]
 
-              //  println("Upper: $upper, Incoming $incoming, value: $value")
-
                 if (parameter == -1) {
                     //there is no parameter in this equation
                     if ((value > 0 && ((upper && !incoming) || (!upper && incoming))) ||
@@ -248,7 +246,7 @@ class OdeFragment(
                     //if you divide by negative number, you have to flip the condition
                     val newIncoming = if (denominator > 0) incoming else !incoming
                     val split = (-value) / denominator
-                   // println("Split $split")
+
                     if (split <= lowerParameterBound && ((upper && !newIncoming) || (!upper && newIncoming))) {
                         edgeValid = true
                         lowerParameterBound = split
@@ -337,15 +335,10 @@ class OdeFragment(
         val results = HashMap<IDNode, RectangleColors>()
         var selfLoop = fullColors
         for (dim in model.variables.indices) {
-            println("Computing $target // $dim")
             val upperIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = true)
-            println("UpperIncoming: $upperIncoming")
             val upperOutgoing = getFacetColors(from = target, dim = dim, incoming = false, upper = true)
-            println("UpperOutgoing: $upperOutgoing")
             val lowerIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = false)
-            println("LowerIncoming: $lowerIncoming")
             val lowerOutgoing = getFacetColors(from = target, dim = dim, incoming = false, upper = false)
-            println("LowerOutgoing: $lowerOutgoing")
 
 
             encoder.higherNode(target, dim)?.apply {
@@ -354,7 +347,6 @@ class OdeFragment(
 
                 //subtract flow
                 val positiveFlow = (lowerIncoming intersect upperOutgoing) - (lowerOutgoing + upperIncoming)
-                println("Positive flow: $positiveFlow")
                 selfLoop -= positiveFlow
             }
             encoder.lowerNode(target, dim)?.apply {
@@ -363,7 +355,6 @@ class OdeFragment(
 
                 //subtract flow
                 val negativeFlow = (lowerOutgoing intersect upperIncoming) - (lowerIncoming + upperOutgoing)
-                println("Negative flow: $negativeFlow")
                 selfLoop -= negativeFlow
             }
         }
