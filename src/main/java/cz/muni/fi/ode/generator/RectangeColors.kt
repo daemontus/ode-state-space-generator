@@ -28,7 +28,7 @@ fun rectangleFromPoints(vararg values: Double): Rectangle {
  * Coordinates should contain intervals for each variable, not direct coordinates of corner vertices.
  */
 class Rectangle(
-        val coordinates: DoubleArray
+        private val coordinates: DoubleArray
 ) {
 
     /**
@@ -136,6 +136,15 @@ class Rectangle(
         return results
     }
 
+    /**
+     * Writes this rectangle into given array, starting on given position.
+     * Returns next empty index.
+     */
+    fun serialize(to: DoubleArray, start: Int): Int {
+        System.arraycopy(coordinates, 0, to, start, coordinates.size)
+        return start + coordinates.size
+    }
+
     override fun equals(other: Any?): Boolean = other is Rectangle && Arrays.equals(coordinates, other.coordinates)
 
     override fun hashCode(): Int = Arrays.hashCode(coordinates)
@@ -204,6 +213,21 @@ class RectangleColors(
             }
         }
         return RectangleColors(newItems.toSet())
+    }
+
+    /**
+     * Number of rectangles in this color set.
+     */
+    fun rectangleCount() = rectangles.size
+
+    /**
+     * Write this color set into given array.
+     */
+    fun serialize(to: DoubleArray) {
+        var index = 0
+        for (r in rectangles) {
+            index = r.serialize(to, index)
+        }
     }
 
     override fun equals(other: Any?): Boolean = other is RectangleColors && other.rectangles == rectangles
