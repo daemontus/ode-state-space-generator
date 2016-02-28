@@ -291,7 +291,7 @@ class OdeFragment(
                 upperParameterBound <= bounds.first -> emptyColors
                 else -> {
                     //constructs a valid rectangle with specified constrains
-                    val rectangle = DoubleArray(2*dimensions) { i ->
+                    val rectangle = DoubleArray(2*model.parameters.size) { i ->
                         if (i / 2 == parameterIndex) {
                             if (i % 2 == 0) Math.max(bounds.first, lowerParameterBound)
                             else Math.min(bounds.second, upperParameterBound)
