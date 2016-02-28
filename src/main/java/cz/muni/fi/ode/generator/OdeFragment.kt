@@ -326,19 +326,21 @@ class OdeFragment(
         }
     }
 
-    private val successorCache = HashMap<IDNode, Nodes<IDNode, RectangleColors>>()
-    private val predecessorCache = HashMap<IDNode, Nodes<IDNode, RectangleColors>>()
+    private val successorCache = Array<Nodes<IDNode, RectangleColors>?>(encoder.stateCount) { null }
+    private val predecessorCache = Array<Nodes<IDNode, RectangleColors>?>(encoder.stateCount) { null }
 
     override val predecessors: IDNode.() -> Nodes<IDNode, RectangleColors> = {
-        predecessorCache.getOrPut(this) {
-            getDirectedEdges(this, false)
+        if (predecessorCache[this.id] == null) {
+            predecessorCache[this.id] = getDirectedEdges(this, false)
         }
+        predecessorCache[this.id]!!
     }
 
     override val successors: IDNode.() -> Nodes<IDNode, RectangleColors> = {
-        successorCache.getOrPut(this) {
-            getDirectedEdges(this, true)
+        if (successorCache[this.id] == null) {
+            successorCache[this.id] = getDirectedEdges(this, true)
         }
+        successorCache[this.id]!!
     }
 
     private fun getDirectedEdges(target: IDNode, successors: Boolean): Nodes<IDNode, RectangleColors> {
