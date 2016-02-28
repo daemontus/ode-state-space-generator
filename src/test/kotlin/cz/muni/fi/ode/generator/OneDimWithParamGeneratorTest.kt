@@ -11,26 +11,28 @@ import kotlin.test.assertEquals
 
 class OneDimWithParamGeneratorTest {
 
-    //dv1 = p(v1 + 1) - 1
+    //dv1 = p(v1/2 + 1) - 1
     //This one dimensional model should actually cover most of the behaviour
     //It only fails to cover a steady state in the middle of the model and
     //cases when parameter is multiplied by zero
 
-    //dv2 = p(v1 - 2) - 1
+    //dv2 = p(v1/2 - 2) - 1
     //This model covers the two remaining cases. A stable state and a zero on threshold.
 
     private val v1 = Model.Variable(
-            name = "v1", range = Pair(0.0,3.0), varPoints = null,
-            thresholds = listOf(0.0, 1.0, 2.0, 3.0),
-            equation = listOf(Summand(paramIndex = 0, evaluables = ExplicitEvaluable(
-                    0, mapOf(0.0 to 1.0, 1.0 to 2.0, 2.0 to 3.0, 3.0 to 4.0)
-            )), Summand(constant = -1.0))
+            name = "v1", range = Pair(0.0,6.0), varPoints = null,
+            thresholds = listOf(0.0, 2.0, 4.0, 6.0),
+            equation = listOf(
+                    Summand(paramIndex = 0, variableIndices = listOf(0), constant = 0.5),
+                    Summand(paramIndex = 0),
+                    Summand(constant = -1.0))
     )
 
     private val v2 = v1.copy(name = "v2",
-            equation = listOf(Summand(paramIndex = 0, evaluables = ExplicitEvaluable(
-                    0, mapOf(0.0 to -2.0, 1.0 to -1.0, 2.0 to 0.0, 3.0 to 1.0)
-            )), Summand(constant = -1.0)))
+            equation = listOf(
+                    Summand(paramIndex = 0, variableIndices = listOf(0), constant = 0.5),
+                    Summand(paramIndex = 0, constant = -2.0),
+                    Summand(constant = -1.0)))
 
     private val fragmentOne = OdeFragment(Model(listOf(v1), listOf(
             Model.Parameter("p1", Pair(0.0, 2.0))

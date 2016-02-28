@@ -172,7 +172,7 @@ class OdeFragment(
             for (summand in model.variables[dim].equation) {
                 var partialSum = summand.constant
                 for (v in summand.variableIndices) {
-                    partialSum *= coordinates[v]
+                    partialSum *= model.variables[v].thresholds[coordinates[v]]
                 }
                 if (partialSum != 0.0) {
                     for (function in summand.evaluable) {
