@@ -1,6 +1,6 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.checker.IDNode
+import com.github.sybila.checker.IDNode
 import cz.muni.fi.ode.model.Model
 import cz.muni.fi.ode.model.Summand
 import org.junit.Test

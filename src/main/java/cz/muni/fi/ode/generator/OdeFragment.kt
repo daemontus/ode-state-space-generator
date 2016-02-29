@@ -1,7 +1,7 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.checker.*
-import cz.muni.fi.ctl.*
+import com.github.sybila.checker.*
+import com.github.sybila.ctl.*
 import cz.muni.fi.ode.model.Model
 import java.util.*
 

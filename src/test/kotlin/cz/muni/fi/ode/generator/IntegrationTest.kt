@@ -1,7 +1,7 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.checker.IDNode
-import cz.muni.fi.checker.UniformPartitionFunction
+import com.github.sybila.checker.IDNode
+import com.github.sybila.checker.UniformPartitionFunction
 import cz.muni.fi.ode.model.Parser
 import cz.muni.fi.ode.model.computeApproximation
 import org.junit.Test

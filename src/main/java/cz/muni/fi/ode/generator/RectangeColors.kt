@@ -1,6 +1,6 @@
 package cz.muni.fi.ode.generator
 
-import cz.muni.fi.checker.Colors
+import com.github.sybila.checker.Colors
 import java.util.*
 
 /**

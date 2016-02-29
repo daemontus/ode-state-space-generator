@@ -1,10 +1,10 @@
 package cz.muni.fi.ode.generator
 
 import com.github.daemontus.jafra.Token
-import cz.muni.fi.checker.Communicator
-import cz.muni.fi.checker.GuardedThread
-import cz.muni.fi.checker.IDNode
-import cz.muni.fi.checker.Job
+import com.github.sybila.checker.Communicator
+import com.github.sybila.checker.GuardedThread
+import com.github.sybila.checker.IDNode
+import com.github.sybila.checker.Job
 import mpi.Comm
 import mpi.MPI
 import java.util.*
