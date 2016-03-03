@@ -40,6 +40,8 @@ class NodeEncoder(
         vertexCount.toInt()
     }
 
+    val dimensions = model.variables.size
+
     /**
      * Encode given coordinate array into a single number.
      */
