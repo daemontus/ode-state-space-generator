@@ -30,7 +30,7 @@ apply plugin: 'com.madvay.tools.build.gitbuildinfo'
 apply plugin: 'me.champeau.gradle.jmh'
 
 group = "com.github.sybila"
-archivesBaseName = "ode-state-space-generator"
+archivesBaseName = "ode-generator"
 version = '0.1.0'
 
 //antlr config
@@ -38,9 +38,9 @@ generateGrammarSource {
     arguments += [
             "-no-visitor",
             "-listener",
-            "-package", "cz.muni.fi.ode.antlr"
+            "-package", "com.github.sybila.ode.antlr"
     ]
-    outputDirectory = new File('src/main/gen/cz/muni/fi/ode/antlr')
+    outputDirectory = new File('src/main/gen/com/github/sybila/ode/antlr')
 }
 
 // make the Java compile task depend on the antlr4 task
@@ -115,10 +115,10 @@ test {
 
 buildStamp {
     // The git commit SHA will be appended to this url to generate the final url.
-    repoBaseUrl "https://github.com/daemontus/ode-state-space-generator/tree/"
+    repoBaseUrl "https://github.com/sybila/ode-generator/tree/"
     // BuildInfo.java will be added under this package, in a
     // generated build/ directory.
-    packageName "cz.muni.fi.ode"
+    packageName "com.github.sybila.ode"
 }
 
 //travis has some strict RAM restrictions, can't afford to exceed this
