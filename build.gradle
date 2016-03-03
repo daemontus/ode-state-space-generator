@@ -31,7 +31,7 @@ apply plugin: 'me.champeau.gradle.jmh'
 
 group = "com.github.sybila"
 archivesBaseName = "ode-generator"
-version = '0.1.0'
+version = '0.8.0'
 
 //antlr config
 generateGrammarSource {
