@@ -60,7 +60,7 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.intellij:annotations:5.1'
-    compile 'com.github.sybila:ctl-model-checker:1.0.0'
+    compile 'com.github.sybila:ctl-model-checker:1.0.1'
     compile files('libs/mpj.jar')
     antlr "org.antlr:antlr4:4.5.1-1"
 }
