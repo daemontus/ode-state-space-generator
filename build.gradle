@@ -29,6 +29,7 @@ apply plugin: 'jacoco'
 apply plugin: 'com.madvay.tools.build.gitbuildinfo'
 apply plugin: 'me.champeau.gradle.jmh'
 
+sourceCompatibility = 1.6
 group = "com.github.sybila"
 archivesBaseName = "ode-generator"
 version = '0.8.0'
