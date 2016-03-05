@@ -62,6 +62,7 @@ dependencies {
     compile 'com.intellij:annotations:5.1'
     compile 'com.github.sybila:ctl-model-checker:1.0.1'
     compile files('libs/mpj.jar')
+    compile files('libs/com.microsoft.z3.jar')
     antlr "org.antlr:antlr4:4.5.1-1"
 }
 
