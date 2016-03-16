@@ -36,7 +36,7 @@ class IntegrationTest {
 
         val results = resultsFile.inputStream().bufferedReader()
 
-        val fragment = OdeFragment(model, UniformPartitionFunction<IDNode>())
+        val fragment = RectangleOdeFragment(model, UniformPartitionFunction<IDNode>())
 
         for (node in fragment.allNodes().entries.toList().sortedBy { it.key.id }) {
             assertEquals(results.readLine(), "Successors for ${node.key}:")

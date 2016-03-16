@@ -49,12 +49,12 @@ class TwoDimWithParamGeneratorTest {
             Summand(paramIndex = 1), Summand(constant = -2.5)
     ))
 
-    private val fragmentOne = OdeFragment(Model(listOf(v1, v2), listOf(
+    private val fragmentOne = RectangleOdeFragment(Model(listOf(v1, v2), listOf(
             Model.Parameter(name = "p1", range = Pair(0.0, 2.0)),
             Model.Parameter(name = "p2", range = Pair(0.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
 
-    private val fragmentTwo = OdeFragment(Model(listOf(v3, v4), listOf(
+    private val fragmentTwo = RectangleOdeFragment(Model(listOf(v3, v4), listOf(
             Model.Parameter(name = "p1", range = Pair(0.0, 2.0)),
             Model.Parameter(name = "p2", range = Pair(0.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
@@ -158,7 +158,7 @@ class TwoDimWithParamGeneratorTest {
         verify(fragmentTwo, transitions)
     }
 
-    private fun verify(fragment: OdeFragment, transitions: List<Edge<IDNode, RectangleColors>>) {
+    private fun verify(fragment: RectangleOdeFragment, transitions: List<Edge<IDNode, RectangleColors>>) {
         assertEquals(allNodes.map { Pair(it, fullColors) }.toMap().toNodes(e), fragment.allNodes())
 
         for (node in allNodes) {

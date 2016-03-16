@@ -24,8 +24,8 @@ class OneDimNoParamGeneratorTest {
             ))
     )
 
-    private fun createFragment(vararg values: Double): OdeFragment {
-        return OdeFragment(Model(variable.copy(equation = listOf(Summand(
+    private fun createFragment(vararg values: Double): RectangleOdeFragment {
+        return RectangleOdeFragment(Model(variable.copy(equation = listOf(Summand(
                 evaluables = ExplicitEvaluable(0,
                         listOf(0.0, 1.0, 2.0, 3.0).zip(values.toList()).toMap()
                 )

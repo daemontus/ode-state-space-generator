@@ -19,14 +19,14 @@ public class SuccessorBenchmarks {
 
     @State(Scope.Thread)
     public static class MyState {
-        OdeFragment TCBBModel;
+        RectangleOdeFragment TCBBModel;
         Nodes<IDNode, RectangleColors> TCBBNodes;
 
 
         @Setup(Level.Trial)
         public void setup() {
             PartitionFunction<IDNode> partition = new UniformPartitionFunction<>();
-            TCBBModel = new OdeFragment(
+            TCBBModel = new RectangleOdeFragment(
                     ModelApproximationKt.computeApproximation(
                             new Parser().parse(new File("models/tcbb.bio")), true, false)
                     , partition);

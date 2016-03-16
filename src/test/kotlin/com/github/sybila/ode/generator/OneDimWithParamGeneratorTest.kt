@@ -34,11 +34,11 @@ class OneDimWithParamGeneratorTest {
                     Summand(paramIndex = 0, constant = -2.0),
                     Summand(constant = -1.0)))
 
-    private val fragmentOne = OdeFragment(Model(listOf(v1), listOf(
+    private val fragmentOne = RectangleOdeFragment(Model(listOf(v1), listOf(
             Model.Parameter("p1", Pair(0.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
 
-    private val fragmentTwo = OdeFragment(Model(listOf(v2), listOf(
+    private val fragmentTwo = RectangleOdeFragment(Model(listOf(v2), listOf(
             Model.Parameter("p2", Pair(-2.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
 

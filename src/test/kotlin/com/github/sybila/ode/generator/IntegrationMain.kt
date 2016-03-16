@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
     val name = "model_31_reduced"
     val writer = File("models/$name.transitions.txt").outputStream().bufferedWriter()
     val model = Parser().parse(File("models/$name.bio")).computeApproximation()
-    val fragment = OdeFragment(model, UniformPartitionFunction<IDNode>())
+    val fragment = RectangleOdeFragment(model, UniformPartitionFunction<IDNode>())
     val sortedNodes = fragment.allNodes().entries.toList().sortedBy { it.key.id }
     for (node in sortedNodes) {
         writer.write("Successors for ${node.key}:\n")
