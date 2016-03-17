@@ -1,5 +1,5 @@
 package com.github.sybila.ode.generator;
-
+/*
 import com.github.sybila.ode.model.ModelApproximationKt;
 import cz.muni.fi.checker.IDNode;
 import cz.muni.fi.checker.Nodes;
@@ -12,9 +12,6 @@ import org.openjdk.jmh.annotations.*;
 import java.io.File;
 import java.util.Map;
 
-/**
- * Created by daemontus on 27/02/16.
- */
 public class SuccessorBenchmarks {
 
     @State(Scope.Thread)
@@ -43,4 +40,4 @@ public class SuccessorBenchmarks {
         }
         return count;
     }
-}
+}*/

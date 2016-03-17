@@ -55,7 +55,7 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
                     CompareOp.GT, CompareOp.GT_EQ ->
                         enumerateStates(dimension, tIndex, model.variables[dimension].thresholds.size - 2)
                     CompareOp.LT, CompareOp.LT_EQ ->
-                        enumerateStates(dimension, 0, tIndex)
+                        enumerateStates(dimension, 0, tIndex - 1)
                 }
             }
             else -> throw IllegalArgumentException("Unsupported proposition: $a")
