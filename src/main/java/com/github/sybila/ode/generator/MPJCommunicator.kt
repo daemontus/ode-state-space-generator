@@ -62,7 +62,7 @@ class MPJCommunicator(
             comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, 0)
             logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         }
-    }
+    }.apply { this.thread.start() }
 
     private fun receiveColors(sender: Int, rectangleCount: Int): RectangleColors {
         while (rectangleCount * rectangleSize > inDataBuffer.size) { //increase buffer size if needed
