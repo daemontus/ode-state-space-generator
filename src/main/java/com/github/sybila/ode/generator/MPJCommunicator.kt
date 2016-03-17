@@ -5,24 +5,22 @@ import com.github.sybila.checker.Communicator
 import com.github.sybila.checker.GuardedThread
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.Job
-import mpi.Comm
 import mpi.MPI
 import java.util.*
 
-//TODO: How do we test this class? Maybe a mock MPJ Comm?
+internal val COMMAND_TAG = 0;
+internal val DATA_TAG = 1;
+
+internal val TOKEN = 1;
+internal val JOB = 2;
+internal val TERMINATE = 3;
+
 class MPJCommunicator(
         override val id: Int,
         override val size: Int,
         parameterCount: Int,
-        private val comm: Comm
+        private val comm: AbstractComm
 ) : Communicator {
-
-    private val COMMAND_TAG = 0;
-    private val DATA_TAG = 1;
-
-    private val TOKEN = 1;
-    private val JOB = 2;
-    private val TERMINATE = 3;
 
     //Command message structure:
     //Token: TOKEN | SENDER | FLAG | COUNT | UNDEFINED
@@ -43,7 +41,7 @@ class MPJCommunicator(
                 listeners[c]
             } ?: throw IllegalStateException("Message with no listener received! $id ${Arrays.toString(inCommandBuffer)} - listeners: $listeners")
         }
-        comm.Recv(inCommandBuffer, 0, inCommandBuffer.size, MPI.INT, MPI.ANY_SOURCE, COMMAND_TAG)
+        comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, COMMAND_TAG)
         while (inCommandBuffer[0] != TERMINATE) {
             if (inCommandBuffer[0] == TOKEN) {
                 val listener = getListener(Token::class.java)
@@ -52,7 +50,7 @@ class MPJCommunicator(
                 val listener = getListener(Job::class.java)
                 listener(inCommandBuffer.toJob())
             }
-            comm.Recv(inCommandBuffer, 0, inCommandBuffer.size, MPI.INT, MPI.ANY_SOURCE, 0)
+            comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, 0)
         }
     }
 
@@ -61,7 +59,7 @@ class MPJCommunicator(
             inDataBuffer = DoubleArray(inDataBuffer.size * 2)
         }
         //we need sender to ensure we don't mix data and commands from different senders
-        comm.Recv(inDataBuffer, 0, rectangleCount * rectangleSize, MPI.DOUBLE, sender, DATA_TAG)
+        comm.receive(inDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, sender, DATA_TAG)
         val rectangles = HashSet<Rectangle>()
         for (rectangle in 0 until rectangleCount) {
             val startIndex = rectangleSize * rectangle
@@ -93,13 +91,13 @@ class MPJCommunicator(
         if (message.javaClass == Token::class.java) {
             val token = message as Token
             token.serialize(outCommandBuffer)
-            comm.Send(outCommandBuffer, 0, outCommandBuffer.size, MPI.INT, dest, COMMAND_TAG)
+            comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
         } else if (message.javaClass == Job::class.java) {
             //send command info
             @Suppress("UNCHECKED_CAST") //It's ok, this won't be used outside this module!
             val job = message as Job<IDNode, RectangleColors>
             job.serialize(outCommandBuffer)
-            comm.Send(outCommandBuffer, 0, outCommandBuffer.size, MPI.INT, dest, COMMAND_TAG)
+            comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
 
             //ensure data buffer capacity
             val rectangleCount = job.colors.rectangleCount()
@@ -109,7 +107,7 @@ class MPJCommunicator(
 
             //send color data
             job.colors.serialize(outDataBuffer)
-            comm.Send(outDataBuffer, 0, rectangleCount * rectangleSize, MPI.DOUBLE, dest, DATA_TAG)
+            comm.send(outDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, dest, DATA_TAG)
         } else {
             throw IllegalArgumentException("Cannot send message: $message to $dest")
         }
@@ -121,11 +119,11 @@ class MPJCommunicator(
                 throw IllegalStateException("Someone is still listening! $listeners")
         }
         outCommandBuffer[0] = TERMINATE
-        outCommandBuffer[1] = comm.Rank()
+        outCommandBuffer[1] = id
         //there is a bug in MPJ where you can't send messages to yourself in MPI configuration (you have to use hybrid)
         //so in order to circumvent this, each node terminates it's successor. - this is valid because
         //termination detection has to be ensured before calling close anyway.
-        comm.Send(outCommandBuffer, 0, 2, MPI.INT, (comm.Rank() + 1) % comm.Size(), COMMAND_TAG)
+        comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, (id + 1) % size, COMMAND_TAG)
         mpiListener.join()
     }
 
@@ -139,11 +137,11 @@ class MPJCommunicator(
     )
 
     private fun Token.serialize(to: IntArray) {
-        to[0] = TOKEN; to[1] = comm.Rank(); to[2] = this.flag; to[3] = this.count
+        to[0] = TOKEN; to[1] = id; to[2] = this.flag; to[3] = this.count
     }
 
     private fun Job<IDNode, RectangleColors>.serialize(to: IntArray) {
-        to[0] = JOB; to[1] = comm.Rank(); to[2] = this.source.id; to[3] = this.target.id; to[4] = this.colors.rectangleCount()
+        to[0] = JOB; to[1] = id; to[2] = this.source.id; to[3] = this.target.id; to[4] = this.colors.rectangleCount()
     }
 
 }
