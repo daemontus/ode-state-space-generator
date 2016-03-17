@@ -1,12 +1,11 @@
 package com.github.sybila.ode.generator
 
 import com.github.daemontus.jafra.Token
-import com.github.sybila.checker.Communicator
-import com.github.sybila.checker.GuardedThread
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.Job
+import com.github.sybila.checker.*
 import mpi.MPI
 import java.util.*
+import java.util.logging.Level
+import java.util.logging.Logger
 
 internal val COMMAND_TAG = 0;
 internal val DATA_TAG = 1;
@@ -19,7 +18,10 @@ class MPJCommunicator(
         override val id: Int,
         override val size: Int,
         parameterCount: Int,
-        private val comm: AbstractComm
+        private val comm: AbstractComm,
+        private val logger: Logger = Logger.getLogger(MPJCommunicator::class.java.canonicalName).apply {
+            this.level = Level.OFF
+        }
 ) : Communicator {
 
     //Command message structure:
@@ -41,16 +43,24 @@ class MPJCommunicator(
                 listeners[c]
             } ?: throw IllegalStateException("Message with no listener received! $id ${Arrays.toString(inCommandBuffer)} - listeners: $listeners")
         }
+        logger.lFinest { "Waiting for message..." }
         comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, COMMAND_TAG)
+        logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         while (inCommandBuffer[0] != TERMINATE) {
             if (inCommandBuffer[0] == TOKEN) {
                 val listener = getListener(Token::class.java)
+                logger.lFinest { "Starting token listener" }
                 listener(inCommandBuffer.toToken())
+                logger.lFinest { "Token listener finished" }
             } else if (inCommandBuffer[0] == JOB) {
                 val listener = getListener(Job::class.java)
+                logger.lFinest { "Starting job listener" }
                 listener(inCommandBuffer.toJob())
+                logger.lFinest { "Job listener finished" }
             }
+            logger.lFinest { "Waiting for message..." }
             comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, 0)
+            logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         }
     }
 
@@ -59,7 +69,9 @@ class MPJCommunicator(
             inDataBuffer = DoubleArray(inDataBuffer.size * 2)
         }
         //we need sender to ensure we don't mix data and commands from different senders
+        logger.lFinest { "Waiting to receive colors..." }
         comm.receive(inDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, sender, DATA_TAG)
+        logger.lFinest { "Colors received." }
         val rectangles = HashSet<Rectangle>()
         for (rectangle in 0 until rectangleCount) {
             val startIndex = rectangleSize * rectangle
@@ -74,6 +86,7 @@ class MPJCommunicator(
             throw IllegalArgumentException("This communicator can't send classes of type: $messageClass")
         }
         synchronized(listeners) {
+            logger.lFine { "Add listener: $messageClass" }
             @Suppress("UNCHECKED_CAST") //Cast is ok, we have to get rid of the type in the map.
             val previous = listeners.put(messageClass, onTask as (Any) -> Unit)
             if (previous != null) throw IllegalStateException("Replacing already present listener: $id, $messageClass")
@@ -82,6 +95,7 @@ class MPJCommunicator(
 
     override fun removeListener(messageClass: Class<*>) {
         synchronized(listeners) {
+            logger.lFine { "Remove listener: $messageClass" }
             listeners.remove(messageClass) ?: throw IllegalStateException("Removing non existent listener: $id, $messageClass")
         }
     }
@@ -91,12 +105,14 @@ class MPJCommunicator(
         if (message.javaClass == Token::class.java) {
             val token = message as Token
             token.serialize(outCommandBuffer)
+            logger.lFinest { "Sending token" }
             comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
         } else if (message.javaClass == Job::class.java) {
             //send command info
             @Suppress("UNCHECKED_CAST") //It's ok, this won't be used outside this module!
             val job = message as Job<IDNode, RectangleColors>
             job.serialize(outCommandBuffer)
+            logger.lFinest { "Sending job info" }
             comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
 
             //ensure data buffer capacity
@@ -107,6 +123,7 @@ class MPJCommunicator(
 
             //send color data
             job.colors.serialize(outDataBuffer)
+            logger.lFinest { "Sending colors" }
             comm.send(outDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, dest, DATA_TAG)
         } else {
             throw IllegalArgumentException("Cannot send message: $message to $dest")
@@ -123,7 +140,9 @@ class MPJCommunicator(
         //there is a bug in MPJ where you can't send messages to yourself in MPI configuration (you have to use hybrid)
         //so in order to circumvent this, each node terminates it's successor. - this is valid because
         //termination detection has to be ensured before calling close anyway.
+        logger.lFinest { "Sending termination token" }
         comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, (id + 1) % size, COMMAND_TAG)
+        logger.lFinest { "Waiting for termination..." }
         mpiListener.join()
     }
 
