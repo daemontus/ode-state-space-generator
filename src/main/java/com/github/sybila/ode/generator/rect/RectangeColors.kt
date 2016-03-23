@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.Colors
 import java.util.*

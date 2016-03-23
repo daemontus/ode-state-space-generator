@@ -1,6 +1,9 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.*
+import com.github.sybila.ode.generator.rect.Rectangle
+import com.github.sybila.ode.generator.rect.RectangleColors
+import com.github.sybila.ode.generator.rect.RectangleOdeFragment
 import com.github.sybila.ode.model.Model
 import com.github.sybila.ode.model.Summand
 import org.junit.Test

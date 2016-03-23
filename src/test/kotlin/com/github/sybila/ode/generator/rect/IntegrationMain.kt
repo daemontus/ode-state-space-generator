@@ -1,7 +1,8 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.UniformPartitionFunction
+import com.github.sybila.ode.generator.rect.RectangleOdeFragment
 import com.github.sybila.ode.model.Parser
 import com.github.sybila.ode.model.computeApproximation
 import java.io.File

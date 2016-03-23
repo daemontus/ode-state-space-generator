@@ -1,9 +1,10 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.UniformPartitionFunction
 import com.github.sybila.checker.nodesOf
 import com.github.sybila.ctl.*
+import com.github.sybila.ode.generator.rect.RectangleOdeFragment
 import com.github.sybila.ode.model.Model
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
@@ -46,8 +47,8 @@ class TwoDimPropositionTest {
 
     @Test
     fun gtTest() {
-        val expected1 = nodesOf(e, n01 to c, n02 to c, n11 to c, n12 to c, n21 to c, n22 to c )
-        val expected2 = nodesOf(e, n20 to c, n21 to c, n22 to c )
+        val expected1 = nodesOf(e, n01 to c, n02 to c, n11 to c, n12 to c, n21 to c, n22 to c)
+        val expected2 = nodesOf(e, n20 to c, n21 to c, n22 to c)
         assertEquals(expected1, fragmentOne.validNodes(FloatProposition("v1", CompareOp.GT, 1.0)))
         assertEquals(expected1, fragmentOne.validNodes(FloatProposition("v1", CompareOp.GT_EQ, 1.0)))
         assertEquals(expected2, fragmentOne.validNodes(FloatProposition("v2", CompareOp.GT, 3.0)))
@@ -56,8 +57,8 @@ class TwoDimPropositionTest {
 
     @Test
     fun ltTest() {
-        val expected1 = nodesOf(e, n00 to c, n10 to c, n20 to c )
-        val expected2 = nodesOf(e, n00 to c, n01 to c, n02 to c, n10 to c, n11 to c, n12 to c )
+        val expected1 = nodesOf(e, n00 to c, n10 to c, n20 to c)
+        val expected2 = nodesOf(e, n00 to c, n01 to c, n02 to c, n10 to c, n11 to c, n12 to c)
         assertEquals(expected1, fragmentOne.validNodes(FloatProposition("v1", CompareOp.LT, 1.0)))
         assertEquals(expected1, fragmentOne.validNodes(FloatProposition("v1", CompareOp.LT_EQ, 1.0)))
         assertEquals(expected2, fragmentOne.validNodes(FloatProposition("v2", CompareOp.LT, 3.0)))

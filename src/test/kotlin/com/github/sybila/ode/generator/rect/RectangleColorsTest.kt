@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import org.junit.Test
 import kotlin.test.assertEquals

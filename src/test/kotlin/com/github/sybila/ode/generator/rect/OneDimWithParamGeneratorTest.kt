@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.UniformPartitionFunction
@@ -20,7 +20,7 @@ class OneDimWithParamGeneratorTest {
     //This model covers the two remaining cases. A stable state and a zero on threshold.
 
     private val v1 = Model.Variable(
-            name = "v1", range = Pair(0.0,6.0), varPoints = null,
+            name = "v1", range = Pair(0.0, 6.0), varPoints = null,
             thresholds = listOf(0.0, 2.0, 4.0, 6.0),
             equation = listOf(
                     Summand(paramIndex = 0, variableIndices = listOf(0), constant = 0.5),

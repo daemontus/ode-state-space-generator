@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.checker.Colors
 import com.microsoft.z3.*
@@ -27,7 +27,7 @@ class SMTColors(
             formula = result[0].AsBoolExpr()
             sat = !formula.isFalse
             context.goal.reset()
-            sat!!
+            !sat!!  //un-sat ~ empty
         }
     }
 

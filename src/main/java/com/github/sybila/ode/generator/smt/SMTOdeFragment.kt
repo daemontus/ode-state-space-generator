@@ -1,7 +1,8 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.PartitionFunction
+import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.Model
 import com.microsoft.z3.Context
 import java.util.*
@@ -14,8 +15,9 @@ class SMTOdeFragment(
     private val paramCount = model.parameters.size
 
     private val z3 = Context()
-    private val context = z3.run { SMTContext(this,
-            this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false))
+    private val context = z3.run {
+        SMTContext(this,
+                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false))
     }
 
     private val z3zero = z3.mkReal(0)
@@ -27,7 +29,7 @@ class SMTOdeFragment(
     override val fullColors: SMTColors = if (model.parameters.isEmpty()) {
         SMTColors(z3.mkTrue(), context, true)
     } else {
-        SMTColors(z3.mkAnd(*model.parameters.flatMap {  //* is a conversion to plain java varargs -_-
+        SMTColors(z3.mkAnd(*model.parameters.flatMap { //* is a conversion to plain java varargs -_-
             val p = z3.mkRealConst(it.name)
             listOf((z3.mkGt(p, z3.mkReal(it.range.first.toString()))), z3.mkLt(p, z3.mkReal(it.range.second.toString())))
         }.toTypedArray()), context, true)
@@ -79,7 +81,7 @@ class SMTOdeFragment(
             for (coordinates in facet(from, dim, upper)) {
                 val vertex = encoder.encodeVertex(coordinates)
                 val results = evaluate(dim, coordinates, vertex)
-                var expression = z3.mkAdd()
+                var expression = z3.mkAdd(z3zero)
                 for (p in 0 until paramCount) {
                     if (results[p] != 0.0) {
                         expression = z3.mkAdd(expression, z3.mkMul(z3.mkReal(results[p].toString()), z3params[p]))
