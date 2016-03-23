@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.ode.generator.smt.SMTColors
 import com.github.sybila.ode.generator.smt.SMTContext
