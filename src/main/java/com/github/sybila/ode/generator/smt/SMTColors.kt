@@ -12,26 +12,25 @@ class SMTContext(
         val timeToNormalize: Int
 )
 
+var timeToNormalize = -1
+
 class SMTColors(
         private var formula: BoolExpr,
         private val context: SMTContext,
-        private var sat: Boolean? = null,
-        private val timeToSolve: Int = context.timeToSolve,
-        private val timeToNormalize: Int = context.timeToNormalize
+        private var sat: Boolean? = null
+        //private val timeToSolve: Int = context.timeToSolve,
+        //private val timeToNormalize: Int = context.timeToNormalize
 ) : Colors<SMTColors> {
 
     private var normalized = false
-
-    override fun intersect(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat, nextSolve(other), nextNormalize(other))
-    }
 
     override fun isEmpty(): Boolean {
         return (sat ?: run {
             if (timeToNormalize < 0) {
                 normalize()
-            } else if (timeToSolve < 0) {
-                solve()
+                timeToNormalize = context.timeToNormalize
+            } else {
+                timeToNormalize -= 1
             }
             sat ?: true
         }).not() //un-sat ~ empty
@@ -59,11 +58,15 @@ class SMTColors(
     }
 
     override fun minus(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat, nextSolve(other), nextNormalize(other))
+        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat)
     }
 
     override fun plus(other: SMTColors): SMTColors {
-        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat, nextSolve(other), nextNormalize(other))
+        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat)
+    }
+
+    override fun intersect(other: SMTColors): SMTColors {
+        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat)
     }
 
     private fun mkAnd(f1: BoolExpr, f2: BoolExpr): BoolExpr {
@@ -77,7 +80,7 @@ class SMTColors(
     private fun mkNot(f1: BoolExpr): BoolExpr {
         return context.ctx.mkNot(f1)
     }
-
+/*
     private fun nextSolve(other: SMTColors): Int {
         return if (sat != null || other.sat != null) {   //this formula is solved, rest the counter
             context.timeToSolve
@@ -92,7 +95,7 @@ class SMTColors(
         } else {
             Math.min(timeToNormalize, other.timeToNormalize) - 1
         }
-    }
+    }*/
 
     private infix fun Boolean?.weakAnd(other: Boolean?): Boolean? = when {
         this == false || other == false -> false
