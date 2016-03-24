@@ -9,8 +9,9 @@ import java.util.*
 
 class SMTOdeFragment(
         model: Model,
-        partitioning: PartitionFunction<IDNode>
-) : AbstractOdeFragment<SMTColors>(model, partitioning) {
+        partitioning: PartitionFunction<IDNode>,
+        createSelfLoops: Boolean = true
+) : AbstractOdeFragment<SMTColors>(model, partitioning, createSelfLoops) {
 
     private val paramCount = model.parameters.size
 

@@ -8,7 +8,8 @@ import java.util.*
 
 abstract class AbstractOdeFragment<C: Colors<C>>(
         protected val model: Model,
-        partitioning: PartitionFunction<IDNode>
+        partitioning: PartitionFunction<IDNode>,
+        private val createSelfLoops: Boolean
 ) : KripkeFragment<IDNode, C>, PartitionFunction<IDNode> by partitioning {
 
     protected  val encoder = NodeEncoder(model)
@@ -220,30 +221,34 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
         var selfLoop = fullColors
         for (dim in model.variables.indices) {
             //we need to compute all of them, because we need them to determine the self loops
-            val upperIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = true)
-            val upperOutgoing = getFacetColors(from = target, dim = dim, incoming = false, upper = true)
-            val lowerIncoming = getFacetColors(from = target, dim = dim, incoming = true, upper = false)
-            val lowerOutgoing = getFacetColors(from = target, dim = dim, incoming = false, upper = false)
+            val upperIncoming = lazy { getFacetColors(from = target, dim = dim, incoming = true, upper = true) }
+            val upperOutgoing = lazy { getFacetColors(from = target, dim = dim, incoming = false, upper = true) }
+            val lowerIncoming = lazy { getFacetColors(from = target, dim = dim, incoming = true, upper = false) }
+            val lowerOutgoing = lazy { getFacetColors(from = target, dim = dim, incoming = false, upper = false) }
 
 
             encoder.higherNode(target, dim)?.apply {
-                val colors = if (successors) upperOutgoing else upperIncoming
+                val colors = (if (successors) upperOutgoing else upperIncoming).value
                 if (colors.isNotEmpty()) results.put(this, colors)
 
                 //subtract flow
-                val positiveFlow = (lowerIncoming intersect upperOutgoing) - (lowerOutgoing + upperIncoming)
-                selfLoop -= positiveFlow
+                if (createSelfLoops) {
+                    val positiveFlow = (lowerIncoming.value intersect upperOutgoing.value) - (lowerOutgoing.value + upperIncoming.value)
+                    selfLoop -= positiveFlow
+                }
             }
             encoder.lowerNode(target, dim)?.apply {
-                val colors = if (successors) lowerOutgoing else lowerIncoming
+                val colors = (if (successors) lowerOutgoing else lowerIncoming).value
                 if (colors.isNotEmpty()) results.put(this, colors)
 
                 //subtract flow
-                val negativeFlow = (lowerOutgoing intersect upperIncoming) - (lowerIncoming + upperOutgoing)
-                selfLoop -= negativeFlow
+                if (createSelfLoops) {
+                    val negativeFlow = (lowerOutgoing.value intersect upperIncoming.value) - (lowerIncoming.value + upperOutgoing.value)
+                    selfLoop -= negativeFlow
+                }
             }
         }
-        if (selfLoop.isNotEmpty()) {
+        if (createSelfLoops && selfLoop.isNotEmpty()) {
             results.put(target, selfLoop)
         }
         return results.toNodes(emptyColors)

@@ -2,7 +2,6 @@ package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.checker.nodesOf
 import com.github.sybila.ode.generator.ExplicitEvaluable
 import com.github.sybila.ode.model.Model
 import com.github.sybila.ode.model.Summand

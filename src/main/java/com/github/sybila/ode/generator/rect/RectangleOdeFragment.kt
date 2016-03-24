@@ -3,15 +3,14 @@ package com.github.sybila.ode.generator.rect
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.PartitionFunction
 import com.github.sybila.ode.generator.AbstractOdeFragment
-import com.github.sybila.ode.generator.rect.Rectangle
-import com.github.sybila.ode.generator.rect.RectangleColors
 import com.github.sybila.ode.model.Model
 import java.util.*
 
 class RectangleOdeFragment(
         model: Model,
-        partitioning: PartitionFunction<IDNode>
-) : AbstractOdeFragment<RectangleColors>(model, partitioning) {
+        partitioning: PartitionFunction<IDNode>,
+        createSelfLoops: Boolean = true
+) : AbstractOdeFragment<RectangleColors>(model, partitioning, createSelfLoops) {
 
     override val emptyColors = RectangleColors()
     override val fullColors = if (model.parameters.isEmpty()) RectangleColors(Rectangle(doubleArrayOf())) else RectangleColors(
