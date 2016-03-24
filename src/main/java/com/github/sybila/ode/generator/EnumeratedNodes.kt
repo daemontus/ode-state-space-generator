@@ -4,7 +4,7 @@ import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.MutableMapNodes
 import com.github.sybila.checker.MutableNodes
 import com.github.sybila.checker.Nodes
-import com.github.sybila.ode.model.Model
+import com.github.sybila.ode.generator.rect.RectangleColors
 import java.util.*
 
 /**
