@@ -6,42 +6,64 @@ import com.microsoft.z3.*
 class SMTContext(
         val ctx: Context,
         val tactic: Tactic,
-        val goal: Goal
+        val goal: Goal,
+        val solver: Solver,
+        val timeToSolve: Int,
+        val timeToNormalize: Int
 )
 
 class SMTColors(
         private var formula: BoolExpr,
         private val context: SMTContext,
-        private var sat: Boolean? = null
+        private var sat: Boolean? = null,
+        private val timeToSolve: Int = context.timeToSolve,
+        private val timeToNormalize: Int = context.timeToNormalize
 ) : Colors<SMTColors> {
 
+    private var normalized = false
+
     override fun intersect(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat)
+        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat, nextSolve(), nextNormalize())
     }
 
     override fun isEmpty(): Boolean {
         return (sat ?: run {
-            normalize()
-            sat!!
+            if (timeToNormalize < 0) {
+                normalize()
+            } else if (timeToSolve < 0) {
+                solve()
+            }
+            sat ?: true
         }).not() //un-sat ~ empty
     }
 
+    fun solve() {
+        if (sat == null) {
+            context.solver.add(formula)
+            sat = context.solver.check() == Status.SATISFIABLE
+            context.solver.reset()
+        }
+    }
+
     fun normalize(): SMTColors {
-        context.goal.add(formula)
-        val result = context.tactic.apply(context.goal).subgoals
-        assert(result.size == 1)
-        formula = result[0].AsBoolExpr()
-        sat = !formula.isFalse
-        context.goal.reset()
+        if (!normalized) {
+            context.goal.add(formula)
+            val result = context.tactic.apply(context.goal).subgoals
+            assert(result.size == 1)
+            formula = result[0].AsBoolExpr()
+            sat = !formula.isFalse
+            context.goal.reset()
+            normalized = true
+        }
         return this
     }
 
     override fun minus(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat)
+        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat, nextSolve(), nextNormalize())
     }
 
     override fun plus(other: SMTColors): SMTColors {
-        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat)
+        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat, nextSolve(), nextNormalize())
     }
 
     private fun mkAnd(f1: BoolExpr, f2: BoolExpr): BoolExpr {
@@ -54,6 +76,22 @@ class SMTColors(
 
     private fun mkNot(f1: BoolExpr): BoolExpr {
         return context.ctx.mkNot(f1)
+    }
+
+    private fun nextSolve(): Int {
+        return if (sat != null) {   //this formula is solved, rest the counter
+            context.timeToSolve
+        } else {
+            timeToSolve - 1
+        }
+    }
+
+    private fun nextNormalize(): Int {
+        return if (normalized) {
+            context.timeToNormalize
+        } else {
+            timeToNormalize - 1
+        }
     }
 
     private infix fun Boolean?.weakAnd(other: Boolean?): Boolean? = when {

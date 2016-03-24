@@ -9,7 +9,11 @@ class SMTColorsTest {
     private val z3 = Context()
     private val context = z3.run {
         SMTContext(this,
-                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false))
+                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false),
+                this.mkSolver(),
+                -1,
+                -1
+        )
     }
 
     private val tt = SMTColors(z3.mkTrue(), context)

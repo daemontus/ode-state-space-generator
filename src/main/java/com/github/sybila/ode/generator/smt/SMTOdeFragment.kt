@@ -10,7 +10,9 @@ import java.util.*
 class SMTOdeFragment(
         model: Model,
         partitioning: PartitionFunction<IDNode>,
-        createSelfLoops: Boolean = true
+        createSelfLoops: Boolean = true,
+        timeToSolve: Int = -1,
+        timeToNormalize: Int = -1
 ) : AbstractOdeFragment<SMTColors>(model, partitioning, createSelfLoops) {
 
     private val paramCount = model.parameters.size
@@ -18,7 +20,11 @@ class SMTOdeFragment(
     internal val z3 = Context()
     internal val context = z3.run {
         SMTContext(this,
-                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false))
+                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false),
+                this.mkSolver(),
+                timeToSolve,
+                timeToNormalize
+        )
     }
 
     private val z3zero = z3.mkReal(0)
