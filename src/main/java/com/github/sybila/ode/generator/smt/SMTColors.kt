@@ -23,7 +23,7 @@ class SMTColors(
     private var normalized = false
 
     override fun intersect(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat, nextSolve(), nextNormalize())
+        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat, nextSolve(other), nextNormalize(other))
     }
 
     override fun isEmpty(): Boolean {
@@ -59,11 +59,11 @@ class SMTColors(
     }
 
     override fun minus(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat, nextSolve(), nextNormalize())
+        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat, nextSolve(other), nextNormalize(other))
     }
 
     override fun plus(other: SMTColors): SMTColors {
-        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat, nextSolve(), nextNormalize())
+        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat, nextSolve(other), nextNormalize(other))
     }
 
     private fun mkAnd(f1: BoolExpr, f2: BoolExpr): BoolExpr {
@@ -78,19 +78,19 @@ class SMTColors(
         return context.ctx.mkNot(f1)
     }
 
-    private fun nextSolve(): Int {
-        return if (sat != null) {   //this formula is solved, rest the counter
+    private fun nextSolve(other: SMTColors): Int {
+        return if (sat != null || other.sat != null) {   //this formula is solved, rest the counter
             context.timeToSolve
         } else {
-            timeToSolve - 1
+            Math.min(timeToSolve, other.timeToSolve) - 1
         }
     }
 
-    private fun nextNormalize(): Int {
-        return if (normalized) {
+    private fun nextNormalize(other: SMTColors): Int {
+        return if (normalized || other.normalized) {
             context.timeToNormalize
         } else {
-            timeToNormalize - 1
+            Math.min(timeToNormalize, other.timeToNormalize) - 1
         }
     }
 
