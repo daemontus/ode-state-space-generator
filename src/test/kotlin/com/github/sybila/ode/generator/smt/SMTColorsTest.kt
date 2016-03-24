@@ -1,7 +1,5 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.ode.generator.smt.SMTColors
-import com.github.sybila.ode.generator.smt.SMTContext
 import com.microsoft.z3.Context
 import org.junit.Test
 import kotlin.test.assertTrue

@@ -20,15 +20,20 @@ class SMTColors(
     }
 
     override fun isEmpty(): Boolean {
-        return sat ?: run {
-            context.goal.add(formula)
-            val result = context.tactic.apply(context.goal).subgoals
-            assert(result.size == 1)
-            formula = result[0].AsBoolExpr()
-            sat = !formula.isFalse
-            context.goal.reset()
-            !sat!!  //un-sat ~ empty
-        }
+        return (sat ?: run {
+            normalize()
+            sat!!
+        }).not() //un-sat ~ empty
+    }
+
+    fun normalize(): SMTColors {
+        context.goal.add(formula)
+        val result = context.tactic.apply(context.goal).subgoals
+        assert(result.size == 1)
+        formula = result[0].AsBoolExpr()
+        sat = !formula.isFalse
+        context.goal.reset()
+        return this
     }
 
     override fun minus(other: SMTColors): SMTColors {
@@ -66,4 +71,19 @@ class SMTColors(
         other == false -> this
         else -> null
     }
+
+    override fun toString(): String{
+        return "SMTColors(sat=$sat, formula=$formula)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is SMTColors) return false
+        if (this.context != other.context) return false
+        return formula.equals(other.formula)
+    }
+
+    override fun hashCode(): Int {
+        return this.context.hashCode() * 31 + formula.hashCode()
+    }
+
 }

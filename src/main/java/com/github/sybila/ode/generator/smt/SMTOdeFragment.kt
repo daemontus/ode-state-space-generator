@@ -14,14 +14,14 @@ class SMTOdeFragment(
 
     private val paramCount = model.parameters.size
 
-    private val z3 = Context()
-    private val context = z3.run {
+    internal val z3 = Context()
+    internal val context = z3.run {
         SMTContext(this,
                 this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false))
     }
 
     private val z3zero = z3.mkReal(0)
-    private val z3params = model.parameters.map {
+    internal val z3params = model.parameters.map {
         z3.mkRealConst(it.name)
     }
 
@@ -100,6 +100,9 @@ class SMTOdeFragment(
             }
 
             val colors = SMTColors(formula, context, null)
+
+            //force colors to be simplified
+            colors.normalize()
 
             myFacets[dim][u][i] = colors
 
