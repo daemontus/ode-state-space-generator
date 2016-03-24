@@ -2,7 +2,8 @@ package com.github.sybila.ode.generator
 
 import com.github.daemontus.jafra.Token
 import com.github.sybila.checker.*
-import mpi.MPI
+import com.github.sybila.ode.generator.rect.Rectangle
+import com.github.sybila.ode.generator.rect.RectangleColors
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -14,6 +15,8 @@ internal val TOKEN = 1;
 internal val JOB = 2;
 internal val TERMINATE = 3;
 
+//you can initialize the communicator with listeners, otherwise it's not safe, because you can't
+//make sure you register a listener before you receive messages
 class MPJCommunicator(
         override val id: Int,
         override val size: Int,
@@ -21,7 +24,9 @@ class MPJCommunicator(
         private val comm: AbstractComm,
         private val logger: Logger = Logger.getLogger(MPJCommunicator::class.java.canonicalName).apply {
             this.level = Level.OFF
-        }
+        },
+        private var tokenListener: ((Token) -> Unit)? = null,
+        private var jobListener: ((Job<IDNode, RectangleColors>) -> Unit)? = null
 ) : Communicator {
 
     //Command message structure:
@@ -35,31 +40,22 @@ class MPJCommunicator(
 
     private val rectangleSize = 2 * parameterCount
 
-    private val listeners = HashMap<Class<*>, (Any) -> Unit>()
-
     private val mpiListener = GuardedThread() {
-        fun getListener(c: Class<*>): (Any) -> Unit {
-            return synchronized(listeners) {
-                listeners[c]
-            } ?: throw IllegalStateException("Message with no listener received! $id ${Arrays.toString(inCommandBuffer)} - listeners: $listeners")
-        }
         logger.lFinest { "Waiting for message..." }
-        comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, COMMAND_TAG)
+        comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, ANY_SOURCE, COMMAND_TAG)
         logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         while (inCommandBuffer[0] != TERMINATE) {
             if (inCommandBuffer[0] == TOKEN) {
-                val listener = getListener(Token::class.java)
                 logger.lFinest { "Starting token listener" }
-                listener(inCommandBuffer.toToken())
+                tokenListener?.invoke(inCommandBuffer.toToken()) ?: throw IllegalStateException("Token listener not provided")
                 logger.lFinest { "Token listener finished" }
             } else if (inCommandBuffer[0] == JOB) {
-                val listener = getListener(Job::class.java)
                 logger.lFinest { "Starting job listener" }
-                listener(inCommandBuffer.toJob())
+                jobListener?.invoke(inCommandBuffer.toJob()) ?: throw IllegalStateException("Job listener not provided")
                 logger.lFinest { "Job listener finished" }
             }
             logger.lFinest { "Waiting for message..." }
-            comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, MPI.ANY_SOURCE, 0)
+            comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, ANY_SOURCE, 0)
             logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         }
     }.apply { this.thread.start() }
@@ -81,22 +77,43 @@ class MPJCommunicator(
         return RectangleColors(rectangles)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <M : Any> addListener(messageClass: Class<M>, onTask: (M) -> Unit) {
-        if (messageClass != Token::class.java && messageClass != Job::class.java) {
-            throw IllegalArgumentException("This communicator can't send classes of type: $messageClass")
-        }
-        synchronized(listeners) {
-            logger.lFine { "Add listener: $messageClass" }
-            @Suppress("UNCHECKED_CAST") //Cast is ok, we have to get rid of the type in the map.
-            val previous = listeners.put(messageClass, onTask as (Any) -> Unit)
-            if (previous != null) throw IllegalStateException("Replacing already present listener: $id, $messageClass")
+
+        logger.lFine { "Add listener: $messageClass" }
+        when (messageClass) {
+            Token::class.java -> synchronized(this) {
+                if (tokenListener != null) {
+                    throw IllegalStateException("Replacing already present listener: $id, $messageClass")
+                } else {
+                    tokenListener = onTask as (Token) -> Unit
+                }
+            }
+            Job::class.java -> synchronized(this) {
+                if (jobListener != null) {
+                    throw IllegalStateException("Replacing already present listener: $id, $messageClass")
+                } else {
+                    jobListener = onTask as (Job<IDNode, RectangleColors>) -> Unit
+                }
+            }
+            else -> throw IllegalArgumentException("This communicator can't send classes of type: $messageClass")
         }
     }
 
     override fun removeListener(messageClass: Class<*>) {
-        synchronized(listeners) {
-            logger.lFine { "Remove listener: $messageClass" }
-            listeners.remove(messageClass) ?: throw IllegalStateException("Removing non existent listener: $id, $messageClass")
+        logger.lFine { "Remove listener: $messageClass" }
+        when (messageClass) {
+            Token::class.java -> synchronized(this) {
+                if (tokenListener == null) {
+                    throw IllegalStateException("Removing non existent listener: $id, $messageClass")
+                } else tokenListener = null
+            }
+            Job::class.java -> synchronized(this) {
+                if (jobListener == null) {
+                    throw IllegalStateException("Removing non existent listener: $id, $messageClass")
+                } else jobListener = null
+            }
+            else -> throw IllegalStateException("Removing non existent listener: $id, $messageClass")
         }
     }
 
@@ -131,9 +148,10 @@ class MPJCommunicator(
     }
 
     override fun close() {
-        synchronized(listeners) {
-            if (listeners.isNotEmpty())
-                throw IllegalStateException("Someone is still listening! $listeners")
+        synchronized(this) {
+            if (tokenListener != null || jobListener != null) {
+                throw IllegalStateException("Someone is still listening! $tokenListener $jobListener")
+            }
         }
         outCommandBuffer[0] = TERMINATE
         outCommandBuffer[1] = id

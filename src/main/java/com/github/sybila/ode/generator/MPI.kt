@@ -14,6 +14,9 @@ enum class Type {
         }
     }
 }
+
+val ANY_SOURCE = -2
+
 /**
  * We need this primarily for testing.
  */
@@ -34,7 +37,13 @@ interface AbstractComm {
 class MPJComm(val comm: Comm) : AbstractComm {
 
     override fun receive(buffer: Any, offset: Int, size: Int, dataType: Type, source: Int, tag: Int) {
-        comm.Recv(buffer, offset, size, dataType.getMPJType(), source, tag)
+        comm.Recv(
+                buffer,
+                offset,
+                size,
+                dataType.getMPJType(),
+                if (source == ANY_SOURCE) MPI.ANY_SOURCE else source,
+                tag)
     }
 
     override fun send(buffer: Any, offset: Int, size: Int, dataType: Type, destination: Int, tag: Int) {
