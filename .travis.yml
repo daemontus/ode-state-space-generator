@@ -4,10 +4,10 @@ sudo: false
 env:
   global:
     - Z3_DIR=~/z3
+    - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
     - GRADLE_OPTS="-XX:MaxPermSize=3072m"   #Set memory limit for gradle tasks other than tests
 
 install:
-    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
     - if [[ ! -e "$Z3_DIR/build/z3" ]]; then
           rm -rf $Z3_DIR;
           git clone --depth=1 https://github.com/Z3Prover/z3 $Z3_DIR;
