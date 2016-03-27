@@ -26,3 +26,6 @@ after_success:
 cache:
   directories:
     - $Z3_DIR
+
+script:
+  - ./gradlew check --stacktrace
