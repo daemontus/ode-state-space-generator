@@ -4,8 +4,14 @@ import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.PartitionFunction
 import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.Model
+import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import java.util.*
+
+val z3 = Context()
+
+var smtFromGenerator = 0
+var timeInEvaluation = 0L
 
 class SMTOdeFragment(
         model: Model,
@@ -17,11 +23,11 @@ class SMTOdeFragment(
 
     private val paramCount = model.parameters.size
 
-    internal val z3 = Context()
     internal val context = z3.run {
         SMTContext(this,
-                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false),
-                this.mkSolver(),
+                this.mkTactic("ctx-solver-simplify"),
+                this.mkTactic("qflra"),
+                this.mkGoal(false, false, false),
                 timeToSolve,
                 timeToNormalize
         )
@@ -32,14 +38,19 @@ class SMTOdeFragment(
         z3.mkRealConst(it.name)
     }
 
-    override val emptyColors: SMTColors = SMTColors(z3.mkFalse(), context, false)
+    val order = PartialOrderSet(z3, model.parameters)
+
+    val emptyCNF = CNF(setOf(Clause(setOf(), order)), order)
+    val fullCNF = CNF(setOf(), order)
+
+    override val emptyColors: SMTColors = SMTColors(z3.mkFalse(), emptyCNF, context, order, false)
     override val fullColors: SMTColors = if (model.parameters.isEmpty()) {
-        SMTColors(z3.mkTrue(), context, true)
+        SMTColors(z3.mkTrue(), fullCNF, context, order, true)
     } else {
         SMTColors(z3.mkAnd(*model.parameters.flatMap { //* is a conversion to plain java varargs -_-
             val p = z3.mkRealConst(it.name)
             listOf((z3.mkGt(p, z3.mkReal(it.range.first.toString()))), z3.mkLt(p, z3.mkReal(it.range.second.toString())))
-        }.toTypedArray()), context, true)
+        }.toTypedArray()), fullCNF, context, order, true)
     }
 
     private val equationConstants = Array(dimensions) {
@@ -83,33 +94,87 @@ class SMTOdeFragment(
         } else {
             //compute facet
 
-            var formula = z3.mkOr()
+            //since this is an or, transition is active if bool is true or formulas are not empty
+            var transitionActive = false
+            var formulas = ArrayList<BoolExpr>()
 
             for (coordinates in facet(from, dim, upper)) {
                 val vertex = encoder.encodeVertex(coordinates)
+                val start = System.nanoTime()
                 val results = evaluate(dim, coordinates, vertex)
+                timeInEvaluation += System.nanoTime() - start
                 var expression = z3.mkAdd(z3zero)
+                var hasParam = false
                 for (p in 0 until paramCount) {
                     if (results[p] != 0.0) {
+                        hasParam = true
                         expression = z3.mkAdd(expression, z3.mkMul(z3.mkReal(results[p].toString()), z3params[p]))
                     }
                 }
-                //add constant
-                expression = z3.mkAdd(expression, z3.mkReal(results[paramCount].toString()))
+                if (hasParam) {
+                    //add constant
+                    expression = z3.mkAdd(expression, z3.mkReal(results[paramCount].toString()))
 
-                val equation = if ((upper && incoming) || (!upper && !incoming)) {
-                    z3.mkLt(expression, z3zero)
+                    val equation = if ((upper && incoming) || (!upper && !incoming)) {
+                        z3.mkLt(expression, z3zero)
+                    } else {
+                        z3.mkGt(expression, z3zero)
+                    }
+
+                    formulas.add(equation)
                 } else {
-                    z3.mkGt(expression, z3zero)
+                    //This equation is without parameters, so we can eval it to true/false right away
+                    if ((upper && incoming) || (!upper && !incoming)) {
+                        if (results[paramCount] < 0.0) {
+                            transitionActive = true
+                        }
+                    } else {
+                        if (results[paramCount] > 0.0) {
+                            transitionActive = true
+                        }
+                    }
                 }
-
-                formula = z3.mkOr(formula, equation)
             }
 
-            val colors = SMTColors(formula, context, null)
+           // val beforeNormalize = z3.mkOr(*formulas.toTypedArray())
 
-            //force colors to be simplified
-            colors.normalize()
+            //this will remove the most obvious bullshit and simplify the arithmetic expressions
+            /*context.goal.add(beforeNormalize)
+            val start = System.nanoTime()
+            val normalized = context.simplifyTactic.apply(context.goal).subgoals.first().AsBoolExpr()
+            timeInSimplify += System.nanoTime() - start
+            context.goal.reset()
+
+            val colors = if (normalized.isFalse) {   //can't happen
+                emptyColors
+            } else if (normalized.isTrue) {
+                fullColors
+            } else if (normalized.isOr){
+                val relevant = order.addBiggest(normalized.args.map { it as BoolExpr })
+                /*if (relevant.size != normalized.numArgs) {
+                    println("Reduced from $normalized to $relevant")
+                }*/
+                if (relevant.isNotEmpty()) {
+                    SMTColors(z3.mkOr(*relevant.toTypedArray()), CNF(setOf(Clause(relevant.toSet()))), context, order, true)
+                } else emptyColors
+            } else {
+                //it's just one proposition!
+                if (order.add(normalized)) {    //should be always true
+                    SMTColors(normalized, CNF(setOf(Clause(setOf(normalized)))), context, order, true)
+                } else emptyColors
+            }*/
+
+            val relevant = order.addBiggest(formulas)
+            val colors = when {
+                relevant.isEmpty() && transitionActive -> fullColors
+                relevant.isEmpty() && !transitionActive -> emptyColors
+                else -> {
+                    SMTColors(z3.mkOr(*relevant.toTypedArray()), CNF(setOf(Clause(relevant.toSet(), order)), order), context, order, true)
+                }
+            }
+
+            //println("Normalized: $colors")
+            //smtFromGenerator += 1
 
             myFacets[dim][u][i] = colors
 
