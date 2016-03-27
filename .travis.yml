@@ -4,7 +4,6 @@ sudo: false
 env:
   global:
     - Z3_DIR=~/z3
-    - GRADLE_OPTS="-XX:MaxPermSize=1024m"
 
 install:
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
