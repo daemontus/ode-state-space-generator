@@ -4,9 +4,10 @@ sudo: false
 env:
   global:
     - Z3_DIR=~/z3
-    - CLASSPATH=~/z3/build/
 
 install:
+    - export CLASSPATH=$CLASSPATH:$Z3_DIR/build/
+    - export LD_LIBRARY_PATH = $LD_LIBRARY_PATH:$Z3_DIR/build/
     - if [[ ! -e "$Z3_DIR/build/z3" ]]; then
           rm -rf $Z3_DIR;
           git clone --depth=1 https://github.com/Z3Prover/z3 $Z3_DIR;

@@ -7,7 +7,7 @@ import kotlin.test.assertTrue
 class SMTColorsTest {
 
     init {
-        println("Current classpath: ${System.getProperty("java.class.path")}")
+        println("Current library: ${System.getProperty("java.library.path")}")
     }
 
     private val z3 = Context()
