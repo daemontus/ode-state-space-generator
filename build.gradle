@@ -125,6 +125,6 @@ buildStamp {
 
 //travis has some strict RAM restrictions, can't afford to exceed this
 tasks.withType(Test) {
-    maxHeapSize = "1024m"
-    jvmArgs "-Xmx1024m"
+    maxHeapSize = "3072m"
+    jvmArgs "-Xmx3072m"
 }
