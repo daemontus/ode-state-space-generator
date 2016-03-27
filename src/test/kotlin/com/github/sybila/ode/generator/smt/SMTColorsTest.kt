@@ -6,6 +6,10 @@ import kotlin.test.assertTrue
 
 class SMTColorsTest {
 
+    init {
+        println("Current classpath: ${System.getProperty("java.class.path")}")
+    }
+
     private val z3 = Context()
     private val context = z3.run {
         SMTContext(this,
