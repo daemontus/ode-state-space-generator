@@ -4,6 +4,7 @@ sudo: false
 env:
   global:
     - Z3_DIR=~/z3
+    - GRADLE_OPTS="-XX:MaxPermSize=3072m"   #Set memory limit for gradle tasks other than tests
 
 install:
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
@@ -26,6 +27,3 @@ after_success:
 cache:
   directories:
     - $Z3_DIR
-
-script:
-  - ./gradlew check --stacktrace

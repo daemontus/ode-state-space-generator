@@ -123,8 +123,8 @@ buildStamp {
     packageName "com.github.sybila.ode"
 }
 
-//travis has some strict RAM restrictions, can't afford to exceed this
+//set memory limit for tests - travis has some strict RAM restrictions, can't afford to exceed this
 tasks.withType(Test) {
     maxHeapSize = "3072m"
-    jvmArgs "-Xmx3072m", "-XX:MaxPermSize=1024m"
+    jvmArgs "-Xmx3072m"
 }
