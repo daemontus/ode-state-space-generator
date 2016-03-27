@@ -6,7 +6,6 @@ env:
     - Z3_DIR=~/z3
 
 install:
-    - export CLASSPATH=$CLASSPATH:$Z3_DIR/build/
     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
     - if [[ ! -e "$Z3_DIR/build/z3" ]]; then
           rm -rf $Z3_DIR;
@@ -27,6 +26,3 @@ after_success:
 cache:
   directories:
     - $Z3_DIR
-
-script:
-    - ./gradlew check -i
