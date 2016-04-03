@@ -1,7 +1,8 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.partitioning
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.PartitionFunction
+import com.github.sybila.ode.generator.NodeEncoder
 
 
 /**
@@ -17,10 +18,10 @@ import com.github.sybila.checker.PartitionFunction
  * The efficiency of such partitioning depends a lot on on the block size. Too big and you basically end up with
  * slice partitioning, too small and you have a not very good inefficient hash.
  */
-class ChequerPartitioning(
+class BlockPartitioning(
         override val myId: Int,
         private val workerCount: Int,
-        private val rectangleSize: Int,
+        private val blockSize: Int,
         private val encoder: NodeEncoder
 ) : PartitionFunction<IDNode> {
 
@@ -33,7 +34,7 @@ class ChequerPartitioning(
         } else {
             var sum = 0
             for (d in 0 until encoder.dimensions) {
-                sum += encoder.coordinate(this, d) / rectangleSize
+                sum += encoder.coordinate(this, d) / blockSize
             }
             val newP = sum % workerCount
             partitionCache[this.id] = newP

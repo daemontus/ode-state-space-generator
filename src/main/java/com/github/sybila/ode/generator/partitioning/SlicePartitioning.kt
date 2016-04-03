@@ -1,7 +1,8 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.partitioning
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.PartitionFunction
+import com.github.sybila.ode.generator.NodeEncoder
 
 
 /**
