@@ -1,5 +1,8 @@
 package com.github.sybila.ode.generator
 
+import com.github.daemontus.egholm.logger.lFine
+import com.github.daemontus.egholm.logger.lFinest
+import com.github.daemontus.egholm.thread.GuardedThread
 import com.github.daemontus.jafra.Token
 import com.github.sybila.checker.*
 import com.github.sybila.ode.generator.rect.Rectangle
@@ -29,6 +32,11 @@ class MPJCommunicator(
         private var jobListener: ((Job<IDNode, RectangleColors>) -> Unit)? = null
 ) : Communicator {
 
+    override var receiveCount: Long = 0L
+    override var receiveSize: Long = 0L
+    override var sendCount: Long = 0L
+    override var sendSize: Long = 0L
+
     //Command message structure:
     //Token: TOKEN | SENDER | FLAG | COUNT | UNDEFINED
     //Job: JOB | SENDER | SOURCE_ID | TARGET_ID | RECTANGLE_COUNT
@@ -43,6 +51,8 @@ class MPJCommunicator(
     private val mpiListener = GuardedThread() {
         logger.lFinest { "Waiting for message..." }
         comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, ANY_SOURCE, COMMAND_TAG)
+        receiveCount += 1
+        receiveSize += inCommandBuffer.size
         logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         while (inCommandBuffer[0] != TERMINATE) {
             if (inCommandBuffer[0] == TOKEN) {
@@ -56,17 +66,22 @@ class MPJCommunicator(
             }
             logger.lFinest { "Waiting for message..." }
             comm.receive(inCommandBuffer, 0, inCommandBuffer.size, Type.INT, ANY_SOURCE, 0)
+            receiveCount += 1
+            receiveSize += inCommandBuffer.size
             logger.lFinest { "Got message, type: ${inCommandBuffer[0]}..." }
         }
     }.apply { this.thread.start() }
 
     private fun receiveColors(sender: Int, rectangleCount: Int): RectangleColors {
-        while (rectangleCount * rectangleSize > inDataBuffer.size) { //increase buffer size if needed
+        val size = rectangleCount * rectangleSize
+        while (size > inDataBuffer.size) { //increase buffer size if needed
             inDataBuffer = DoubleArray(inDataBuffer.size * 2)
         }
         //we need sender to ensure we don't mix data and commands from different senders
         logger.lFinest { "Waiting to receive colors..." }
-        comm.receive(inDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, sender, DATA_TAG)
+        comm.receive(inDataBuffer, 0, size, Type.DOUBLE, sender, DATA_TAG)
+        receiveCount += 1
+        receiveSize += size
         logger.lFinest { "Colors received." }
         val rectangles = HashSet<Rectangle>()
         for (rectangle in 0 until rectangleCount) {
@@ -124,6 +139,8 @@ class MPJCommunicator(
             token.serialize(outCommandBuffer)
             logger.lFinest { "Sending token" }
             comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
+            sendCount += 1
+            sendSize += outCommandBuffer.size
         } else if (message.javaClass == Job::class.java) {
             //send command info
             @Suppress("UNCHECKED_CAST") //It's ok, this won't be used outside this module!
@@ -131,6 +148,8 @@ class MPJCommunicator(
             job.serialize(outCommandBuffer)
             logger.lFinest { "Sending job info" }
             comm.send(outCommandBuffer, 0, outCommandBuffer.size, Type.INT, dest, COMMAND_TAG)
+            sendCount += 1
+            sendSize += outCommandBuffer.size
 
             //ensure data buffer capacity
             val rectangleCount = job.colors.rectangleCount()
@@ -141,7 +160,10 @@ class MPJCommunicator(
             //send color data
             job.colors.serialize(outDataBuffer)
             logger.lFinest { "Sending colors" }
-            comm.send(outDataBuffer, 0, rectangleCount * rectangleSize, Type.DOUBLE, dest, DATA_TAG)
+            val size = rectangleSize * rectangleCount
+            comm.send(outDataBuffer, 0, size, Type.DOUBLE, dest, DATA_TAG)
+            sendCount += 1
+            sendSize += size
         } else {
             throw IllegalArgumentException("Cannot send message: $message to $dest")
         }
