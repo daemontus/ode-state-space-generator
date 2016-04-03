@@ -4,6 +4,9 @@ import mpi.Comm
 import mpi.Datatype
 import mpi.MPI
 
+/**
+ * We don't want to initialise MPJ during tests, so we can't touch any code in MPJ package.
+ */
 enum class Type {
     INT, DOUBLE;
 

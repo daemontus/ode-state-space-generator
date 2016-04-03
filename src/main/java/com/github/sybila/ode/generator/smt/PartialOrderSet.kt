@@ -2,25 +2,19 @@ package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.ode.model.Model
 import com.microsoft.z3.BoolExpr
-import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 import java.util.*
 
-fun Status.isSat() = this == Status.SATISFIABLE
-fun Status.isUnknown() = this == Status.UNKNOWN
-fun Status.isUnsat() = this == Status.UNSATISFIABLE
-
-var timeToOrder = 0L
-
-
-private val unsatCache = HashSet<BoolExpr>()
-private val tautologyCache = HashSet<BoolExpr>()
-
 class PartialOrderSet(
-        private val z3: Context,
         val paramBounds: Array<BoolExpr>,
-        private val logic: String = "qflra"
+        private val logic: String = "qflra",
+        private val unsatCache: MutableSet<BoolExpr> = HashSet<BoolExpr>(),
+        private val tautologyCache: MutableSet<BoolExpr> = HashSet<BoolExpr>()
 ) {
+
+    //nanosecond time spent ordering the set
+    var timeInOrdering = 0L
+    var solverCallsInOrdering = 0L
 
     var size = 0
         private set
@@ -28,52 +22,42 @@ class PartialOrderSet(
     val width: Int
         get() = chains.size
 
-    fun String.toConst(z3: Context) = z3.mkRealConst(this)
-    fun Double.toReal(z3: Context) = z3.mkReal(this.toString())
-    fun BoolExpr.not() = z3.mkNot(this)
-
     constructor(
-            z3: Context, params: List<Model.Parameter>, logic: String = "qflra"
-    ) : this(z3, if (params.isEmpty()) Array<BoolExpr>(1) { z3.mkTrue() } else {
+            params: List<Model.Parameter>, logic: String = "qflra"
+    ) : this(if (params.isEmpty()) Array<BoolExpr>(1) { z3True } else {
         params.flatMap {
-            val p = z3.mkRealConst(it.name)
-            listOf(z3.mkGt(p, z3.mkReal(it.range.first.toString())), z3.mkLt(p, z3.mkReal(it.range.second.toString())))
+            val p = it.name.toZ3()
+            listOf(p gt it.range.first.toZ3(), p lt it.range.second.toZ3())
         }.toTypedArray()
     }, logic)
 
 
     //initialize solver with requested logic and parameter bounds
-    private val solver = z3.mkSolver(z3.mkTactic(logic)).apply {
-        this.add(*paramBounds)
+    val solver = z3.mkSolver(z3.mkTactic(logic)).apply {
+        this.add(*paramBounds)  //spread array operator
     }
 
-    fun BoolExpr.isSuperSet(other: BoolExpr): Boolean {
+    private fun BoolExpr.isSuperSet(other: BoolExpr): Boolean {
         val start = System.nanoTime()
         val result = solver.check(other, this.not()).isUnsat()
-        timeToOrder += System.nanoTime() - start
-        //println("Is $this superset of $other? $result")
+        timeInOrdering += System.nanoTime() - start
+        solverCallsInOrdering += 1
         return result
     }
 
+    //chains of equations, sorted from smallest (false) to biggest (true)
     private val chains = ArrayList<MutableList<BoolExpr>>()
 
+    //mapping from equations to their respective chains
     private val equations = HashMap<BoolExpr, List<BoolExpr>>()
 
-    init {
-
-    }
-
+    /**
+     * Return the bigger one of the arguments. If arguments are incomparable, returns null.
+     * If they are semantically equal, there is no guarantee on what will be returned.
+     * It will throw an exception if one of the arguments is not in the set.
+     */
     fun bigger(e1: BoolExpr, e2: BoolExpr): BoolExpr? {
         if (e1 == e2) return null
-       // println("compare")
-        //if (e1 !in equations) {
-          //  val r = add(e1)
-         //   println("Add e1: $r")
-        //}
-        //if (e2 !in equations) {
-          //  val r =add(e2)
-           // println("Add e2: $r")
-        //}
         if (e1 in tautologyCache) return e1
         if (e2 in tautologyCache) return e2
         if (e1 in unsatCache) return e2
@@ -81,7 +65,7 @@ class PartialOrderSet(
         if (equations[e1] !== equations[e2]) {  //Yes, we want a reference equivalence
             return null    //can't compare
         }
-        val chain = equations[e1] ?: equations[e2] ?: throw IllegalStateException("Problem in $e1 and $e2")
+        val chain = equations[e1] ?: equations[e2] ?: throw IllegalStateException("Problem comparing $e1 and $e2")
         if (chain.indexOf(e1) < chain.indexOf(e2)) {
             return e2
         } else {
@@ -92,7 +76,7 @@ class PartialOrderSet(
     fun contains(e: BoolExpr) = e in equations
 
     /**
-     * Returns true if given equation was added (therefore is satisfiable)
+     * Returns true if given equation was is satisfiable
      */
     fun add(equation: BoolExpr): Boolean  //first, check if equation is satisfiable and fail fast if it is not
     {
@@ -101,7 +85,8 @@ class PartialOrderSet(
         if (equation in tautologyCache) return true
         val start = System.nanoTime()
         val r = solver.check(equation)!!
-        timeToOrder += System.nanoTime() - start
+        solverCallsInOrdering += 1
+        timeInOrdering += System.nanoTime() - start
         return when (r) {
             Status.UNKNOWN -> throw IllegalStateException("Cannot decide this equation: $equation")
             Status.UNSATISFIABLE -> {
@@ -109,7 +94,11 @@ class PartialOrderSet(
                 false
             }
             Status.SATISFIABLE -> {
-                if (solver.check(equation.not()).isUnsat()) {
+                val s = System.nanoTime()
+                val tautology = solver.check(equation.not()).isUnsat()
+                solverCallsInOrdering += 1
+                timeInOrdering += System.nanoTime() - s
+                if (tautology) {
                     //this is a tautology!
                     tautologyCache.add(equation)
                     return true
@@ -130,26 +119,20 @@ class PartialOrderSet(
 
     /**
      * Remove subsets and insert only relevant items. Return these items.
+     * Items must be valid equations, not true/false/etc...
      */
     fun addBiggest(items: List<BoolExpr>): List<BoolExpr> {
         if (items.isEmpty()) return items
-        val set = PartialOrderSet(z3, paramBounds, logic)
-        var hasTrue = false
+        val set = PartialOrderSet(paramBounds, logic, unsatCache, tautologyCache)
         for (i in items) {
-            if (i.isTrue) {
-                hasTrue = true
-            } else if (i.isFalse) {
-                //nothing
-            } else {
-                set.add(i)
-            }
+            set.add(i)
         }
         //return items
         val results = set.chains.map { it.last() }
         for (r in results) {
             add(r)
         }
-        return if(hasTrue && results.size == 0) listOf(z3.mkTrue()) else results
+        return results
     }
 
     private fun tryInsert(equation: BoolExpr, chain: MutableList<BoolExpr>): Boolean {
@@ -165,7 +148,7 @@ class PartialOrderSet(
                 low = mid + 1
             } else if(midVal.isSuperSet(equation)) { //midVal < equation
                 high = mid - 1
-            } else {    //incomparable (remember, they can't be equal!)
+            } else {    //incomparable
                 return false
             }
         }
@@ -173,7 +156,6 @@ class PartialOrderSet(
         //especially an element before and above us.
         //And since partial order is transitive, that means we are comparable to entire chain.
         val insertIndex = low
-        //println("Low: $low")
         if (insertIndex >= chain.size) {
             chain.add(equation)
         } else {
