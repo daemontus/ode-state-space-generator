@@ -4,21 +4,13 @@ import com.github.daemontus.egholm.logger.lFine
 import com.github.daemontus.egholm.logger.lFinest
 import com.github.daemontus.egholm.thread.GuardedThread
 import com.github.daemontus.jafra.Token
-import com.github.sybila.checker.*
-import com.github.sybila.ode.generator.AbstractComm
-import com.github.sybila.ode.generator.Type
-import com.github.sybila.ode.generator.rect.Rectangle
-import com.github.sybila.ode.generator.rect.RectangleColors
+import com.github.sybila.checker.Communicator
+import com.github.sybila.checker.IDNode
+import com.github.sybila.checker.Job
+import com.github.sybila.ode.generator.*
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
-
-internal val COMMAND_TAG = 0;
-internal val DATA_TAG = 1;
-
-internal val TOKEN = 1;
-internal val JOB = 2;
-internal val TERMINATE = 3;
 
 //you can initialize the communicator with listeners, otherwise it's not safe, because you can't
 //make sure you register a listener before you receive messages

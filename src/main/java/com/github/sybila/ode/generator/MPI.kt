@@ -4,6 +4,14 @@ import mpi.Comm
 import mpi.Datatype
 import mpi.MPI
 
+
+internal val COMMAND_TAG = 0;
+internal val DATA_TAG = 1;
+
+internal val TOKEN = 1;
+internal val JOB = 2;
+internal val TERMINATE = 3;
+
 /**
  * We don't want to initialise MPJ during tests, so we can't touch any code in MPJ package.
  */
