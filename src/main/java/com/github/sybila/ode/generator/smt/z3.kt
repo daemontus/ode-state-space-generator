@@ -193,7 +193,14 @@ class Clause(
 
     infix fun and(other: Clause): CNF = CNF(setOf(this, other), order)
 
-    fun not(): CNF = CNF(literals.map { Clause(setOf(z3.mkNot(it).simplify() as BoolExpr), order, true) }.toSet(), order, true)
+    fun not(): CNF = CNF(literals.map {
+        try {
+            Clause(setOf(z3.mkNot(it).simplify() as BoolExpr), order, true)
+        } catch (e: Exception) {
+            println("Problem simplifying $it as ${z3.mkNot(it)}")
+            throw e
+        }
+    }.toSet(), order, true)
 
     fun simplify(): Clause? {
         if (simplified) return this
