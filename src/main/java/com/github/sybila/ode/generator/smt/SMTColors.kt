@@ -1,59 +1,50 @@
 package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.checker.Colors
-import com.microsoft.z3.*
+import java.util.*
 
-class SMTContext(
-        val ctx: Context,
-        val tactic: Tactic,
-        val goal: Goal
-)
+var solverCalls = 0
+var timeInSolver = 0L
+val solverCache = HashMap<CNF, Boolean>()
+var solverCacheHit = 0
+
 
 class SMTColors(
-        private var formula: BoolExpr,
-        private val context: SMTContext,
+        val cnf: CNF,
+        private val order: PartialOrderSet,
         private var sat: Boolean? = null
 ) : Colors<SMTColors> {
 
-    override fun intersect(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, other.formula), context, sat weakAnd other.sat)
-    }
-
     override fun isEmpty(): Boolean {
-        return (sat ?: run {
-            normalize()
-            sat!!
+        return (sat ?: solverCache[cnf].apply { solverCacheHit += 1 } ?: run {
+            solve()
+            sat ?: true
         }).not() //un-sat ~ empty
     }
 
-    fun normalize(): SMTColors {
-        context.goal.add(formula)
-        val result = context.tactic.apply(context.goal).subgoals
-        assert(result.size == 1)
-        formula = result[0].AsBoolExpr()
-        sat = !formula.isFalse
-        context.goal.reset()
-        return this
+    fun solve() {
+        if (sat == null) {
+            val start = System.nanoTime()
+            sat = order.solver.check(cnf.asFormula()).isSat()
+            timeInSolver += System.nanoTime() - start
+            solverCalls += 1
+            solverCache[cnf] = sat ?: true
+        }
     }
 
     override fun minus(other: SMTColors): SMTColors {
-        return SMTColors(mkAnd(formula, mkNot(other.formula)), context, sat weakMinus other.sat)
+        val new = cnf.and(other.cnf.not()).simplify()
+        return SMTColors(new, order, sat weakMinus other.sat)
     }
 
     override fun plus(other: SMTColors): SMTColors {
-        return SMTColors(mkOr(formula, other.formula), context, sat weakOr other.sat)
+        val new = cnf.or(other.cnf).simplify()
+        return SMTColors(new, order, sat weakOr other.sat)
     }
 
-    private fun mkAnd(f1: BoolExpr, f2: BoolExpr): BoolExpr {
-        return context.ctx.mkAnd(f1, f2)
-    }
-
-    private fun mkOr(f1: BoolExpr, f2: BoolExpr): BoolExpr {
-        return context.ctx.mkOr(f1, f2)
-    }
-
-    private fun mkNot(f1: BoolExpr): BoolExpr {
-        return context.ctx.mkNot(f1)
+    override fun intersect(other: SMTColors): SMTColors {
+        val new = cnf.and(other.cnf).simplify()
+        return SMTColors(new, order, sat weakAnd other.sat)
     }
 
     private infix fun Boolean?.weakAnd(other: Boolean?): Boolean? = when {
@@ -73,17 +64,40 @@ class SMTColors(
     }
 
     override fun toString(): String{
-        return "SMTColors(sat=$sat, formula=$formula)"
+        return "SMTColors(sat=$sat, cnf=$cnf)"
     }
 
     override fun equals(other: Any?): Boolean {
         if (other !is SMTColors) return false
-        if (this.context != other.context) return false
-        return formula.equals(other.formula)
+        return cnf.equals(other.cnf)
     }
 
     override fun hashCode(): Int {
-        return this.context.hashCode() * 31 + formula.hashCode()
+        return cnf.hashCode()
     }
 
+    fun calculateBufferSize(): Int {
+        return 1 + cnf.calculateBufferSize()
+    }
+
+    fun serialize(buffer: LongArray) {
+        buffer[0] = when (sat) {
+            true -> 1
+            false -> -1
+            null -> 0
+        }
+        cnf.serialize(buffer, 1)
+    }
+
+}
+
+
+fun LongArray.readSMTColors(order: PartialOrderSet): SMTColors {
+    val sat = when(this[0]) {
+        0L -> null
+        1L -> true
+        -1L -> false
+        else -> throw IllegalStateException("Unknown value: ${this[0]}")
+    }
+    return SMTColors(this.readCNF(1, order), order, sat)
 }
