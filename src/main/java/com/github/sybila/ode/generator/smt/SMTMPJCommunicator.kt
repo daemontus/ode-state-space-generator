@@ -13,12 +13,12 @@ import java.util.logging.Logger
 
 //you can initialize the communicator with listeners, otherwise it's not safe, because you can't
 //make sure you register a listener before you receive messages
-class RectangleMPJCommunicator(
+class SMTMPJCommunicator(
         override val id: Int,
         override val size: Int,
         private val order: PartialOrderSet,
         private val comm: AbstractComm,
-        private val logger: Logger = Logger.getLogger(RectangleMPJCommunicator::class.java.canonicalName).apply {
+        private val logger: Logger = Logger.getLogger(SMTMPJCommunicator::class.java.canonicalName).apply {
             this.level = Level.OFF
         },
         private var tokenListener: ((Token) -> Unit)? = null,
@@ -69,7 +69,7 @@ class RectangleMPJCommunicator(
         }
         //we need sender to ensure we don't mix data and commands from different senders
         logger.lFinest { "Waiting to receive colors..." }
-        comm.receive(inDataBuffer, 0, bufferSize, Type.DOUBLE, sender, DATA_TAG)
+        comm.receive(inDataBuffer, 0, bufferSize, Type.LONG, sender, DATA_TAG)
         receiveCount += 1
         receiveSize += size
         logger.lFinest { "Colors received." }
