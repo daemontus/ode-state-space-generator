@@ -116,6 +116,7 @@ class SMTOdeFragment(
 
             val relevant = order.addBiggest(formulas)
             val colors = when {
+                relevant == null -> fullColors
                 relevant.isEmpty() && transitionActive -> fullColors
                 relevant.isEmpty() && !transitionActive -> emptyColors
                 else -> {

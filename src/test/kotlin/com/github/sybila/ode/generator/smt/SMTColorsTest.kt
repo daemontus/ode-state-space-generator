@@ -1,31 +1,25 @@
 package com.github.sybila.ode.generator.smt
 
-import com.microsoft.z3.Context
+import com.microsoft.z3.BoolExpr
 import org.junit.Test
 import kotlin.test.assertTrue
 
 class SMTColorsTest {
 
-    private val z3 = Context()
-    private val context = z3.run {
-        SMTContext(this,
-                this.mkTactic("ctx-solver-simplify"), this.mkGoal(false, false, false),
-                this.mkSolver(),
-                -1,
-                -1
-        )
-    }
+    private val order = PartialOrderSet(listOf())
 
-    private val tt = SMTColors(z3.mkTrue(), context)
-    private val ff = SMTColors(z3.mkFalse(), context)
-    private val x = z3.mkRealConst("x")
-    private val three = z3.mkReal(3)
-    private val two = z3.mkReal(2)
+    fun BoolExpr.toColors() = SMTColors(CNF(setOf(Clause(setOf(this), order)), order), order)
 
-    private val gt3 = SMTColors(z3.mkGt(x, three), context)
-    private val gt2 = SMTColors(z3.mkGt(x, two), context)
-    private val lt3 = SMTColors(z3.mkLt(x, three), context)
-    private val lt2 = SMTColors(z3.mkLt(x, two), context)
+    private val tt = SMTColors(CNF(setOf(), order), order)
+    private val ff = SMTColors(CNF(setOf(Clause(setOf(), order)), order), order)
+    private val x = "x".toZ3()
+    private val three = 3.toZ3()
+    private val two = 2.toZ3()
+
+    private val gt3 = (x gt three).toColors()
+    private val gt2 = (x gt two).toColors()
+    private val lt3 = (x lt three).toColors()
+    private val lt2 = (x lt two).toColors()
 
     @Test
     fun isEmptyTest() {

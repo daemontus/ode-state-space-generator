@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.rect
+package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.checker.IDNode
 import com.github.sybila.checker.UniformPartitionFunction
@@ -6,16 +6,20 @@ import com.github.sybila.ode.model.Parser
 import com.github.sybila.ode.model.computeApproximation
 import java.io.File
 
+
 /**
  * Use this main to regenerate integration tests.
  */
 fun main(args: Array<String>) {
-    val name = "model_31_reduced"
-    val writer = File("models/$name.transitions.txt").outputStream().bufferedWriter()
+    val name = "tcbb"//"model_31_reduced"
+    val writer = File("models/$name.transitions.smt.txt").outputStream().bufferedWriter()
     val model = Parser().parse(File("models/$name.bio")).computeApproximation()
-    val fragment = RectangleOdeFragment(model, UniformPartitionFunction<IDNode>())
+    val fragment = SMTOdeFragment(model, UniformPartitionFunction<IDNode>())
     val sortedNodes = fragment.allNodes().entries.toList().sortedBy { it.key.id }
+    var i = 0
     for (node in sortedNodes) {
+        i += 1
+        println("Done: $i/${sortedNodes.size}")
         writer.write("Successors for ${node.key}:\n")
         for (successor in fragment.successors.invoke(node.key).entries.toList().sortedBy { it.key.id }) {
             writer.write("\t${successor.key} - ${successor.value}\n")

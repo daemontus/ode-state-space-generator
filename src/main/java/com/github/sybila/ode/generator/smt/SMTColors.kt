@@ -28,7 +28,6 @@ class SMTColors(
             sat = order.solver.check(cnf.asFormula()).isSat()
             timeInSolver += System.nanoTime() - start
             solverCalls += 1
-            if (solverCalls % 100 == 0) println("Calls $solverCalls")
             solverCache[cnf] = sat ?: true
         }
     }

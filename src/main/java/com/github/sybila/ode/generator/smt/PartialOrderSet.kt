@@ -5,16 +5,16 @@ import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Status
 import java.util.*
 
+//nanosecond time spent ordering the set
+var timeInOrdering = 0L
+var solverCallsInOrdering = 0L
+
 class PartialOrderSet(
         val paramBounds: Array<BoolExpr>,
         private val logic: String = "qflra",
         private val unsatCache: MutableSet<BoolExpr> = HashSet<BoolExpr>(),
         private val tautologyCache: MutableSet<BoolExpr> = HashSet<BoolExpr>()
 ) {
-
-    //nanosecond time spent ordering the set
-    var timeInOrdering = 0L
-    var solverCallsInOrdering = 0L
 
     var size = 0
         private set
@@ -120,12 +120,16 @@ class PartialOrderSet(
     /**
      * Remove subsets and insert only relevant items. Return these items.
      * Items must be valid equations, not true/false/etc...
+     * Returns empty list if all items are unsatisfiable and null if list contains a tautology.
      */
-    fun addBiggest(items: List<BoolExpr>): List<BoolExpr> {
+    fun addBiggest(items: List<BoolExpr>): List<BoolExpr>? {
         if (items.isEmpty()) return items
         val set = PartialOrderSet(paramBounds, logic, unsatCache, tautologyCache)
         for (i in items) {
             set.add(i)
+            if (i in tautologyCache) {
+                return null
+            }
         }
         //return items
         val results = set.chains.map { it.last() }
