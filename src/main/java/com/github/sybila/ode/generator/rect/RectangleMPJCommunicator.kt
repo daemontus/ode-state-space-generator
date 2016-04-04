@@ -1,10 +1,12 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.rect
 
 import com.github.daemontus.egholm.logger.lFine
 import com.github.daemontus.egholm.logger.lFinest
 import com.github.daemontus.egholm.thread.GuardedThread
 import com.github.daemontus.jafra.Token
 import com.github.sybila.checker.*
+import com.github.sybila.ode.generator.AbstractComm
+import com.github.sybila.ode.generator.Type
 import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.RectangleColors
 import java.util.*
@@ -20,12 +22,12 @@ internal val TERMINATE = 3;
 
 //you can initialize the communicator with listeners, otherwise it's not safe, because you can't
 //make sure you register a listener before you receive messages
-class MPJCommunicator(
+class RectangleMPJCommunicator(
         override val id: Int,
         override val size: Int,
         parameterCount: Int,
         private val comm: AbstractComm,
-        private val logger: Logger = Logger.getLogger(MPJCommunicator::class.java.canonicalName).apply {
+        private val logger: Logger = Logger.getLogger(RectangleMPJCommunicator::class.java.canonicalName).apply {
             this.level = Level.OFF
         },
         private var tokenListener: ((Token) -> Unit)? = null,
