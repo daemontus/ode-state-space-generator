@@ -2,6 +2,7 @@ package com.github.sybila.ode.generator.smt
 
 import com.github.sybila.ode.model.Model
 import com.microsoft.z3.BoolExpr
+import com.microsoft.z3.RealExpr
 import com.microsoft.z3.Status
 import java.util.*
 
@@ -11,6 +12,7 @@ var solverCallsInOrdering = 0L
 
 class PartialOrderSet(
         val paramBounds: Array<BoolExpr>,
+        val params: List<RealExpr>,
         private val logic: String = "qflra",
         private val unsatCache: MutableSet<BoolExpr> = HashSet<BoolExpr>(),
         private val tautologyCache: MutableSet<BoolExpr> = HashSet<BoolExpr>()
@@ -29,7 +31,7 @@ class PartialOrderSet(
             val p = it.name.toZ3()
             listOf(p gt it.range.first.toZ3(), p lt it.range.second.toZ3())
         }.toTypedArray()
-    }, logic)
+    }, params.map { it.name.toZ3() }, logic)
 
 
     //initialize solver with requested logic and parameter bounds
@@ -124,7 +126,7 @@ class PartialOrderSet(
      */
     fun addBiggest(items: List<BoolExpr>): List<BoolExpr>? {
         if (items.isEmpty()) return items
-        val set = PartialOrderSet(paramBounds, logic, unsatCache, tautologyCache)
+        val set = PartialOrderSet(paramBounds, params, logic, unsatCache, tautologyCache)
         for (i in items) {
             set.add(i)
             if (i in tautologyCache) {

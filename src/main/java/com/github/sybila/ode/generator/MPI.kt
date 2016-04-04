@@ -16,12 +16,13 @@ internal val TERMINATE = 3;
  * We don't want to initialise MPJ during tests, so we can't touch any code in MPJ package.
  */
 enum class Type {
-    INT, DOUBLE;
+    INT, DOUBLE, LONG;
 
     fun getMPJType(): Datatype {
         return when (this) {
             INT -> MPI.INT
             DOUBLE -> MPI.DOUBLE
+            LONG -> MPI.LONG
         }
     }
 }

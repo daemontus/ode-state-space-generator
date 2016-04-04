@@ -76,4 +76,28 @@ class SMTColors(
         return cnf.hashCode()
     }
 
+    fun calculateBufferSize(): Int {
+        return 1 + cnf.calculateBufferSize()
+    }
+
+    fun serialize(buffer: LongArray) {
+        buffer[0] = when (sat) {
+            true -> 1
+            false -> -1
+            null -> 0
+        }
+        cnf.serialize(buffer, 1)
+    }
+
+}
+
+
+fun LongArray.readSMTColors(order: PartialOrderSet): SMTColors {
+    val sat = when(this[0]) {
+        0L -> null
+        1L -> true
+        -1L -> false
+        else -> throw IllegalStateException("Unknown value: ${this[0]}")
+    }
+    return SMTColors(this.readCNF(1, order), order, sat)
 }
