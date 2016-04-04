@@ -89,8 +89,8 @@ fun ArithExpr.serialize(buffer: LongArray, start: Int, params: List<RealExpr>): 
         this.isRatNum -> {
             var r = this as RatNum
             buffer[start] = 0
-            buffer[start+1] = r.bigIntNumerator.longValueExact()
-            buffer[start+2] = r.bigIntDenominator.longValueExact()
+            buffer[start+1] = r.bigIntNumerator.toLong()
+            buffer[start+2] = r.bigIntDenominator.toLong()
             start + 3
         }
         this.isReal -> {
