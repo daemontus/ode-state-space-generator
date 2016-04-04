@@ -284,6 +284,7 @@ class CNF(
             return simplifyCache[this]!!
         }
         if (simplified) return this
+        simplifyCalls += 1
         val start = System.nanoTime()
         val simplified = clauses.map { it.simplify() }.filterNotNull()
         val working = simplified.toMutableList()
