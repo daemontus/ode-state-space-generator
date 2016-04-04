@@ -195,7 +195,7 @@ class Clause(
 
     fun not(): CNF = CNF(literals.map {
         try {
-            Clause(setOf(z3.mkNot(it).simplify() as BoolExpr), order, true)
+            Clause(setOf(if (it.isNot) it.args[0] as BoolExpr else z3.mkNot(it)/*.simplify() as BoolExpr*/), order, true)
         } catch (e: Exception) {
             println("Problem simplifying $it as ${z3.mkNot(it)}")
             throw e
