@@ -11,7 +11,8 @@ import java.util.*
 class SMTOdeFragment(
         model: Model,
         partitioning: PartitionFunction<IDNode>,
-        createSelfLoops: Boolean = true
+        createSelfLoops: Boolean = true,
+        val order: PartialOrderSet = PartialOrderSet(model.parameters)
 ) : AbstractOdeFragment<SMTColors>(model, partitioning, createSelfLoops) {
 
     private val paramCount = model.parameters.size
@@ -20,8 +21,6 @@ class SMTOdeFragment(
     internal val z3params = model.parameters.map {
         z3.mkRealConst(it.name)
     }
-
-    val order = PartialOrderSet(model.parameters)
 
     val emptyCNF = CNF(setOf(Clause(setOf(), order)), order)
     val fullCNF = CNF(setOf(), order)

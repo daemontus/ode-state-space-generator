@@ -1,6 +1,7 @@
 package com.github.sybila.ode.generator.smt
 
 import com.microsoft.z3.*
+import java.io.Serializable
 import java.util.*
 
 //Z3 doesn't support any parallelism or anything, so we might as well just make it all static...

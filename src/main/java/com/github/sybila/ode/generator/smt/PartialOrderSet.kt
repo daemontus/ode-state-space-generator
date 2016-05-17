@@ -4,6 +4,7 @@ import com.github.sybila.ode.model.Model
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.RealExpr
 import com.microsoft.z3.Status
+import java.io.*
 import java.util.*
 
 //nanosecond time spent ordering the set
@@ -24,16 +25,6 @@ class PartialOrderSet(
     val width: Int
         get() = chains.size
 
-    constructor(
-            params: List<Model.Parameter>, logic: String = "qflra"
-    ) : this(if (params.isEmpty()) Array<BoolExpr>(1) { z3True } else {
-        params.flatMap {
-            val p = it.name.toZ3()
-            listOf(p gt it.range.first.toZ3(), p lt it.range.second.toZ3())
-        }.toTypedArray()
-    }, params.map { it.name.toZ3() }, logic)
-
-
     //initialize solver with requested logic and parameter bounds
     val solver = z3.mkSolver(z3.mkTactic(logic)).apply {
         this.add(*paramBounds)  //spread array operator
@@ -52,6 +43,81 @@ class PartialOrderSet(
 
     //mapping from equations to their respective chains
     private val equations = HashMap<BoolExpr, List<BoolExpr>>()
+
+    constructor(
+            params: List<Model.Parameter>, logic: String = "qflra"
+    ) : this(if (params.isEmpty()) Array<BoolExpr>(1) { z3True } else {
+        params.flatMap {
+            val p = it.name.toZ3()
+            listOf(p gt it.range.first.toZ3(), p lt it.range.second.toZ3())
+        }.toTypedArray()
+    }, params.map { it.name.toZ3() }, logic)
+
+    constructor(
+            params: List<Model.Parameter>, logic: String = "qflra",
+            chainFile: File, tautologyFile: File, unsatFile: File
+    ) : this(params, logic) {
+
+        ObjectInputStream(chainFile.inputStream()).use { stream ->
+            var count = stream.readInt()
+            repeat(count) {
+                var serialized = stream.readObject() as Array<LongArray>
+                val chain = serialized.map {
+                    it.readBoolExpr(0, this.params).first
+                }.toMutableList()
+                chain.forEach { equations[it] = chain }
+                chains.add(chain)
+            }
+        }
+
+        ObjectInputStream(tautologyFile.inputStream()).use { stream ->
+            var serialized = stream.readObject() as Array<LongArray>
+            tautologyCache.addAll(serialized.map {
+                it.readBoolExpr(0, this.params).first
+            })
+        }
+
+        ObjectInputStream(unsatFile.inputStream()).use { stream ->
+            var serialized = stream.readObject() as Array<LongArray>
+            unsatCache.addAll(serialized.map {
+                it.readBoolExpr(0, this.params).first
+            })
+        }
+
+    }
+
+    fun serialize(chainFile: File, tautologyFile: File, unsatFile: File) {
+        ObjectOutputStream(chainFile.outputStream()).use { stream ->
+            stream.writeInt(chains.size)
+            chains.forEach { chain ->
+                val serialized: Array<LongArray> = chain.map {
+                    val size = it.calculateBufferSize()
+                    val array = LongArray(size)
+                    it.serialize(array, 0, params)
+                    array
+                }.toTypedArray()
+                stream.writeObject(serialized)
+            }
+        }
+        ObjectOutputStream(tautologyFile.outputStream()).use { stream ->
+            val serialized: Array<LongArray> = tautologyCache.map {
+                val size = it.calculateBufferSize()
+                val array = LongArray(size)
+                it.serialize(array, 0, params)
+                array
+            }.toTypedArray()
+            stream.writeObject(serialized)
+        }
+        ObjectOutputStream(unsatFile.outputStream()).use { stream ->
+            val serialized: Array<LongArray> = unsatCache.map {
+                val size = it.calculateBufferSize()
+                val array = LongArray(size)
+                it.serialize(array, 0, params)
+                array
+            }.toTypedArray()
+            stream.writeObject(serialized)
+        }
+    }
 
     /**
      * Return the bigger one of the arguments. If arguments are incomparable, returns null.
