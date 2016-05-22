@@ -19,9 +19,9 @@ fun main(args: Array<String>) {
             UName("x"),
             anyDirection, anyDirection
     ))*/
-    val property = UBind("x", UNot(UEX(true, UNot(UAU(
+    val property = UBind("x", UEX(true, UAU(
             true, UProposition(True), UName("x"), anyDirection, anyDirection
-    )), anyDirection)))
+    ), anyDirection))
     /*val property = UExists("s",
             UAnd(UAt("s",
                     UNot(
