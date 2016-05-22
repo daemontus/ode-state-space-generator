@@ -1,6 +1,9 @@
 package com.github.sybila.ode.generator
 
 import com.github.sybila.checker.*
+import com.github.sybila.checker.uctl.DAnd
+import com.github.sybila.checker.uctl.DFormula
+import com.github.sybila.checker.uctl.DNot
 import com.github.sybila.ctl.*
 import com.github.sybila.ode.model.Model
 import java.util.*
@@ -10,10 +13,10 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
         protected val model: Model,
         partitioning: PartitionFunction<IDNode>,
         private val createSelfLoops: Boolean
-) : KripkeFragment<IDNode, C>, PartitionFunction<IDNode> by partitioning {
+) : DirectedKripkeFragment<IDNode, C>, PartitionFunction<IDNode> by partitioning {
 
-    protected  val encoder = NodeEncoder(model)
-    protected  val dimensions = model.variables.size
+    internal val encoder = NodeEncoder(model)
+    internal val dimensions = model.variables.size
 
     abstract val emptyColors: C
     abstract val fullColors: C
@@ -254,4 +257,21 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
         return results.toNodes(emptyColors)
     }
 
+    /** Directions related stuff **/
+    override fun checkTransition(from: IDNode, to: IDNode, formula: DFormula): Boolean {
+        return when (formula) {
+            is com.github.sybila.checker.uctl.Direction -> {
+                if (formula.dimension < 0) {
+                    formula.positive
+                } else if (formula.positive) {
+                    encoder.higherNode(from, formula.dimension) == to
+                } else {
+                    encoder.lowerNode(from, formula.dimension) == to
+                }
+            }
+            is DAnd -> checkTransition(from, to, formula.left) && checkTransition(from, to, formula.right)
+            is DNot -> !checkTransition(from, to, formula.inner)
+            else -> throw IllegalStateException("Unknown direction formula: $formula")
+        }
+    }
 }
