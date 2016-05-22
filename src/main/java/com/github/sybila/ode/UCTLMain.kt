@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
             UName("x"),
             anyDirection, anyDirection
     ))*/
-    val property = UExists("x", UAnd(UAt("x", UEX(true, UAU(
+    val property = UExists("x", UAnd(UAt("x", UAX(true, UAU(
             true, UProposition(True), UName("x"), anyDirection, anyDirection
     ), anyDirection)), UName("x")))
     /*val property = UExists("s",
