@@ -19,9 +19,22 @@ fun main(args: Array<String>) {
             UName("x"),
             anyDirection, anyDirection
     ))*/
-    val property = UBind("x", UEX(true, UAU(
+    val property = UBind("x", UNot(UEX(true, UNot(UAU(
             true, UProposition(True), UName("x"), anyDirection, anyDirection
-    ), anyDirection))
+    )), anyDirection)))
+    /*val property = UExists("s",
+            UAnd(UAt("s",
+                    UNot(
+                            UEU(true,
+                                    UProposition(True),
+                                    UNot(
+                                            UEU(true,
+                                                    UProposition(True),
+                                                    UName("s"),
+                                                    anyDirection, anyDirection)
+                                    ), anyDirection, anyDirection))
+            ), UName("s"))
+    )*/
     val model = Parser().parse(File("models/$name.bio")).computeApproximation(fast = true, cutToRange = true)
 
     println("Normalized formula: $property")

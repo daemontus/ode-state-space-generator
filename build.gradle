@@ -133,3 +133,8 @@ tasks.withType(Test) {
     maxHeapSize = "3072m"
     jvmArgs "-Xmx3072m"
 }
+
+task execute(type:JavaExec) {
+    main = "com.github.sybila.ode.UCTLMainKt"
+    classpath = sourceSets.main.runtimeClasspath
+}
