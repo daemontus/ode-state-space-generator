@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
     ))*/
     val property = UExists("x", UAnd(UAt("x", UEX(true, UAU(
             true, UProposition(True), UName("x"), anyDirection, anyDirection
-    ), anyDirection)), UName("x"))
+    ), anyDirection)), UName("x")))
     /*val property = UExists("s",
             UAnd(UAt("s",
                     UNot(
