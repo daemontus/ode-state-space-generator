@@ -10,9 +10,9 @@ import java.io.File
  * Use this main to regenerate integration tests.
  */
 fun main(args: Array<String>) {
-    val name = "model_31_reduced"
-    val writer = File("models/$name.transitions.txt").outputStream().bufferedWriter()
-    val model = Parser().parse(File("models/$name.bio")).computeApproximation()
+    val name = "tcbb"//"model_31_reduced"
+    val writer = File("models/$name.current.transitions.txt").outputStream().bufferedWriter()
+    val model = Parser().parse(File("models/$name.bio")).computeApproximation(fast = true, cutToRange = true)
     val fragment = RectangleOdeFragment(model, UniformPartitionFunction<IDNode>())
     val sortedNodes = fragment.allNodes().entries.toList().sortedBy { it.key.id }
     for (node in sortedNodes) {

@@ -1,6 +1,6 @@
 VARS: pRB, E2F1
 
-PARAMS: y_pRB,0.0,1.0
+PARAMS: y_pRB,0.0,0.5
 
 CONSTS: k1,1; k2,1.6; y_E2F1,0.1; a,0.04; kp,0.05
 
