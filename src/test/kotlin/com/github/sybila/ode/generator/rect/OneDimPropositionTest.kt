@@ -82,8 +82,9 @@ class OneDimPropositionTest {
 
     @Test
     fun invalidProposition() {
+        class BadAtom(override val operator: Op, override val subFormulas: List<Formula>) : Atom
         assertFails {
-            fragmentOne.validNodes(DirectionProposition("v1", Direction.IN, Facet.POSITIVE))
+            fragmentOne.validNodes(BadAtom(Op.ATOM, listOf()))
         }
     }
 
