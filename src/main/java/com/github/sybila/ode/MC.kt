@@ -2,7 +2,18 @@ package com.github.sybila.ode
 
 import com.github.sybila.checker.*
 import com.github.sybila.checker.uctl.*
+import com.github.sybila.ode.generator.rect.RectangleColors
 import java.util.*
+
+data class UExact(
+        val nodes: Nodes<IDNode, RectangleColors>
+) : UFormula
+
+data class UExistsIn(
+        val name: String,
+        val set: Nodes<IDNode, RectangleColors>,
+        val formula: UFormula
+) : UFormula
 
 class UModelChecker<N: Node, C: Colors<C>>(
         fragment: DirectedKripkeFragment<N, C>,
@@ -17,6 +28,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
 
     fun verify(f: UFormula, vars: Map<String, Pair<N, C>>): Nodes<N, C> {
         return when (f) {
+            is UExact -> f.nodes as Nodes<N, C>
             is UProposition -> validNodes(f.proposition)
             is UNot -> allNodes() - verify(f.formula, vars)
             is UAnd -> verify(f.left, vars) intersect verify(f.right, vars)
@@ -70,7 +82,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
                 val result = HashMap<N, C>().toMutableNodes(emptyColors)
                 if (inner[state.first].isNotEmpty()) {
                     for (entry in allNodes().entries) {
-                        result.putOrUnion(entry.key, inner[state.first])
+                        result.putOrUnion(entry.key, inner[state.first] intersect state.second)
                     }
                 }
                 result.toNodes()
@@ -83,6 +95,16 @@ class UModelChecker<N: Node, C: Colors<C>>(
                     if (counter % 1000 == 1) println("Counter: $counter")
                     val inner = verify(f.inner, vars + Pair(f.name, entry.toPair()))
                     result += inner
+                }
+                result
+            }
+            is UExistsIn -> {
+                var result = HashMap<N, C>().toNodes(emptyColors)
+                var counter = 0
+                for (entry in f.set.entries) {
+                    counter += 1
+                    if (counter % 50 == 0) println("Counter: $counter")
+                    result += verify(f.formula, vars + Pair(f.name, entry.toPair() as Pair<N, C>))
                 }
                 result
             }
