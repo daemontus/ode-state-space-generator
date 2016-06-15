@@ -139,3 +139,15 @@ task execute(type:JavaExec) {
     jvmArgs "-Xmx14000m"
     classpath = sourceSets.main.runtimeClasspath
 }
+
+//create a single Jar with all dependencies
+task uctlJar(type: Jar) {
+    manifest {
+        attributes  'Implementation-Title': 'Biodivine CTL',
+                'Implementation-Version': version,
+                'Main-Class': 'com.github.sybila.ode.UCTLMainKt'
+    }
+    baseName = project.name + '-stability'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
