@@ -67,7 +67,11 @@ class UModelChecker<N: Node, C: Colors<C>>(
             }
             is UBind -> {
                 val result = HashMap<N, C>().toMutableNodes(emptyColors)
-                for (entry in allNodes().entries) {
+                var counter = 0
+                val nodes = allNodes()
+                for (entry in nodes.entries) {
+                    counter += 1
+                    if (counter % 100 == 0) println("Progress: $counter/${nodes.entries.count()}")
                     val inner = verify(f.inner, vars + Pair(f.name, entry.toPair()))
                     if (inner[entry.key].isNotEmpty()) {
                         result.putOrUnion(entry.key, inner[entry.key])
