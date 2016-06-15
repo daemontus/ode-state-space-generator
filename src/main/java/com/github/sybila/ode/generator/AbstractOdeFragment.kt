@@ -62,6 +62,23 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
                         enumerateStates(dimension, 0, tIndex - 1)
                 }
             }
+            is DirectionProposition -> {
+                val results = HashMap<IDNode, C>().toMutableNodes(emptyColors)
+                val dimension = model.variables.indexOfFirst { it.name == a.variable }
+                if (dimension < 0) throw IllegalStateException("Unknown direction variable: ${a.variable}")
+                for ((node, colors) in allNodes().entries) {
+                    val dir = if (a.direction == Direction.OUT) node.successors() else node.predecessors()
+                    val target = if (a.facet == Facet.POSITIVE) {
+                            encoder.higherNode(node, dimension)?.let { dir[it] }
+                        } else {
+                            encoder.lowerNode(node, dimension)?.let { dir[it] }
+                        }
+                    if (target != null && colors.isNotEmpty()) {
+                        results.putOrUnion(node, colors.intersect(target))
+                    }
+                }
+                results.toNodes()
+            }
             else -> throw IllegalArgumentException("Unsupported proposition: $a")
         }
     }
