@@ -15,6 +15,11 @@ data class UExistsIn(
         val formula: UFormula
 ) : UFormula
 
+data class NameDirection(
+        val dimension: String,
+        val positive: Boolean
+) : DFormula
+
 class UModelChecker<N: Node, C: Colors<C>>(
         fragment: DirectedKripkeFragment<N, C>,
         private val emptyColors: C,
@@ -48,6 +53,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
                         }
                     }
                 }
+                println("EX done")
                 result.toNodes()
             }
             is UAX -> {
@@ -162,9 +168,14 @@ class UModelChecker<N: Node, C: Colors<C>>(
             }
         }
 
+        var lastUpdate = System.currentTimeMillis()
         while (queue.isNotEmpty()) {
             val (n, c) = pick()
             val andPhi_1 = c intersect phi_1[n]
+            if (System.currentTimeMillis() - lastUpdate > 2000) {
+                lastUpdate = System.currentTimeMillis()
+                println("Queue: ${queue.size}")
+            }
             if (andPhi_1.isNotEmpty() && results.putOrUnion(n, andPhi_1)) {
                 for ((pred, pCol) in next(n, f.forward).entries) {
                     val push = andPhi_1.intersect(pCol)
@@ -207,20 +218,20 @@ class UModelChecker<N: Node, C: Colors<C>>(
             return Pair(n, c)
         }
 
-        for (entry in phi_2.entries) {
-            var valid = fullColors
+        for ((state, validColors) in phi_2.entries) {
+            var valid = validColors
             //we must gather all colors for which we have only a successor in the correct direction
-            for ((succ, col) in next(entry.key, !f.forward).entries) {
-                val sCol = entry.value.intersect(col)
-                if (sCol.isNotEmpty() && !checkTransition(entry.key, succ, f.reachDirection)) {
+            for ((succ, col) in next(state, !f.forward).entries) {
+                val sCol = validColors.intersect(col)
+                if (sCol.isNotEmpty() && !checkTransition(state, succ, f.reachDirection)) {
                     valid -= sCol
                 }
             }
-            if (valid.isNotEmpty() && results.putOrUnion(entry.key, valid)) {
-                for ((pred, pCol) in next(entry.key, f.forward).entries) {
+            if (valid.isNotEmpty() && results.putOrUnion(state, valid)) {
+                for ((pred, pCol) in next(state, f.forward).entries) {
                     val push = valid.intersect(pCol)
-                    if (push.isNotEmpty() && checkTransition(pred, entry.key, f.pathDirection)) {
-                        enqueue(Pair(pred, entry.key), push)
+                    if (push.isNotEmpty() && checkTransition(pred, state, f.pathDirection)) {
+                        enqueue(Pair(pred, state), push)
                     }
                 }
             }

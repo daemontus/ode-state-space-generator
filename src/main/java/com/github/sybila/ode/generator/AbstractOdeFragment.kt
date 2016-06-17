@@ -5,6 +5,7 @@ import com.github.sybila.checker.uctl.DAnd
 import com.github.sybila.checker.uctl.DFormula
 import com.github.sybila.checker.uctl.DNot
 import com.github.sybila.ctl.*
+import com.github.sybila.ode.NameDirection
 import com.github.sybila.ode.model.Model
 import java.util.*
 
@@ -277,6 +278,11 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
     /** Directions related stuff **/
     override fun checkTransition(from: IDNode, to: IDNode, formula: DFormula): Boolean {
         return when (formula) {
+            is NameDirection -> {
+                val index = model.variables.indexOfFirst { it.name == formula.dimension }
+                if (index < 0) throw IllegalStateException("Unexpected name: ${formula.dimension}")
+                checkTransition(from, to, com.github.sybila.checker.uctl.Direction(index, formula.positive))
+            }
             is com.github.sybila.checker.uctl.Direction -> {
                 if (formula.dimension < 0) {
                     formula.positive
