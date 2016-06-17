@@ -61,6 +61,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.intellij:annotations:5.1'
     compile 'com.github.sybila:ctl-model-checker:1.1.0'
+    compile 'com.google.code.gson:gson:2.3.1'   //for state space export
     compile files('libs/mpj.jar')
     compile files('libs/com.microsoft.z3.jar')
     antlr "org.antlr:antlr4:4.5.1-1"
@@ -73,6 +74,18 @@ task fullJar(type: Jar) {
                 'Implementation-Version': version
     }
     baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+//create an executable jar with transition main
+task jsonJar(type: Jar) {
+    manifest {
+        attributes  'Implementation-Title': 'Biodivine CTL',
+                'Implementation-Version': version,
+                'Main-Class': 'com.github.sybila.ode.export.ExportMainKt'
+    }
+    baseName = project.name + '-json'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

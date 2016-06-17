@@ -12,8 +12,8 @@ abstract class AbstractOdeFragment<C: Colors<C>>(
         private val createSelfLoops: Boolean
 ) : KripkeFragment<IDNode, C>, PartitionFunction<IDNode> by partitioning {
 
-    protected  val encoder = NodeEncoder(model)
-    protected  val dimensions = model.variables.size
+    val encoder = NodeEncoder(model)
+    protected val dimensions = model.variables.size
 
     abstract val emptyColors: C
     abstract val fullColors: C

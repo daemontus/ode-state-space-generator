@@ -145,6 +145,12 @@ class Rectangle(
         return start + coordinates.size
     }
 
+    fun asTwoDimensionalArray(): Array<DoubleArray> {
+        return Array(coordinates.size / 2) { i ->
+            doubleArrayOf(coordinates[2*i], coordinates[2*i+1])
+        }
+    }
+
     override fun equals(other: Any?): Boolean = other is Rectangle && Arrays.equals(coordinates, other.coordinates)
 
     override fun hashCode(): Int = Arrays.hashCode(coordinates)
@@ -229,6 +235,13 @@ class RectangleColors(
         for (r in rectangles) {
             index = r.serialize(to, index)
         }
+    }
+
+    fun toRectangle(): Rectangle {
+        if (rectangles.size != 1) {
+            throw IllegalStateException("Illegal color set conversion")
+        }
+        return rectangles.first()
     }
 
     override fun equals(other: Any?): Boolean = other is RectangleColors && other.rectangles == rectangles
