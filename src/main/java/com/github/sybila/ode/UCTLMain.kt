@@ -13,7 +13,7 @@ import java.io.File
 import java.util.*
 
 fun main(args: Array<String>) {
-    val name = "HHR1N"
+    val name = "HHR1Or_new"
 
     //val property = UEU(true, UProposition(True), UProposition(True), Direction(0, true), anyDirection)
     /*val property = UBind("x", UEU(
@@ -25,8 +25,12 @@ fun main(args: Array<String>) {
     //E x: (x && At x: ! EF ! EF x)
     //val props = CTLParser().parse("p1 = E2F1 > 6.220146764509673; p2 = E2F1 < 6.568378919279519; p3 = pRB > 4.4129419613075385; p4 = pRB < 4.8332221480987325")
     //val x = UAnd(UAnd(UProposition(props["p1"] as Atom), UProposition(props["p2"] as Atom)), UAnd(UProposition(props["p3"] as Atom), UProposition(props["p4"] as Atom)))
-    val init = UProposition(FloatProposition("ERK", CompareOp.LT, 0.0001))
-    val down = UProposition(DirectionProposition("ERK", Direction.OUT, Facet.NEGATIVE))
+    val dirUp = NameDirection("ERK", true)
+    val dirDown = NameDirection("ERK", false)
+    val dirNotUp = DNot(dirUp)
+    val dirNotDown = DNot(dirDown)
+    val tt = UProposition(True)
+
     val stable = UAnd(
             UAnd(
                     UAnd(
@@ -48,63 +52,76 @@ fun main(args: Array<String>) {
                             UNot(UProposition(DirectionProposition("FRS2", Direction.OUT, Facet.NEGATIVE)))
                     )
             ))
-    val prop1 = UAnd(
-            init,
-            UAU(forward = true, path = UProposition(True), reach = UAU(forward = true,
-                path = UProposition(True), reach = stable,
-                    pathDirection = DNot(NameDirection("ERK", false)), reachDirection = anyDirection
-            ), pathDirection = NameDirection("ERK", true), reachDirection = anyDirection)
-    )
-    val prop2 = UAnd(
-            init,
-            UEU(forward = true, path = UProposition(True), reach = stable,
-                    pathDirection = NameDirection("ERK", true), reachDirection = anyDirection)
-    )
-    val prop3 = UAnd(
-            init, UAU(forward = true,
-                path = UProposition(True), reach = UAU(forward = true,
-                    path = UProposition(True), reach = UAU(forward = true,
-                        path = UProposition(True), reach = UAU(forward = true,
-                            path = UProposition(True), reach = stable,
-                        pathDirection = NameDirection("ERK", false), reachDirection = anyDirection),
-                    pathDirection = DNot(NameDirection("ERK", true)), reachDirection = anyDirection),
-                pathDirection = DNot(NameDirection("ERK", false)), reachDirection = anyDirection),
-            pathDirection = NameDirection("ERK", true), reachDirection = anyDirection)
-    )
-    val dirDown = NameDirection("ERK", false)
-    val dirNotDown = DNot(dirDown)
-    val tt = UProposition(True)
-    val prop4 = UAnd(
-            init, UEX(forward = true, direction = dirNotDown, inner =
-                UEU(forward = true, path = tt, pathDirection = dirNotDown, reachDirection = anyDirection, reach =
-                UEX(forward = true, direction = dirDown, inner =
-                UEU(forward = true, path = tt, pathDirection = dirDown, reachDirection = anyDirection, reach = stable)))
+
+    val init = UAnd(UProposition(FloatProposition("ERK", CompareOp.LT, 0.0001)), UNot(stable))
+    val notUp = UNot(UProposition(DirectionProposition("ERK", Direction.OUT, Facet.POSITIVE)))
+
+    fun EF(pathDirection: DFormula, reach: UFormula): UFormula {
+        return UEU(forward = true, pathDirection = pathDirection, reachDirection = anyDirection, path = tt, reach = reach)
+    }
+
+    fun AF(pathDirection: DFormula, reach: UFormula): UFormula {
+        return UAU(forward = true, pathDirection = pathDirection, reachDirection = anyDirection, path = tt, reach = reach)
+    }
+
+    fun EX(pathDirection: DFormula, reach: UFormula): UFormula {
+        return UEX(forward = true, direction = pathDirection, inner = reach)
+    }
+
+    fun AX(pathDirection: DFormula, reach: UFormula): UFormula {
+        return UAX(forward = true, direction = pathDirection, inner = reach)
+    }
+
+    val p1 = UAnd(init, AX(dirUp, AF(dirNotDown, stable)))
+
+    val p2 = UAnd(init, EF(anyDirection, EX(dirDown, tt)))
+
+    val p3 = UAnd(init, EF(anyDirection, EX(dirDown, notUp)))
+
+    val p4 = UAnd(init,
+            EF(anyDirection,
+                EF(dirUp,
+                    EF(dirNotDown,
+                        EF(dirNotUp,
+                            EX(dirDown, tt)
+                        )
+                    )
+                )
             )
     )
-    //val efX = UEU(true, UProposition(True), UName("x"), anyDirection, anyDirection)
-    //val stableX = UNot(UEU(true, UProposition(True), UNot(efX), anyDirection, anyDirection))
-    //val property = UBind("x", stableX)
-    //val property = UBind("x", UEX(true, UAnd(efX, UNot(UName("x"))), anyDirection))
-    //E x : x && AX AF x
-    /*val property = UExists("x", UAnd(UAt("x", UAX(true, UAU(
-            true, UProposition(True), UName("x"), anyDirection, anyDirection
-    ), anyDirection)), UName("x")))*/
-    /*val property = UExists("s",
-            UAnd(UAt("s",
-                    UNot(
-                            UEU(true,
-                                    UProposition(True),
-                                    UNot(
-                                            UEU(true,
-                                                    UProposition(True),
-                                                    UName("s"),
-                                                    anyDirection, anyDirection)
-                                    ), anyDirection, anyDirection))
-            ), UName("s"))
-    )*/
+
+    val p5 = UAnd(init,
+            EF(anyDirection,
+                EF(dirUp,
+                    EF(dirNotDown,
+                        EF(dirNotUp,
+                            EX(dirDown, notUp)
+                        )
+                    )
+                )
+            )
+    )
+
+    val p6 = UAnd(init,
+            AX(dirUp,
+                AF(dirNotDown,
+                    AF(dirNotUp,
+                        AX(dirDown,
+                            AF(dirNotUp, stable)
+                        )
+                    )
+                )
+            )
+    )
+
+    val t1 = AF(anyDirection, EX(dirDown, stable))
+    val t2 = EX(dirUp, AF(anyDirection, EX(dirDown, stable)))
+
     //val model = Parser().parse(File("models/$name.bio")).computeApproximation(fast = true, cutToRange = true)
-    //val property = prop4
-    val properties = listOf(prop1, prop2, prop3, prop4)
+    //val property = p3//UAnd(init, AF(dirUp, stable)) //UAnd(p5, UNot(p3))
+
+    //println("Model: $model")
+    val properties = listOf(p1, p2, p3, p4, p5, p6, t1, t2)
     val i = try {
         args[1].toInt()
     } catch (e: Exception) {

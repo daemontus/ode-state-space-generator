@@ -13,6 +13,7 @@ import com.github.sybila.ode.generator.smt.*
 import com.github.sybila.ode.model.Model
 import com.github.sybila.ode.model.Parser
 import com.github.sybila.ode.model.computeApproximation
+import com.github.sybila.ode.model.prettyPrint
 import java.io.File
 import java.util.*
 import java.util.logging.Logger
@@ -31,6 +32,7 @@ fun main(args: Array<String>) {
         //val property = CTLParser().formula("EX EX ! (E2F1 > 6 && E2F1 < 7.5)").normalize()
                 // ("AF ! EF ! (GLY > 1.5 && ATOX < 3)") "AG (E2F1 > 4 && E2F1 < 7.5)" (pRB > 3.0 EU E2F1 > 6.0)
         val model = Parser().parse(File("models/$name.bio")).computeApproximation(fast = true, cutToRange = true)
+    println(model.prettyPrint())
         val encoder = NodeEncoder(model)
 
         println("Normalized formula: $property")

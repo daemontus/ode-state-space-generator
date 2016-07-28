@@ -147,7 +147,7 @@ task uctlJar(type: Jar) {
                 'Implementation-Version': version,
                 'Main-Class': 'com.github.sybila.ode.UCTLMainKt'
     }
-    baseName = project.name + '-stability'
+    baseName = project.name + '-uctl'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }

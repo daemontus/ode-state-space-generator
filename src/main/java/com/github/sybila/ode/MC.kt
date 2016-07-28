@@ -57,19 +57,23 @@ class UModelChecker<N: Node, C: Colors<C>>(
                 result.toNodes()
             }
             is UAX -> {
-                verify(UNot(UEX(true, UNot(f.inner), f.direction)), vars)
-                /*val result = HashMap<N, C>().toMutableNodes(emptyColors)
+                //verify(UNot(UEX(true, UNot(f.inner), f.direction)), vars)
+                val result = HashMap<N, C>().toMutableNodes(emptyColors)
                 val inner = verify(f.inner, vars)
-                for (entry in allNodes().entries) {
-                    val valid = fullColors
-                    for ((succ, sCol) in next(entry.key, !f.forward).entries) {
-                        val push = sCol intersect inner[succ]
-                        if (push.isNotEmpty() && checkTransition(entry.key, succ, f.direction)) {
-                            result.putOrUnion(entry.key, push)
+                for ((key) in allNodes().entries) {
+                    var candidates = fullColors
+                    for ((succ, sCol) in next(key, !f.forward).entries) {
+                        if (!checkTransition(key, succ, f.direction)) {
+                            candidates -= sCol
+                        } else {
+                            candidates = candidates intersect (sCol intersect inner[succ])
                         }
                     }
+                    if (candidates.isNotEmpty()) {
+                        result.putOrUnion(key, candidates)
+                    }
                 }
-                result.toNodes()*/
+                result.toNodes()
             }
             is UBind -> {
                 val result = HashMap<N, C>().toMutableNodes(emptyColors)
@@ -77,7 +81,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
                 val nodes = allNodes()
                 for (entry in nodes.entries) {
                     counter += 1
-                    if (counter % 100 == 0) println("Progress: $counter/${nodes.entries.count()}")
+                    if (counter % 100 == 0) System.err.println("Progress: $counter/${nodes.entries.count()}")
                     val inner = verify(f.inner, vars + Pair(f.name, entry.toPair()))
                     if (inner[entry.key].isNotEmpty()) {
                         result.putOrUnion(entry.key, inner[entry.key])
@@ -102,7 +106,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
                 var counter = 0
                 for (entry in allNodes().entries) {
                     counter += 1
-                    if (counter % 1000 == 1) println("Counter: $counter")
+                    if (counter % 1000 == 1) System.err.println("Counter: $counter")
                     val inner = verify(f.inner, vars + Pair(f.name, entry.toPair()))
                     result += inner
                 }
@@ -174,7 +178,7 @@ class UModelChecker<N: Node, C: Colors<C>>(
             val andPhi_1 = c intersect phi_1[n]
             if (System.currentTimeMillis() - lastUpdate > 2000) {
                 lastUpdate = System.currentTimeMillis()
-                println("Queue: ${queue.size}")
+                System.err.println("Queue: ${queue.size}")
             }
             if (andPhi_1.isNotEmpty() && results.putOrUnion(n, andPhi_1)) {
                 for ((pred, pCol) in next(n, f.forward).entries) {
@@ -237,11 +241,16 @@ class UModelChecker<N: Node, C: Colors<C>>(
             }
         }
 
+        var lastUpdate = System.currentTimeMillis()
         while (queue.isNotEmpty()) {
             val (pair, c) = pick()
             val (current, succ) = pair
             val uncoveredSuccessors = uncoveredEdges.getOrPut(current) {
                 next(current, !f.forward).toMutableMap()
+            }
+            if (System.currentTimeMillis() - lastUpdate > 2000) {
+                lastUpdate = System.currentTimeMillis()
+                System.err.println("Queue: ${queue.size}")
             }
 
             //cover pushed edge

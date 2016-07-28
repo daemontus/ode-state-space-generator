@@ -69,6 +69,50 @@ class RectangleOdeFragment(
         }
     }
 
+    data class EvalPoint(
+            val x: Double,
+            val y: Double,
+            val dx: Double,
+            val dy: Double
+    )
+
+    fun printDerivations() {
+        if (model.variables.size != 2) throw IllegalStateException("Variable count not 2")
+        if (model.parameters.isNotEmpty()) throw IllegalStateException("Model has parameters")
+        val rangeX = model.variables[0].range
+        val rangeY = model.variables[1].range
+        val stepX = (rangeX.second - rangeX.first) / 24
+        val stepY = (rangeY.second - rangeY.first) / 24
+        println("StepX: $stepX StepY: $stepY")
+        var x = 0.0
+        var y = 0.0
+        while (x < rangeX.second + 0.001) {
+            while (y < rangeY.second + 0.001) {
+                fun eval(dim: Int): Double {
+                    var derivationValue = 0.0
+                    for (summand in model.variables[dim].equation) {
+                        var partialSum = summand.constant
+                        for (v in summand.variableIndices) {
+                            partialSum *= if (v == 0) x else y
+                        }
+                        if (partialSum != 0.0) {
+                            for (function in summand.evaluable) {
+                                val index = function.varIndex
+                                partialSum *= function(if (index == 0) x else y)
+                            }
+                        }
+                        derivationValue += partialSum
+                    }
+                    return derivationValue
+                }
+                println("$x \t $y \t ${eval(0)} \t ${eval(1)}")
+                y += stepY
+            }
+            x += stepX
+            y = 0.0
+        }
+    }
+
     /**
      * This map will cache all edge colors, so that we don't have to recompute them.
      */
