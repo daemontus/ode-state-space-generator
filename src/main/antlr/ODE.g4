@@ -37,6 +37,7 @@ eval : NUMBER       # numberEval
      | sigm         # sigmoidEval
      | step         # stepEval
      | hill         # hillEval
+     | approx       # approxEval
      ;
 
 /** Lexer rules **/
@@ -51,10 +52,15 @@ hill : HILL'('NAME','arg','arg','arg','arg')';
 
 sigm : SIGM'('NAME','arg','arg','arg','arg')';
 
+approx : APPROX'('NAME')''('(pair',')* pair')';
+
+pair : '['NUMBER','NUMBER']';
+
 RAMP : [Rr][mp]('coor')?;
 STEP : [Hh][mp];
 HILL : [Hh]'ill'[mp];
 SIGM : [Ss][mp]('inv')?;
+APPROX : [Aa]'pprox';
 
 BA_LINE : 'BA:'~[\n]+;
 
