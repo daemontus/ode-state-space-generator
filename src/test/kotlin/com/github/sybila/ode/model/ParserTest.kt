@@ -569,6 +569,26 @@ class ParserTest {
         )
     }
 
+    @Test
+    fun approxFunctionTest() {
+        assertEquals(Model(
+                listOf(Model.Variable(
+                        name = "V1", range = 0.0 to 3.0,
+                        thresholds = listOf(0.0, 2.0, 3.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(RampApproximation(0,
+                                doubleArrayOf(0.0, 2.0, 3.0), doubleArrayOf(1.2, 2.2, -0.3))
+                        ))
+                )
+                ))
+        ),
+                parser.parse("""
+            VARS: V1
+            THRES: V1: 0, 2, 3
+            EQ: V1 = Approx(V1)([0.0, 1.2], [2.0, 2.2], [3.0, -0.3])
+            """))
+    }
+
 
 
     /*
@@ -576,7 +596,7 @@ class ParserTest {
      */
 
     @Test
-    fun biodegradationTest() {
+    fun bioDegradationTest() {
 
         val model = """
 ###############################################################################

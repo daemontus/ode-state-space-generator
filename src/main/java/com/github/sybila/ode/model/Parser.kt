@@ -51,8 +51,8 @@ private class ModelReader : ODEBaseListener() {
         if (variables.isEmpty()) {
             throw IllegalStateException("Model has no variables!")
         }
-        for (t in thresholds.entries) {
-            if (t.value.size < 2) {
+        for ((key, value) in thresholds) {
+            if (value.size < 2) {
                 throw IllegalStateException("You must provide at least two thresholds for each variable")
             }
         }
@@ -109,6 +109,7 @@ private class ModelReader : ODEBaseListener() {
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
         is AbstractRamp -> listOf(Summand(evaluable = listOf(target.toRamp(this))))
         is AbstractStep -> listOf(Summand(evaluable = listOf(target.toStep(this))))
+        is AbstractApprox -> listOf(Summand(evaluable = listOf(target.toApprox(this))))
         is Plus -> simplifySummands(flattenAndResolve(target.e1) + flattenAndResolve(target.e2))
         is Negation -> simplifySummands(flattenAndResolve(target.expr).map { it.copy(constant = -1.0 * it.constant) })
         is Times -> {
@@ -274,6 +275,13 @@ private class ModelReader : ODEBaseListener() {
         )
     }
 
+    override fun exitApproxEval(ctx: ODEParser.ApproxEvalContext) {
+        expressionTree[ctx] = AbstractApprox(
+                ctx.approx().NAME().text,
+                ctx.approx().pair().map { it.NUMBER(0).text.toDouble() to it.NUMBER(1).text.toDouble() }
+        )
+    }
+
     override fun exitNegativeEvaluable(ctx: ODEParser.NegativeEvaluableContext) {
         expressionTree[ctx] = Negation(expressionTree[ctx.eval()])
     }
@@ -336,6 +344,17 @@ private sealed class Reference : Resolvable {
     internal class Number(
             val value: Double
     ) : Reference()
+}
+
+private class AbstractApprox(
+        private val name: String,
+        private val pairs: List<Pair<Double, Double>>
+) : Resolvable {
+    fun toApprox(reader: ModelReader): RampApproximation = RampApproximation(
+            varIndex = reader.resolveVarName(name),
+            thresholds = pairs.map { it.first }.toDoubleArray(),
+            values = pairs.map { it.second }.toDoubleArray()
+    )
 }
 
 private class AbstractHill(

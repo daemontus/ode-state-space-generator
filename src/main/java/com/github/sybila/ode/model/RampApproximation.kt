@@ -27,4 +27,14 @@ data class RampApproximation(
     override fun toString(): String
         = "Approx($varIndex)[${thresholds.joinToString()}]{${values.joinToString()}}"
 
+    override fun equals(other: Any?): Boolean {
+        return other is RampApproximation &&
+                this.varIndex == other.varIndex &&
+                Arrays.equals(this.thresholds, other.thresholds) &&
+                Arrays.equals(this.values, other.values)
+    }
+
+    override fun hashCode(): Int {
+        return varIndex + 31 * Arrays.hashCode(thresholds) + 47 * Arrays.hashCode(values)
+    }
 }
