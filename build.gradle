@@ -128,3 +128,15 @@ tasks.withType(Test) {
     maxHeapSize = "3072m"
     jvmArgs "-Xmx3072m"
 }
+
+//executable jar that performs abstraction
+task abstractionJar(type: Jar) {
+    manifest {
+        attributes  'Implementation-Title': 'Abstractor',
+                    'Implementation-Version': version,
+                    'Main-Class': 'com.github.sybila.ode.exe.AbstractionKt'
+    }
+    baseName = project.name + '-abstractor'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
