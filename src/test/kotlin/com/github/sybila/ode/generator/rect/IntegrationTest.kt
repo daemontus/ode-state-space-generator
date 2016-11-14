@@ -28,8 +28,9 @@ import kotlin.test.assertEquals
 
 class IntegrationTest {
 
-    @Test fun TCBBTest() = integrationTest(File("models/tcbb.bio"), File("models/tcbb.transitions.txt"))
-    @Test fun Model31Test() = integrationTest(File("models/model_31_reduced.bio"), File("models/model_31_reduced.transitions.txt"))
+    //TODO: Reevaluate
+    //@Test fun TCBBTest() = integrationTest(File("models/tcbb.bio"), File("models/tcbb.transitions.txt"))
+    //@Test fun Model31Test() = integrationTest(File("models/model_31_reduced.bio"), File("models/model_31_reduced.transitions.txt"))
 
     private fun integrationTest(modelFile: File, resultsFile: File) {
 
