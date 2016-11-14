@@ -1,19 +1,19 @@
 package com.github.sybila.ode.model
 
-fun Model.writeBio(): String {
+fun Model.toBio(): String {
     return (if (this.parameters.isNotEmpty()) {
                 "PARAMS: ${this.parameters.map {
                     "${it.name}, ${it.range.first}, ${it.range.second}"
                 }.joinToString(separator = ";")}"
-            } else "") +
-            ("VARS: " + this.variables.map { it.name }.joinToString()) +
+            } else "") + "\n" +
+            ("VARS: " + this.variables.map { it.name }.joinToString()) + "\n" +
             (this.variables.map {
                 "THRES: ${it.name}: ${it.thresholds.joinToString()}"
-            }) +
+            }.joinToString(separator = "\n")) + "\n" +
             (this.variables.map {
                 "EQ: ${it.name} = ${it.equation.map {
                     "${it.constant}" +
-                    if (it.hasParam()) { " * " + this.parameters[it.paramIndex].name } else "" +
+                    (if (it.hasParam()) { " * " + this.parameters[it.paramIndex].name } else "") +
                     it.variableIndices.map { " * " + this.variables[it].name }.joinToString(separator = "") +
                     it.evaluable.map {
                         if (it is RampApproximation) {
@@ -24,7 +24,7 @@ fun Model.writeBio(): String {
                         } else {
                             throw IllegalArgumentException("Cannot serialize models with non-ramp functions.")
                         }
-                    }
+                    }.joinToString(separator = "")
                 }.joinToString(separator = " + ")}"
-            })
+            }.joinToString(separator = "\n"))
 }
