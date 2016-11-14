@@ -12,48 +12,53 @@ package com.github.sybila.ode.model
  */
 fun Model.computeApproximation(fast: Boolean = true, cutToRange: Boolean = false): Model {
 
-    val variables = variables.indices.map { vIndex ->
+    val newThresholds = variables.indices.map { vIndex ->
 
         val variable = variables[vIndex]
 
-        //find all functions that need to by approximated
         val functions = variables
                 .flatMap { it.equation }.flatMap { it.evaluable }
                 .filter {
                     (it is Hill && it.varIndex == vIndex) || (it is Sigmoid && it.varIndex == vIndex)
                 }
 
-        if (functions.isEmpty()) variable  //this variable is OK!
+        if (functions.isEmpty()) variable.thresholds
         else {
-
             //compute new thresholds
             val (pointCount, segmentCount) = variable.varPoints ?:
                     throw IllegalStateException("Can't run abstraction for ${variable.name} without specified var points!")
-            val newThresholds = computeThresholds(pointCount, segmentCount, functions, fast)
+            val thresholds = computeThresholds(pointCount, segmentCount, functions, fast)
 
-            //create a copy replacing functions with approximation
-            variable.copy(
-                    thresholds = (newThresholds + variable.thresholds).filter {
-                        !cutToRange || (it >= variable.range.first && it <= variable.range.second)
-                    }.toSet().sorted(),
-                    equation = variable.equation.map {
-                        it.copy(
-                                evaluable = it.evaluable.map { f ->
-                                    when (f) {
-                                        is Hill, is Sigmoid -> {
-                                            RampApproximation(
-                                                    f.varIndex,
-                                                    newThresholds,
-                                                    newThresholds.map { x -> f(x) }.toDoubleArray()
-                                            )
-                                        }
-                                        else -> f
-                                    }
-                                }
-                        )
-                    }
-            )
+            (thresholds + variable.thresholds).filter {
+                !cutToRange || (it >= variable.range.first && it <= variable.range.second)
+            }.toSet().sorted()
         }
+    }
+
+    val variables = variables.indices.map { vIndex ->
+
+        val variable = variables[vIndex]
+
+        //create a copy replacing functions with approximation
+        variable.copy(
+                thresholds = newThresholds[vIndex],
+                equation = variable.equation.map {
+                    it.copy(
+                            evaluable = it.evaluable.map { f ->
+                                when (f) {
+                                    is Hill, is Sigmoid -> {
+                                        RampApproximation(
+                                                f.varIndex,
+                                                newThresholds[f.varIndex].toDoubleArray(),
+                                                newThresholds[f.varIndex].map { x -> f(x) }.toDoubleArray()
+                                        )
+                                    }
+                                    else -> f
+                                }
+                            }
+                    )
+                }
+            )
     }
 
     return this.copy( variables = variables )       //parameters do not change
@@ -76,6 +81,7 @@ private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: Lis
 //compute points at which the function should be evaluated
 private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>): DoubleArray {
     var max = 0.0
+    @Suppress("LoopToCallChain")    // much faster this way
     for (e in functions) {  //find last evaluation point
         val newMax = if (e is Hill) {
             2.0 * e.theta + (5.0 / e.n) * e.theta
@@ -113,23 +119,23 @@ private fun fastLinearApproximation(xPoints: DoubleArray, curves: Array<DoubleAr
     val sx2 = DoubleArray(xPoints.size) { 0.0 }
 
     for (ic in curves.indices) {
-        sy2[ic][0] = curves[ic][0] * curves[ic][0];
-        sy [ic][0] = curves[ic][0];
-        sxy[ic][0] = curves[ic][0] * xPoints[0];
+        sy2[ic][0] = curves[ic][0] * curves[ic][0]
+        sy [ic][0] = curves[ic][0]
+        sxy[ic][0] = curves[ic][0] * xPoints[0]
 
         for (ip in 1 until xPoints.size) {
-            sy2[ic][ip] = sy2[ic][ip-1] + (curves[ic][ip] * curves[ic][ip]);
-            sy [ic][ip] = sy [ic][ip-1] + (curves[ic][ip]);
-            sxy[ic][ip] = sxy[ic][ip-1] + (curves[ic][ip] * xPoints[ip]);
+            sy2[ic][ip] = sy2[ic][ip-1] + (curves[ic][ip] * curves[ic][ip])
+            sy [ic][ip] = sy [ic][ip-1] + (curves[ic][ip])
+            sxy[ic][ip] = sxy[ic][ip-1] + (curves[ic][ip] * xPoints[ip])
         }
     }
 
-    sx2[0] = xPoints[0] * xPoints[0];
-    sx[0] = xPoints[0];
+    sx2[0] = xPoints[0] * xPoints[0]
+    sx[0] = xPoints[0]
 
     for (ip in 1 until xPoints.size) {
-        sx2[ip] = sx2[ip-1] + (xPoints[ip] * xPoints[ip]);
-        sx [ip] = sx [ip-1]  + xPoints[ip];
+        sx2[ip] = sx2[ip-1] + (xPoints[ip] * xPoints[ip])
+        sx [ip] = sx [ip-1]  + xPoints[ip]
     }
 
     val hCost = Array(xPoints.size) { n -> DoubleArray(xPoints.size) { i ->
@@ -137,9 +143,9 @@ private fun fastLinearApproximation(xPoints: DoubleArray, curves: Array<DoubleAr
             0.0 //no one will read this!
         } else {
             curves.maxByDoubleIndexed { ic ->
-                val a = (curves[ic][n] - curves[ic][0]) / (xPoints[n] - xPoints[0]);
-                val b = (curves[ic][0] * xPoints[n] - curves[ic][n] * xPoints[0]) / (xPoints[n] - xPoints[0]);
-                (sy2[ic][n] - sy2[ic][i-1]) - 2 * a * (sxy[ic][n] - sxy[ic][i-1]) - 2 * b * (sy[ic][n] - sy[ic][i-1]) + a * a * (sx2[n] - sx2[i-1]) + 2 * a * b * (sx[n] - sx[i-1]) + b * (n - i);
+                val a = (curves[ic][n] - curves[ic][0]) / (xPoints[n] - xPoints[0])
+                val b = (curves[ic][0] * xPoints[n] - curves[ic][n] * xPoints[0]) / (xPoints[n] - xPoints[0])
+                (sy2[ic][n] - sy2[ic][i-1]) - 2 * a * (sxy[ic][n] - sxy[ic][i-1]) - 2 * b * (sy[ic][n] - sy[ic][i-1]) + a * a * (sx2[n] - sx2[i-1]) + 2 * a * b * (sx[n] - sx[i-1]) + b * (n - i)
             }
         }
     }}
@@ -173,16 +179,16 @@ private fun approximation(
 
             for (i in m..(n-2)) {
 
-                val currentError = cost[i-1] + costs[n][i];
+                val currentError = cost[i-1] + costs[n][i]
 
                 if (currentError < minError) {
-                    minError = currentError;
-                    minIndex = i;
+                    minError = currentError
+                    minIndex = i
                 }
             }
 
-            cost[n-1] = minError;
-            father[m][n] = minIndex;
+            cost[n-1] = minError
+            father[m][n] = minIndex
 
         }
 
@@ -191,12 +197,12 @@ private fun approximation(
 
     val results = DoubleArray(segmentCount+1) { 0.0 }
 
-    var pointIndex = pointCount - 1;
-    results[segmentCount] = points[pointIndex];
+    var pointIndex = pointCount - 1
+    results[segmentCount] = points[pointIndex]
 
     for (i in (segmentCount-1).downTo(0)) {
-        pointIndex = father[i][pointIndex];
-        results[i] = points[pointIndex];
+        pointIndex = father[i][pointIndex]
+        results[i] = points[pointIndex]
     }
 
     return results
@@ -204,11 +210,12 @@ private fun approximation(
 
 private fun segmentError(x: DoubleArray, y: DoubleArray, first: Int, last: Int): Double {
     // Compute line segment coefficients
-    val a = (y[last] - y[first]) / (x[last] - x[first]);
-    val b = (y[first] * x[last] - y[last] * x[first]) / (x[last] - x[first]);
+    val a = (y[last] - y[first]) / (x[last] - x[first])
+    val b = (y[first] * x[last] - y[last] * x[first]) / (x[last] - x[first])
 
     // Compute error for the line segment
     var e = 0.0
+    @Suppress("LoopToCallChain")    // much faster this way
     for (k in first..last) {
         e += (y[k] - a * x[k] - b) * (y[k] - a * x[k] - b)
     }
@@ -220,6 +227,7 @@ private fun segmentError(x: DoubleArray, y: DoubleArray, first: Int, last: Int):
 //Utility functions used when computing the approximated model
 private inline fun <T> Array<T>.maxByDouble(action: (T) -> Double): Double {
     var max = Double.NEGATIVE_INFINITY
+    @Suppress("LoopToCallChain")    // much faster this way
     for (e in this) {
         max = Math.max(max, action(e))
     }
@@ -228,6 +236,7 @@ private inline fun <T> Array<T>.maxByDouble(action: (T) -> Double): Double {
 
 private inline fun <T> Array<T>.maxByDoubleIndexed(action: (Int) -> Double): Double {
     var max = Double.NEGATIVE_INFINITY
+    @Suppress("LoopToCallChain")    // much faster this way
     for (e in this.indices) {
         max = Math.max(max, action(e))
     }

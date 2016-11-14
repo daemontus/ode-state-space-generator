@@ -69,7 +69,7 @@ class SMTColors(
 
     override fun equals(other: Any?): Boolean {
         if (other !is SMTColors) return false
-        return cnf.equals(other.cnf)
+        return cnf == other.cnf
     }
 
     override fun hashCode(): Int {
