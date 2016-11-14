@@ -28,7 +28,7 @@ class PartialOrderSet(
     //initialize solver with requested logic and parameter bounds
     val solver = z3.mkSolver(z3.mkTactic(logic)).apply {
         this.add(*paramBounds)  //spread array operator
-    }
+    }!!
 
     private fun BoolExpr.isSuperSet(other: BoolExpr): Boolean {
         val start = System.nanoTime()

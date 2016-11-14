@@ -1,34 +1,33 @@
 package com.github.sybila.ode.generator.smt
 
 import com.microsoft.z3.*
-import java.io.Serializable
 import java.util.*
 
 //Z3 doesn't support any parallelism or anything, so we might as well just make it all static...
 
 val z3 = Context()
 
-fun BoolExpr.not() = z3.mkNot(this)
+fun BoolExpr.not() = z3.mkNot(this)!!
 fun Status.isUnsat() = this == Status.UNSATISFIABLE
 fun Status.isSat() = this == Status.SATISFIABLE
 
-val z3True = z3.mkTrue()
-val z3False = z3.mkFalse()
+val z3True = z3.mkTrue()!!
+val z3False = z3.mkFalse()!!
 
-fun String.toZ3() = z3.mkRealConst(this)
-fun Double.toZ3() = z3.mkReal(this.toString())
-fun Int.toZ3() = z3.mkReal(this)
+fun String.toZ3() = z3.mkRealConst(this)!!
+fun Double.toZ3() = z3.mkReal(this.toString())!!
+fun Int.toZ3() = z3.mkReal(this)!!
 
-infix fun BoolExpr.and(other: BoolExpr) = z3.mkAnd(this, other)
-infix fun BoolExpr.or(other: BoolExpr) = z3.mkOr(this, other)
+infix fun BoolExpr.and(other: BoolExpr) = z3.mkAnd(this, other)!!
+infix fun BoolExpr.or(other: BoolExpr) = z3.mkOr(this, other)!!
 
-infix fun ArithExpr.gt(other: ArithExpr) = z3.mkGt(this, other)
-infix fun ArithExpr.ge(other: ArithExpr) = z3.mkGe(this, other)
-infix fun ArithExpr.lt(other: ArithExpr) = z3.mkLt(this, other)
-infix fun ArithExpr.le(other: ArithExpr) = z3.mkLe(this, other)
+infix fun ArithExpr.gt(other: ArithExpr) = z3.mkGt(this, other)!!
+infix fun ArithExpr.ge(other: ArithExpr) = z3.mkGe(this, other)!!
+infix fun ArithExpr.lt(other: ArithExpr) = z3.mkLt(this, other)!!
+infix fun ArithExpr.le(other: ArithExpr) = z3.mkLe(this, other)!!
 
-infix fun ArithExpr.plus(other: ArithExpr) = z3.mkAdd(this, other)
-infix fun ArithExpr.times(other: ArithExpr) = z3.mkMul(this, other)
+infix fun ArithExpr.plus(other: ArithExpr) = z3.mkAdd(this, other)!!
+infix fun ArithExpr.times(other: ArithExpr) = z3.mkMul(this, other)!!
 
 fun BoolExpr.calculateBufferSize(): Int {
     if (!this.isGT && !this.isGE && !this.isLE && ! this.isLT) {
@@ -88,7 +87,7 @@ fun ArithExpr.serialize(buffer: LongArray, start: Int, params: List<RealExpr>): 
             newStart
         }
         this.isRatNum -> {
-            var r = this as RatNum
+            val r = this as RatNum
             buffer[start] = 0
             buffer[start+1] = r.bigIntNumerator.toLong()
             buffer[start+2] = r.bigIntDenominator.toLong()
@@ -188,7 +187,7 @@ class Clause(
         val simplified: Boolean = false
 ) {
 
-    fun asFormula() = if (literals.isEmpty()) z3.mkFalse() else z3.mkOr(*literals.toTypedArray())
+    fun asFormula() = (if (literals.isEmpty()) z3.mkFalse() else z3.mkOr(*literals.toTypedArray()))!!
 
     infix fun or(other: Clause): Clause = Clause(literals + other.literals, order, false)
 
@@ -232,7 +231,7 @@ class Clause(
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (other is Clause) this.literals.equals(other.literals)
+        return if (other is Clause) this.literals == other.literals
         else false
     }
 
@@ -260,7 +259,7 @@ class CNF(
         val simplified: Boolean = false
 ) {
 
-    fun asFormula() = if (clauses.isEmpty()) z3.mkTrue() else z3.mkAnd(*clauses.map { it.asFormula() }.toTypedArray())
+    fun asFormula() = if (clauses.isEmpty()) z3.mkTrue() else z3.mkAnd(*clauses.map(Clause::asFormula).toTypedArray())
 
     infix fun and(other: CNF): CNF {
         return CNF(this.clauses + other.clauses, order, false)
@@ -276,7 +275,7 @@ class CNF(
 
     fun not(): CNF {
         if (this.clauses.isEmpty()) return CNF(setOf(Clause(setOf(), order)), order, true)
-        return clauses.map { it.not() }.fold(CNF(setOf(Clause(setOf(), order)), order, true)) { a, b -> a or b }
+        return clauses.map(Clause::not).fold(CNF(setOf(Clause(setOf(), order)), order, true)) { a, b -> a or b }
     }
 
     fun simplify(): CNF {
@@ -287,7 +286,7 @@ class CNF(
         if (simplified) return this
         simplifyCalls += 1
         val start = System.nanoTime()
-        val simplified = clauses.map { it.simplify() }.filterNotNull()
+        val simplified = clauses.map(Clause::simplify).filterNotNull()
         val working = simplified.toMutableList()
         working.removeAll { a ->
             simplified.any { b -> a != b && a.covers(b) }
@@ -299,7 +298,7 @@ class CNF(
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (other is CNF) this.clauses.equals(other.clauses)
+        return if (other is CNF) this.clauses == other.clauses
         else false
     }
 
@@ -312,7 +311,7 @@ class CNF(
     }
 
     fun calculateBufferSize(): Int {
-        return clauses.sumBy { it.calculateBufferSize() } + 1
+        return clauses.sumBy(Clause::calculateBufferSize) + 1
     }
 
     fun serialize(buffer: LongArray, start: Int): Int {

@@ -13,8 +13,8 @@ import com.github.sybila.ode.generator.NodeEncoder
  */
 class SlicePartitioning(
         override val myId: Int,
-        private val workerCount: Int,
-        private val encoder: NodeEncoder
+        workerCount: Int,
+        encoder: NodeEncoder
 ) : PartitionFunction<IDNode> {
 
     private val statesPerMachine = Math.ceil(encoder.stateCount.toDouble() / workerCount.toDouble()).toInt();
