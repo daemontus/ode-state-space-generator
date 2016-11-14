@@ -4,8 +4,11 @@ import com.github.sybila.ctl.set
 import com.github.sybila.ode.antlr.ODEBaseListener
 import com.github.sybila.ode.antlr.ODELexer
 import com.github.sybila.ode.antlr.ODEParser
-import org.antlr.v4.runtime.ANTLRInputStream
-import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.Parser
+import org.antlr.v4.runtime.atn.ATNConfigSet
+import org.antlr.v4.runtime.dfa.DFA
+import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import java.io.File
@@ -20,10 +23,35 @@ class Parser {
             = input.inputStream().use { processStream(ANTLRInputStream(it)) }
 
     private fun processStream(input: ANTLRInputStream): Model {
-        val root = ODEParser(CommonTokenStream(ODELexer(input))).root()
+        val lexer = ODELexer(input)
+        val parser = ODEParser(CommonTokenStream(lexer))
+        parser.removeErrorListeners()
+        parser.addErrorListener(errorListener)
+        lexer.removeErrorListeners()
+        lexer.addErrorListener(errorListener)
+        val root = parser.root()
         val reader = ModelReader()
         ParseTreeWalker().walk(reader, root)
         return reader.toModel()
+    }
+
+    private val errorListener = object : ANTLRErrorListener {
+        override fun reportAttemptingFullContext(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: BitSet?, p5: ATNConfigSet?) {
+            //ok
+            println("Full ctx!")
+        }
+        override fun syntaxError(p0: Recognizer<*, *>?, p1: Any?, line: Int, char: Int, msg: String?, p5: RecognitionException?) {
+            throw IllegalArgumentException("Syntax error at $line:$char: $msg")
+        }
+        override fun reportAmbiguity(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: Boolean, p5: BitSet?, p6: ATNConfigSet?) {
+            //ok
+            println("Ambig")
+        }
+        override fun reportContextSensitivity(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: Int, p5: ATNConfigSet?) {
+            //ok
+            println("Sense")
+        }
+
     }
 
 }
@@ -306,6 +334,9 @@ private class ModelReader : ODEBaseListener() {
         expressionTree[ctx] = expressionTree[ctx.eval()]
     }
 
+    override fun visitErrorNode(node: ErrorNode) {
+        throw IllegalArgumentException("Parser error: $node")
+    }
 }
 
 // Helper classes that preserve important parts of parse tree between parsing and validation/conversion
