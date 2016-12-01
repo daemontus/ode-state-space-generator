@@ -5,14 +5,12 @@ import com.github.sybila.checker.PartitionFunction
 import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.Model
 import com.microsoft.z3.ArithExpr
-import com.microsoft.z3.BoolExpr
 import java.util.*
 
 class SMTOdeFragment(
         model: Model,
         partitioning: PartitionFunction<IDNode>,
-        createSelfLoops: Boolean = true,
-        val order: PartialOrderSet = PartialOrderSet(model.parameters)
+        createSelfLoops: Boolean = true
 ) : AbstractOdeFragment<SMTColors>(model, partitioning, createSelfLoops) {
 
     private val paramCount = model.parameters.size
@@ -22,14 +20,12 @@ class SMTOdeFragment(
         z3.mkRealConst(it.name)
     }
 
-    val emptyCNF = CNF(setOf(Clause(setOf(), order)), order)
-    val fullCNF = CNF(setOf(), order)
-
-    override val emptyColors: SMTColors = SMTColors(emptyCNF, order, false)
-    override val fullColors: SMTColors = if (model.parameters.isEmpty()) {
-        SMTColors(fullCNF, order, true)
-    } else {
-        SMTColors(fullCNF, order, true)
+    override val emptyColors: SMTColors = ff
+    override val fullColors: SMTColors = if (model.parameters.isEmpty()) tt else {
+        SMTColors(z3.mkAnd(*model.parameters.map {
+            val p = it.name.toZ3()
+            (p gt it.range.first.toZ3()) and (p lt it.range.second.toZ3())
+        }.toTypedArray()), ctx, true)
     }
 
     private val equationConstants = Array(dimensions) {
@@ -69,13 +65,12 @@ class SMTOdeFragment(
         val u = if (upper) 1 else 0
         val i = if (incoming) 1 else 0
         if (myFacets[dim][u][i] != null) {
-            return myFacets[dim][u][i]!!;
+            return myFacets[dim][u][i]!!
         } else {
             //compute facet
 
             //since this is an or, transition is active if bool is true or formulas are not empty
-            var transitionActive = false
-            var formulas = ArrayList<BoolExpr>()
+            var formula = z3False
 
             for (coordinates in facet(from, dim, upper)) {
                 val vertex = encoder.encodeVertex(coordinates)
@@ -98,30 +93,23 @@ class SMTOdeFragment(
                         expression gt z3zero
                     }
 
-                    formulas.add(equation)
+                    formula = formula.or(equation)
                 } else {
                     //This equation is without parameters, so we can eval it to true/false right away
-                    if ((upper && incoming) || (!upper && !incoming)) {
+                    val c = if ((upper && incoming) || (!upper && !incoming)) {
                         if (results[paramCount] < 0.0) {
-                            transitionActive = true
-                        }
+                            z3True
+                        } else z3False
                     } else {
                         if (results[paramCount] > 0.0) {
-                            transitionActive = true
-                        }
+                            z3True
+                        } else z3False
                     }
+                    formula = formula.or(c)
                 }
             }
 
-            val relevant = order.addBiggest(formulas)
-            val colors = when {
-                relevant == null -> fullColors
-                relevant.isEmpty() && transitionActive -> fullColors
-                relevant.isEmpty() && !transitionActive -> emptyColors
-                else -> {
-                    SMTColors(CNF(setOf(Clause(relevant.toSet(), order)), order), order, true)
-                }
-            }
+            val colors = SMTColors(formula, ctx, null).intersect(fullColors)
 
             myFacets[dim][u][i] = colors
 
