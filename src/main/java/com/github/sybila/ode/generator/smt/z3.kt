@@ -4,7 +4,6 @@ import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.Status
-import com.sun.org.apache.xpath.internal.operations.Bool
 
 //Z3 doesn't support any parallelism or anything, so we might as well just make it all static...
 
