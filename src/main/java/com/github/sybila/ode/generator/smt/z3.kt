@@ -14,7 +14,7 @@ val ctx = SMTContext(
         tactic = z3.mkTactic("ctx-solver-simplify"),
         purify = z3.mkTactic("purify-arith"),
         goal = z3.mkGoal(false, false, false),
-        solver = z3.mkSolver("qflra")
+        solver = z3.mkSolver(z3.mkTactic("qflra"))
 )
 
 fun BoolExpr.asColors(): SMTColors = SMTColors(
