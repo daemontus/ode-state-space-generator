@@ -6,12 +6,8 @@ import kotlin.test.assertTrue
 
 class SMTColorsTest {
 
-    private val order = PartialOrderSet(listOf())
+    fun BoolExpr.toColors() = SMTColors(this, ctx, null)
 
-    fun BoolExpr.toColors() = SMTColors(CNF(setOf(Clause(setOf(this), order)), order), order)
-
-    private val tt = SMTColors(CNF(setOf(), order), order)
-    private val ff = SMTColors(CNF(setOf(Clause(setOf(), order)), order), order)
     private val x = "x".toZ3()
     private val three = 3.toZ3()
     private val two = 2.toZ3()

@@ -6,7 +6,6 @@ import com.github.sybila.ode.generator.ExplicitEvaluable
 import com.github.sybila.ode.model.Model
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
-import kotlin.test.assertEquals
 
 /**
  * This test suit should provide a really basic way to test how
@@ -37,11 +36,11 @@ class OneDimNoParamGeneratorTest {
     private val n2 = IDNode(2)
 
     private fun SMTOdeFragment.normalizedSuccessors(node: IDNode): List<Pair<IDNode, SMTColors>> {
-        return this.successors.invoke(node).entries.map { Pair(it.key, it.value) }.sortedBy { it.first.id }
+        return this.successors.invoke(node).normalize()
     }
 
     private fun SMTOdeFragment.normalizedPredecessors(node: IDNode): List<Pair<IDNode, SMTColors>> {
-        return this.predecessors.invoke(node).entries.map { Pair(it.key, it.value) }.sortedBy { it.first.id }
+        return this.predecessors.invoke(node).normalize()
     }
 
     //ignore symmetric cases, otherwise try as many combinations as possible
