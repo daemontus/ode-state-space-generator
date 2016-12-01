@@ -135,4 +135,8 @@ class SMTColors(
         return this.context.hashCode() * 31 + formula.hashCode()
     }
 
+    fun prettyFormula(): BoolExpr {
+        return this.normalize().purify().formula
+    }
+
 }
