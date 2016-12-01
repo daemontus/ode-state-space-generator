@@ -145,6 +145,12 @@ class Rectangle(
         return start + coordinates.size
     }
 
+    fun asIntervals(): List<List<Double>> {
+        return (0 until (coordinates.size / 2)).map {
+            listOf(coordinates[2* it], coordinates[2* it +1])
+        }
+    }
+
     override fun equals(other: Any?): Boolean = other is Rectangle && Arrays.equals(coordinates, other.coordinates)
 
     override fun hashCode(): Int = Arrays.hashCode(coordinates)
@@ -230,6 +236,8 @@ class RectangleColors(
             index = r.serialize(to, index)
         }
     }
+
+    fun asRectangleList(): List<Rectangle> = this.rectangles.toList()
 
     override fun equals(other: Any?): Boolean = other is RectangleColors && other.rectangles == rectangles
 
