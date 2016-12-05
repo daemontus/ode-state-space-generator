@@ -1,5 +1,7 @@
 package com.github.sybila.ode.model
 
+import java.util.*
+
 fun Model.toBio(): String {
     return (if (this.parameters.isNotEmpty()) {
                 "PARAMS: ${this.parameters.map {
@@ -31,5 +33,5 @@ fun Model.toBio(): String {
 }
 
 fun Double.safeString(): String {
-    return String.format("%f", this)
+    return String.format(Locale.ROOT, "%f", this)
 }
