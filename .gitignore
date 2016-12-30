@@ -16,3 +16,7 @@ build
 ## File-based project format:
 *.ipr
 *.iws
+
+*.so
+*.dylib
+*.a
