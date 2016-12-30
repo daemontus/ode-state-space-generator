@@ -2,7 +2,7 @@ package com.github.sybila.ode.model
 
 import java.util.*
 
-fun Model.toBio(): String {
+fun OdeModel.toBio(): String {
     return (if (this.parameters.isNotEmpty()) {
                 "PARAMS: ${this.parameters.map {
                     "${it.name}, ${it.range.first.safeString()}, ${it.range.second.safeString()}"

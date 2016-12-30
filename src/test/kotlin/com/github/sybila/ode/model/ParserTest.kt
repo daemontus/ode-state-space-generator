@@ -290,8 +290,8 @@ class ParserTest {
 
     @Test
     fun literalPropagation() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -313,8 +313,8 @@ class ParserTest {
 
     @Test
     fun constantPropagation() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -337,8 +337,8 @@ class ParserTest {
 
     @Test
     fun hillFunctionsTest() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -353,8 +353,8 @@ class ParserTest {
             """)
         )
 
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -369,8 +369,8 @@ class ParserTest {
             """)
         )
 
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -389,8 +389,8 @@ class ParserTest {
 
     @Test
     fun rampFunctionsTest() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -404,8 +404,8 @@ class ParserTest {
             EQ: V1 = Rp(V1, 1.0, 2.0, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -420,8 +420,8 @@ class ParserTest {
             EQ: V1 = rm(V1, c1, 2.0, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -436,8 +436,8 @@ class ParserTest {
             EQ: V1 = rpcoor(V1, 1.0, c1, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -455,8 +455,8 @@ class ParserTest {
 
     @Test
     fun stepFunctionTest() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -470,8 +470,8 @@ class ParserTest {
             EQ: V1 = Hp(V1, 1.0, 2.0, 3.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -485,8 +485,8 @@ class ParserTest {
             EQ: V1 = hm(V1, 1.0, 2.0, 3.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -505,8 +505,8 @@ class ParserTest {
 
     @Test
     fun sigmoidFunctionTest() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -521,8 +521,8 @@ class ParserTest {
             EQ: V1 = Sp(V1, 1.0, c1, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -536,8 +536,8 @@ class ParserTest {
             EQ: V1 = sm(V1, 1.0, 2.0, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -551,8 +551,8 @@ class ParserTest {
             EQ: V1 = spinv(V1, 1.0, 2.0, 3.0, 4.0)
             """)
         )
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = Pair(0.0, 3.0),
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -571,8 +571,8 @@ class ParserTest {
 
     @Test
     fun approxFunctionTest() {
-        assertEquals(Model(
-                listOf(Model.Variable(
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = 0.0 to 3.0,
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -631,8 +631,8 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
 
         val parser = Parser()
 
-        assertEquals(Model(listOf(
-                Model.Variable(
+        assertEquals(OdeModel(listOf(
+                OdeModel.Variable(
                         name = "TCP",
                         range = Pair(0.0, 2.0),
                         thresholds = listOf(0.0, 0.5, 1.0, 1.5, 2.0),
@@ -645,7 +645,7 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
                                 )
                         )
                 ),
-                Model.Variable(
+                OdeModel.Variable(
                         name = "DCP",
                         range = Pair(0.0, 2.0),
                         thresholds = listOf(0.0, 0.5, 1.0, 1.5, 2.0),
@@ -662,7 +662,7 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
                                 )
                         )
                 ),
-                Model.Variable(
+                OdeModel.Variable(
                         name = "ECH",
                         range = Pair(0.0, 2.0),
                         thresholds = listOf(0.0, 2.0),
@@ -678,7 +678,7 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
                                 )
                         )
                 ),
-                Model.Variable(
+                OdeModel.Variable(
                         name = "GLY",
                         range = Pair(0.0, 2.0),
                         thresholds = listOf(0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0),
@@ -690,7 +690,7 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
                                 )
                         )
                 ),
-                Model.Variable(
+                OdeModel.Variable(
                         name = "ATOX",
                         range = Pair(0.0, 5.0),
                         thresholds = listOf(0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0),
@@ -711,7 +711,7 @@ THRES: ATOX:  0,	0.5,	1,		1.5,	2,	3,		5
                         )
                 )
         ), listOf(
-                Model.Parameter("DhaA", Pair(0.0, 0.01))
+                OdeModel.Parameter("DhaA", Pair(0.0, 0.01))
         )), parser.parse(model))
 
     }
@@ -736,8 +736,8 @@ THRES: E2F1: 0, 2, 6, 10, 15
 INIT: pRB: 3, 7; E2F1: 2, 6
         """
 
-        assertEquals(Model(listOf(
-                Model.Variable(
+        assertEquals(OdeModel(listOf(
+                OdeModel.Variable(
                         name = "pRB",
                         range = Pair(0.0, 10.0),
                         thresholds = listOf(0.0, 3.0, 7.0, 10.0),
@@ -756,7 +756,7 @@ INIT: pRB: 3, 7; E2F1: 2, 6
                                 )
                         )
                 ),
-                Model.Variable(
+                OdeModel.Variable(
                         name = "E2F1",
                         range = Pair(0.0, 15.0),
                         thresholds = listOf(0.0, 2.0, 6.0, 10.0, 15.0),
@@ -784,7 +784,7 @@ INIT: pRB: 3, 7; E2F1: 2, 6
                         )
                 )
         ), listOf(
-                Model.Parameter("y_pRB", Pair(0.0, 1.0))
+                OdeModel.Parameter("y_pRB", Pair(0.0, 1.0))
         )), parser.parse(model))
     }
 
@@ -811,8 +811,8 @@ system async;
 
         """
 
-        assertEquals(Model(listOf(
-                Model.Variable(
+        assertEquals(OdeModel(listOf(
+                OdeModel.Variable(
                         name = "x",
                         range = Pair(0.0, 10.0),
                         thresholds = listOf(0.0, 4.9, 5.1, 10.0),
@@ -829,7 +829,7 @@ system async;
                         )
                 )
         ), listOf(
-                Model.Parameter("k1", Pair(0.01, 10.0))
+                OdeModel.Parameter("k1", Pair(0.01, 10.0))
         )), parser.parse(model))
     }
 }

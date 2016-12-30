@@ -1,10 +1,9 @@
 package com.github.sybila.ode.generator
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.ode.model.Model
+import com.github.sybila.ode.model.OdeModel
 
 class NodeEncoder(
-        private val model: Model
+        private val model: OdeModel
 ) {
 
     private val dimensionMultipliers = IntArray(model.variables.size)
@@ -23,7 +22,7 @@ class NodeEncoder(
             stateCount *= dimensionStateCounts[v]
         }
         if (stateCount > Int.MAX_VALUE) {
-            throw IllegalArgumentException("Model is too big for integer encoding!")
+            throw IllegalArgumentException("OdeModel is too big for integer encoding!")
         }
         stateCount.toInt()
     }
@@ -35,7 +34,7 @@ class NodeEncoder(
             vertexCount *= thresholdCounts[v]
         }
         if (vertexCount > Int.MAX_VALUE) {
-            throw IllegalArgumentException("Model is too big for integer encoding!")
+            throw IllegalArgumentException("OdeModel is too big for integer encoding!")
         }
         vertexCount.toInt()
     }
@@ -45,18 +44,18 @@ class NodeEncoder(
     /**
      * Encode given coordinate array into a single number.
      */
-    fun encodeNode(coordinates: IntArray): IDNode {
-        return IDNode(coordinates.foldIndexed(0) { i, acc, e ->
+    fun encodeNode(coordinates: IntArray): Int {
+        return coordinates.foldIndexed(0) { i, acc, e ->
             acc + dimensionMultipliers[i] * e
-        })
+        }
     }
 
     /**
      * Decode given node into array of it's coordinates.
      */
-    fun decodeNode(node: IDNode): IntArray {
+    fun decodeNode(node: Int): IntArray {
         return IntArray(dimensionMultipliers.size) { i ->
-            (node.id / dimensionMultipliers[i]) % dimensionStateCounts[i]
+            (node / dimensionMultipliers[i]) % dimensionStateCounts[i]
         }
     }
 
@@ -66,9 +65,17 @@ class NodeEncoder(
         }
     }
 
-    fun decodeVertex(vertex: Int): IntArray {
-        return IntArray(thresholdMultipliers.size) { i ->
-            (vertex / thresholdMultipliers[i]) % thresholdCounts[i]
+    fun vertexCoordinate(vertex: Int, dim: Int): Int {
+        return (vertex / thresholdMultipliers[dim]) % thresholdCounts[dim]
+    }
+
+    fun nodeVertex(node: Int, vertexMask: Int): Int {
+        return (0 until dimensions).asSequence().map { dim ->
+            //compute vertex coordinates
+            coordinate(node, dim) + vertexMask.shr(dim).and(1)
+        }.foldIndexed(0) { i, acc, e ->
+            //transform to ID
+            acc + thresholdMultipliers[i] * e
         }
     }
 
@@ -76,40 +83,38 @@ class NodeEncoder(
      * Find an id node that is above given node in specified dimension.
      * Return null if such node is not in the model.
      */
-    fun higherNode(from: IDNode, dim: Int): IDNode? {
-        val coordinate = (from.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
-        if (coordinate == dimensionStateCounts[dim] - 1) return null
-        else return IDNode(from.id + dimensionMultipliers[dim])
+    fun higherNode(from: Int, dim: Int): Int? {
+        val coordinate = (from / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+        return if (coordinate == dimensionStateCounts[dim] - 1) null else from + dimensionMultipliers[dim]
     }
 
     /**
      * Find an id node that is below given node in specified dimension.
      * Return null if such node is not in the model.
      */
-    fun lowerNode(from: IDNode, dim: Int): IDNode? {
-        val coordinate = (from.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
-        if (coordinate == 0) return null
-        else return IDNode(from.id - dimensionMultipliers[dim])
+    fun lowerNode(from: Int, dim: Int): Int? {
+        val coordinate = (from / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+        return if (coordinate == 0) null else from - dimensionMultipliers[dim]
     }
 
     /**
      * Return index of upper threshold in specified dimension
      */
-    fun upperThreshold(of: IDNode, dim: Int): Int {
-        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + 1
+    fun upperThreshold(of: Int, dim: Int): Int {
+        return (of / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + 1
     }
 
     /**
      * Return index of lower threshold in specified dimension
      */
-    fun lowerThreshold(of: IDNode, dim: Int): Int {
-        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+    fun lowerThreshold(of: Int, dim: Int): Int {
+        return (of / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
     }
 
-    fun threshold(of: IDNode, dim: Int, upper: Boolean): Int {
-        return (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + if (upper) 1 else 0
+    fun threshold(of: Int, dim: Int, upper: Boolean): Int {
+        return (of / dimensionMultipliers[dim]) % dimensionStateCounts[dim] + if (upper) 1 else 0
     }
 
-    fun coordinate(of: IDNode, dim: Int): Int = (of.id / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
+    fun coordinate(of: Int, dim: Int): Int = (of / dimensionMultipliers[dim]) % dimensionStateCounts[dim]
 
 }

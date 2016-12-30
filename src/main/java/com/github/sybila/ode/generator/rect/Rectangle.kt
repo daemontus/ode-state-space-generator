@@ -1,7 +1,9 @@
 package com.github.sybila.ode.generator.rect
 
-import com.github.sybila.checker.Colors
+import java.nio.ByteBuffer
 import java.util.*
+
+private val PRECISION = 0.00001
 
 /**
  * Shortcut for creating rectangles
@@ -21,6 +23,15 @@ fun rectangleFromPoints(vararg values: Double): Rectangle {
         }
     }
     return Rectangle(newCoordinates)
+}
+
+fun rectangleFromBuffer(buffer: ByteBuffer): Rectangle {
+    val size = buffer.int
+    val coordinates = DoubleArray(size)
+    for (i in 0 until size) {
+        coordinates[i] = buffer.double
+    }
+    return Rectangle(coordinates)
 }
 
 /**
@@ -100,7 +111,7 @@ class Rectangle(
     /**
      * Create a set of smaller rectangles that together form a result of subtraction of given rectangle.
      */
-    operator fun minus(other: Rectangle): Set<Rectangle> {
+    operator fun minus(other: Rectangle): MutableSet<Rectangle> {
         val workingCoordinates = coordinates.copyOf()
         val results = HashSet<Rectangle>()
         for (dim in 0 until (coordinates.size/2)) {
@@ -113,7 +124,7 @@ class Rectangle(
                 continue
             } else if (h2 <= l1 || h1 <= l2) {
                 // l1..h1 ... l2..h2 || l2..h2 ... l1..h1 - these rectangles are completely separate, nothing should be cut
-                return setOf(this)
+                return mutableSetOf(this)
             } else {
                 if (l1 < l2) {
                     //there is an overlap on the lower side, create cut-rectangle and subtract it from working coordinates
@@ -136,113 +147,19 @@ class Rectangle(
         return results
     }
 
-    /**
-     * Writes this rectangle into given array, starting on given position.
-     * Returns next empty index.
-     */
-    fun serialize(to: DoubleArray, start: Int): Int {
-        System.arraycopy(coordinates, 0, to, start, coordinates.size)
-        return start + coordinates.size
-    }
-
-    fun asIntervals(): List<List<Double>> {
-        return (0 until (coordinates.size / 2)).map {
-            listOf(coordinates[2* it], coordinates[2* it +1])
-        }
-    }
-
     override fun equals(other: Any?): Boolean = other is Rectangle && Arrays.equals(coordinates, other.coordinates)
 
     override fun hashCode(): Int = Arrays.hashCode(coordinates)
 
     override fun toString(): String = Arrays.toString(coordinates)
-}
 
+    fun byteSize(): Int = 4 + 8 * coordinates.size
 
-class RectangleColors(
-        private val rectangles: Set<Rectangle> = setOf()
-) : Colors<RectangleColors> {
-
-    constructor(vararg values: Rectangle): this(values.toSet())
-
-    override fun intersect(other: RectangleColors): RectangleColors {
-        val newItems = ArrayList<Rectangle>()
-        for (item1 in rectangles) {
-            for (item2 in other.rectangles) {
-                val r = item1 * item2
-                if (r != null) newItems.add(r)
-            }
-        }
-        return RectangleColors(newItems.toSet())
+    fun writeToBuffer(buffer: ByteBuffer) {
+        buffer.putInt(coordinates.size)
+        coordinates.forEach { buffer.putDouble(it) }
     }
 
-    override fun isEmpty(): Boolean = rectangles.isEmpty()
-
-    override fun minus(other: RectangleColors): RectangleColors {
-        //go through all rectangles in other and subtract them one by one from all our rectangles
-        return RectangleColors(
-                other.rectangles.fold(rectangles.toList()) {
-                    acc, rect ->
-                    acc.flatMap { it - rect }
-                }.toSet()
-        )
-    }
-
-    override fun plus(other: RectangleColors): RectangleColors {
-        val newItems = ArrayList(rectangles)
-        for (extra in other.rectangles) {
-            var merged = false
-            for (i in newItems.indices) {
-                val r = extra + newItems[i]
-                if (r != null) {
-                    merged = true
-                    newItems[i] = r
-                    break   //we need to break, so that we don't do multiple merges
-                }
-            }
-            if (!merged) newItems.add(extra)
-        }
-        //resulting array still might not be optimal
-        var merged = true
-        while (merged) {
-            merged = false
-            search@ for (c in newItems.indices) {
-                for (i in newItems.indices) {
-                    if (i == c) continue
-                    val r = newItems[c] + newItems[i]
-                    if (r != null) {
-                        merged = true
-                        newItems[c] = r
-                        newItems.removeAt(i)
-                        break@search
-                    }
-                }
-            }
-        }
-        return RectangleColors(newItems.toSet())
-    }
-
-    /**
-     * Number of rectangles in this color set.
-     */
-    fun rectangleCount() = rectangles.size
-
-    /**
-     * Write this color set into given array.
-     */
-    fun serialize(to: DoubleArray) {
-        var index = 0
-        for (r in rectangles) {
-            index = r.serialize(to, index)
-        }
-    }
-
-    fun asRectangleList(): List<Rectangle> = this.rectangles.toList()
-
-    override fun equals(other: Any?): Boolean = other is RectangleColors && other.rectangles == rectangles
-
-    override fun hashCode(): Int = rectangles.hashCode()
-
-    override fun toString(): String = rectangles.toString()
+    fun asParams(): MutableSet<Rectangle> = mutableSetOf(this)
 
 }

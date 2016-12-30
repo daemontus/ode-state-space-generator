@@ -1,6 +1,6 @@
 package com.github.sybila.ode.model
 
-data class Model(
+data class OdeModel(
         val variables: List<Variable>,
         val parameters: List<Parameter> = listOf()
 ) {
@@ -8,7 +8,7 @@ data class Model(
     constructor(vararg variable: Variable) : this(variable.toList())
 
     init {
-        if (variables.isEmpty()) throw IllegalArgumentException("Model has no variables!")
+        if (variables.isEmpty()) throw IllegalArgumentException("OdeModel has no variables!")
     }
 
     data class Variable(

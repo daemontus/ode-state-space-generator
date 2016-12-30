@@ -10,7 +10,7 @@ package com.github.sybila.ode.model
 /**
  * Perform linear approximation of continuous functions used in the model
  */
-fun Model.computeApproximation(fast: Boolean = true, cutToRange: Boolean = false): Model {
+fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = false): OdeModel {
 
     val newThresholds = variables.indices.map { vIndex ->
 

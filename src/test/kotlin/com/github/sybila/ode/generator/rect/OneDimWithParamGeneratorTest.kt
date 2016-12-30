@@ -1,12 +1,13 @@
 package com.github.sybila.ode.generator.rect
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.checker.nodesOf
-import com.github.sybila.ode.model.Model
+import com.github.sybila.checker.Transition
+import com.github.sybila.checker.decreaseProp
+import com.github.sybila.checker.increaseProp
+import com.github.sybila.huctl.DirectionFormula
+import com.github.sybila.ode.assertTransitionEquals
+import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
-import kotlin.test.assertEquals
 
 
 class OneDimWithParamGeneratorTest {
@@ -19,7 +20,7 @@ class OneDimWithParamGeneratorTest {
     //dv2 = p(v1/2 - 2) - 1
     //This model covers the two remaining cases. A stable state and a zero on threshold.
 
-    private val v1 = Model.Variable(
+    private val v1 = OdeModel.Variable(
             name = "v1", range = Pair(0.0, 6.0), varPoints = null,
             thresholds = listOf(0.0, 2.0, 4.0, 6.0),
             equation = listOf(
@@ -28,86 +29,54 @@ class OneDimWithParamGeneratorTest {
                     Summand(constant = -1.0))
     )
 
-    private val v2 = v1.copy(name = "v2",
+    private val v2 = v1.copy(name = "v1",
             equation = listOf(
                     Summand(paramIndex = 0, variableIndices = listOf(0), constant = 0.5),
                     Summand(paramIndex = 0, constant = -2.0),
                     Summand(constant = -1.0)))
 
-    private val fragmentOne = RectangleOdeFragment(Model(listOf(v1), listOf(
-            Model.Parameter("p1", Pair(0.0, 2.0))
-    )), UniformPartitionFunction<IDNode>())
+    private val fragmentOne = RectangleOdeModel(OdeModel(listOf(v1), listOf(
+            OdeModel.Parameter("p1", Pair(0.0, 2.0))
+    )))
 
-    private val fragmentTwo = RectangleOdeFragment(Model(listOf(v2), listOf(
-            Model.Parameter("p2", Pair(-2.0, 2.0))
-    )), UniformPartitionFunction<IDNode>())
+    private val fragmentTwo = RectangleOdeModel(OdeModel(listOf(v2), listOf(
+            OdeModel.Parameter("p2", Pair(-2.0, 2.0))
+    )))
 
-    private val n0 = IDNode(0)
-    private val n1 = IDNode(1)
-    private val n2 = IDNode(2)
-
-    private val c = RectangleColors()
+    val up = "v1".increaseProp()
+    val down = "v1".decreaseProp()
+    val loop = DirectionFormula.Atom.Loop
 
     @Test
     fun parameterTestOne() {
-        val s0 = fragmentOne.successors.invoke(n0)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 2.0, 2.0
-                )))), s0)
-        val s1 = fragmentOne.successors.invoke(n1)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0 / 2.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 3.0, 1.0 / 2.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 3.0, 2.0
-                )))), s1)
-        val s2 = fragmentOne.successors.invoke(n2)
-        assertEquals(nodesOf(c,
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0 / 3.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 4.0, 2.0
-                )))), s2
-        )
-        val p0 = fragmentOne.predecessors.invoke(n0)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0 / 2.0
-                )))), p0
-        )
-        val p1 = fragmentOne.predecessors.invoke(n1)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 2.0, 2.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 3.0, 1.0 / 2.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        0.0, 1.0 / 3.0
-                )))), p1
-        )
-        val p2 = fragmentOne.predecessors.invoke(n2)
-        assertEquals(nodesOf(c,
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 3.0, 2.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0 / 4.0, 2.0
-                )))), p2
-        )
+        fragmentOne.run {
+            assertTransitionEquals(0.successors(true),
+                    Transition(0, loop, rectangleOf(0.0, 1.0).asParams()),
+                    Transition(1, up, rectangleOf(1.0 / 2.0, 2.0).asParams())
+            )
+            assertTransitionEquals(1.successors(true),
+                    Transition(0, down, rectangleOf(0.0, 1.0 / 2.0).asParams()),
+                    Transition(1, loop, rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams()),
+                    Transition(2, up, rectangleOf(1.0 / 3.0, 2.0).asParams())
+            )
+            assertTransitionEquals(2.successors(true),
+                    Transition(1, down, rectangleOf(0.0, 1.0 / 3.0).asParams()),
+                    Transition(2, loop, rectangleOf(1.0 / 4.0, 2.0).asParams())
+            )
+            assertTransitionEquals(0.predecessors(true),
+                    Transition(0, loop, rectangleOf(0.0, 1.0).asParams()),
+                    Transition(1, down, rectangleOf(0.0, 1.0 / 2.0).asParams())
+            )
+            assertTransitionEquals(1.predecessors(true),
+                    Transition(0, up, rectangleOf(1.0 / 2.0, 2.0).asParams()),
+                    Transition(1, loop, rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams()),
+                    Transition(2, down, rectangleOf(0.0, 1.0 / 3.0).asParams())
+            )
+            assertTransitionEquals(2.predecessors(true),
+                    Transition(1, up, rectangleOf(1.0 / 3.0, 2.0).asParams()),
+                    Transition(2, loop, rectangleOf(1.0 / 4.0, 2.0).asParams())
+            )
+        }
     }
 
     @Test
@@ -117,54 +86,32 @@ class OneDimWithParamGeneratorTest {
         //(1) dv2 = p(-1) - 1 p>-1 => - // p < -1 => +
         //(2) dv2 = p(0) - 1 // -1
         //(3) dv2 = p(1) - 1  p<1 => - // p > 1 => +
-        val s0 = fragmentTwo.successors.invoke(n0)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        -1.0, 2.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, -1.0
-                )))), s0)
-        val s1 = fragmentTwo.successors.invoke(n1)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        -1.0, 2.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, -1.0
-                )))), s1)
-        val s2 = fragmentTwo.successors.invoke(n2)
-        assertEquals(nodesOf(c,
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, 2.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0, 2.0
-                )))), s2)
-        val p0 = fragmentTwo.predecessors.invoke(n0)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        -1.0, 2.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        -1.0, 2.0
-                )))), p0)
-        val p1 = fragmentTwo.predecessors.invoke(n1)
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, -1.0
-                ))),
-                n1 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, -1.0
-                ))),
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        -2.0, 2.0
-                )))), p1)
-        val p2 = fragmentTwo.predecessors.invoke(n2)
-        assertEquals(nodesOf(c,
-                n2 to RectangleColors(Rectangle(doubleArrayOf(
-                        1.0, 2.0
-                )))), p2)
+        fragmentTwo.run {
+            assertTransitionEquals(0.successors(true),
+                    Transition(0, loop, rectangleOf(-1.0, 2.0).asParams()),
+                    Transition(1, up, rectangleOf(-2.0, -1.0).asParams())
+            )
+            assertTransitionEquals(1.successors(true),
+                    Transition(0, down, rectangleOf(-1.0, 2.0).asParams()),
+                    Transition(1, loop, rectangleOf(-2.0, -1.0).asParams())
+            )
+            assertTransitionEquals(2.successors(true),
+                    Transition(1, down, rectangleOf(-2.0, 2.0).asParams()),
+                    Transition(2, loop, rectangleOf(1.0, 2.0).asParams())
+            )
+            assertTransitionEquals(0.predecessors(true),
+                    Transition(0, loop, rectangleOf(-1.0, 2.0).asParams()),
+                    Transition(1, down, rectangleOf(-1.0, 2.0).asParams())
+            )
+            assertTransitionEquals(1.predecessors(true),
+                    Transition(0, up, rectangleOf(-2.0, -1.0).asParams()),
+                    Transition(1, loop, rectangleOf(-2.0, -1.0).asParams()),
+                    Transition(2, down, rectangleOf(-2.0, 2.0).asParams())
+            )
+            assertTransitionEquals(2.predecessors(true),
+                    Transition(2, loop, rectangleOf(1.0, 2.0).asParams())
+            )
+        }
     }
 
 }
