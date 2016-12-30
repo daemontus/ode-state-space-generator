@@ -45,9 +45,9 @@ class RectangleSolver(
 
                     val union = i + c
                     if (union != null) {
-                        this.add(union)
                         this.remove(i)
                         this.remove(c)
+                        this.add(union)
                         merged = true
                         break@search
                     }
