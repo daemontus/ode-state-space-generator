@@ -1,22 +1,19 @@
 package com.github.sybila.ode.generator.rect
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.checker.nodesOf
-import com.github.sybila.ctl.Direction
-import com.github.sybila.ctl.DirectionProposition
-import com.github.sybila.ctl.Facet
-import com.github.sybila.ode.model.Model
+import com.github.sybila.huctl.negativeIn
+import com.github.sybila.huctl.negativeOut
+import com.github.sybila.huctl.positiveIn
+import com.github.sybila.huctl.positiveOut
+import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFails
 
 class OneDimDirectionPropositionTest {
 
     //model from OneDimWithParamGeneratorTest
     //dv1 = p*(v1/2 + 1) - 1
-    private val v1 = Model.Variable(
+    private val v1 = OdeModel.Variable(
             name = "v1", range = Pair(0.0, 6.0), varPoints = null,
             thresholds = listOf(0.0, 2.0, 4.0, 6.0),
             equation = listOf(
@@ -25,58 +22,60 @@ class OneDimDirectionPropositionTest {
                     Summand(constant = -1.0))
     )
 
-    // 3p - 1 < 0
+    private val fragmentOne = RectangleOdeModel(OdeModel(listOf(v1), listOf(
+            OdeModel.Parameter("p1", Pair(0.0, 2.0))
+    )))
 
-    private val fragmentOne = RectangleOdeFragment(Model(listOf(v1), listOf(
-            Model.Parameter("p1", Pair(0.0, 2.0))
-    )), UniformPartitionFunction<IDNode>())
-
-    private val n0 = IDNode(0)
-    private val n1 = IDNode(1)
-    private val n2 = IDNode(2)
-
-    private val c = RectangleColors()
+    private val n0 = 0
+    private val n1 = 1
+    private val n2 = 2
 
     @Test
     fun positiveIn() {
-        val res = fragmentOne.validNodes(DirectionProposition("v1", Direction.IN, Facet.POSITIVE))
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(rectangleOf(0.0,1.0/2.0)),
-                n1 to RectangleColors(rectangleOf(0.0,1.0/3.0))
-                ), res)
+        fragmentOne.run {
+            mapOf(
+                    n0 to rectangleOf(0.0,1.0/2.0).asParams(),
+                    n1 to rectangleOf(0.0,1.0/3.0).asParams()
+            ).asStateMap().assertDeepEquals("v1".positiveIn().eval())
+        }
     }
 
     @Test
     fun positiveOut() {
-        val res = fragmentOne.validNodes(DirectionProposition("v1", Direction.OUT, Facet.POSITIVE))
-        assertEquals(nodesOf(c,
-                n0 to RectangleColors(rectangleOf(1.0/2.0,2.0)),
-                n1 to RectangleColors(rectangleOf(1.0/3.0,2.0))
-        ), res)
+        fragmentOne.run {
+            mapOf(
+                    n0 to rectangleOf(1.0/2.0,2.0).asParams(),
+                    n1 to rectangleOf(1.0/3.0,2.0).asParams()
+            ).asStateMap().assertDeepEquals("v1".positiveOut().eval())
+        }
     }
 
     @Test
     fun negativeIn() {
-        val res = fragmentOne.validNodes(DirectionProposition("v1", Direction.IN, Facet.NEGATIVE))
-        assertEquals(nodesOf(c,
-                n1 to RectangleColors(rectangleOf(1.0/2.0,2.0)),
-                n2 to RectangleColors(rectangleOf(1.0/3.0,2.0))
-        ), res)
+        fragmentOne.run {
+            mapOf(
+                    n1 to rectangleOf(1.0/2.0,2.0).asParams(),
+                    n2 to rectangleOf(1.0/3.0,2.0).asParams()
+            ).asStateMap().assertDeepEquals("v1".negativeIn().eval())
+        }
     }
 
     @Test
     fun negativeOut() {
-        val res = fragmentOne.validNodes(DirectionProposition("v1", Direction.OUT, Facet.NEGATIVE))
-        assertEquals(nodesOf(c,
-                n1 to RectangleColors(rectangleOf(0.0,1.0/2.0)),
-                n2 to RectangleColors(rectangleOf(0.0,1.0/3.0))
-        ), res)
+        fragmentOne.run {
+            mapOf(
+                    n1 to rectangleOf(0.0,1.0/2.0).asParams(),
+                    n2 to rectangleOf(0.0,1.0/3.0).asParams()
+            ).asStateMap().assertDeepEquals("v1".negativeOut().eval())
+        }
     }
 
     @Test
     fun unknownVariable() {
         assertFails {
-            fragmentOne.validNodes(DirectionProposition("v2", Direction.IN, Facet.POSITIVE))
+            fragmentOne.run {
+                "v2".positiveIn().eval()
+            }
         }
     }
 

@@ -1,8 +1,6 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.checker.Colors
-import com.microsoft.z3.*
-
+/*
 val ff = SMTColors(z3False, ctx, false)
 val tt = SMTColors(z3True, ctx, true)
 
@@ -139,4 +137,4 @@ class SMTColors(
         return this.normalize().purify().formula
     }
 
-}
+}*/

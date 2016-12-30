@@ -1,11 +1,5 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.ode.generator.ExplicitEvaluable
-import com.github.sybila.ode.model.Model
-import com.github.sybila.ode.model.Summand
-import org.junit.Test
 
 /**
  * This test suit should provide a really basic way to test how
@@ -13,9 +7,10 @@ import org.junit.Test
  *
  * All test cases rely on a one dimensional model with three states and predefined result.
  **/
+/*
 class OneDimNoParamGeneratorTest {
 
-    private val variable = Model.Variable(
+    private val variable = OdeModel.Variable(
             name = "v1", range = Pair(0.0, 3.0), varPoints = null,
             thresholds = listOf(0.0, 1.0, 2.0, 3.0),
             summands = Summand(evaluables = ExplicitEvaluable(
@@ -24,7 +19,7 @@ class OneDimNoParamGeneratorTest {
     )
 
     private fun createFragment(vararg values: Double): SMTOdeFragment {
-        return SMTOdeFragment(Model(variable.copy(equation = listOf(Summand(
+        return SMTOdeFragment(OdeModel(variable.copy(equation = listOf(Summand(
                 evaluables = ExplicitEvaluable(0,
                         listOf(0.0, 1.0, 2.0, 3.0).zip(values.toList()).toMap()
                 )
@@ -841,4 +836,4 @@ class OneDimNoParamGeneratorTest {
         assertEquals(listOf<Pair<IDNode, SMTColors>>(), p2)
     }
 
-}
+}*/

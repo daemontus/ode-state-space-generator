@@ -315,8 +315,8 @@ class SimpleApproximationTest() {
 
     private fun runTestSet(tests: Map<Pair<Int, Int>, DoubleArray>, functions: List<Evaluable>, fast: Boolean = true) {
         for ((varPoints, results) in tests) {
-            val model = Model(listOf(
-                    Model.Variable(
+            val model = OdeModel(listOf(
+                    OdeModel.Variable(
                             name = "v1",
                             range = Pair(0.0, 1000.0),
                             varPoints = Pair(varPoints.second, varPoints.first),
@@ -433,15 +433,15 @@ class ComplexApproximationTest() {
 
     fun complexTest(expected: Map<Pair<Int, Int>, List<DoubleArray>>, fast: Boolean) {
         for ((varPoints, results) in expected) {
-            val model = Model(listOf(
-                    Model.Variable(
+            val model = OdeModel(listOf(
+                    OdeModel.Variable(
                             name = "v1",
                             range = Pair(0.0, 1000.0),
                             varPoints = Pair(varPoints.second, varPoints.first),
                             thresholds = listOf(results[0].first(), results[0].last()),
                             equation = listOf(Summand(evaluable = listOf(simpleHill, complexSigmoid.copy(varIndex = 1))))
                     ),
-                    Model.Variable(
+                    OdeModel.Variable(
                             name = "v1",
                             range = Pair(0.0, 1000.0),
                             varPoints = Pair(varPoints.second, varPoints.first),

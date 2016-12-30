@@ -8,8 +8,8 @@ class WriterTest {
 
     @Test
     fun writerTest() {
-        val m = Model(
-                listOf(Model.Variable(
+        val m = OdeModel(
+                listOf(OdeModel.Variable(
                         name = "V1", range = 0.0 to 3.0,
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -18,7 +18,7 @@ class WriterTest {
                                 doubleArrayOf(0.0, 2.0, 3.0), doubleArrayOf(1.2, 2.2, -0.3))
                         ))
                 )
-                ), Model.Variable(
+                ), OdeModel.Variable(
                         name = "V2", range = 0.0 to 3.0,
                         thresholds = listOf(0.0, 2.0, 3.0),
                         varPoints = null, equation = listOf(
@@ -27,7 +27,7 @@ class WriterTest {
                                         doubleArrayOf(0.0, 2.0, 3.0), doubleArrayOf(-1.2, -2.2, 0.3))
                                 ))
                 )
-                )), listOf(Model.Parameter("foo", 0.0 to 10.0))
+                )), listOf(OdeModel.Parameter("foo", 0.0 to 10.0))
         )
 
         println(m.toBio())
@@ -38,7 +38,7 @@ class WriterTest {
     @Test
     fun invalidModel() {
         assertFailsWith(IllegalArgumentException::class) {
-            Model(Model.Variable(
+            OdeModel(OdeModel.Variable(
                     name = "foo",
                     thresholds = listOf(1.0, 2.0),
                     range = 1.0 to 2.0,

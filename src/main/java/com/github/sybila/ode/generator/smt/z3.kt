@@ -6,7 +6,7 @@ import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 
 //Z3 doesn't support any parallelism or anything, so we might as well just make it all static...
-
+/*
 val z3 = Context()
 
 val ctx = SMTContext(
@@ -60,4 +60,4 @@ fun BoolExpr.weakInequalities(): List<BoolExpr> {
     } else {
         this.args.flatMap { if (it is BoolExpr) it.weakInequalities() else listOf() }
     }
-}
+}*/

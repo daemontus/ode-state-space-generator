@@ -1,13 +1,7 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.checker.nodesOf
-import com.github.sybila.ode.model.Model
-import com.github.sybila.ode.model.Summand
-import org.junit.Test
 
-
+/*
 class OneDimWithParamGeneratorTest {
 
     //dv1 = p(v1/2 + 1) - 1
@@ -18,7 +12,7 @@ class OneDimWithParamGeneratorTest {
     //dv2 = p(v1/2 - 2) - 1
     //This model covers the two remaining cases. A stable state and a zero on threshold.
 
-    private val v1 = Model.Variable(
+    private val v1 = OdeModel.Variable(
             name = "v1", range = Pair(0.0, 6.0), varPoints = null,
             thresholds = listOf(0.0, 2.0, 4.0, 6.0),
             equation = listOf(
@@ -33,12 +27,12 @@ class OneDimWithParamGeneratorTest {
                     Summand(paramIndex = 0, constant = -2.0),
                     Summand(constant = -1.0)))
 
-    private val fragmentOne = SMTOdeFragment(Model(listOf(v1), listOf(
-            Model.Parameter("p", Pair(0.0, 2.0))
+    private val fragmentOne = SMTOdeFragment(OdeModel(listOf(v1), listOf(
+            OdeModel.Parameter("p", Pair(0.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
 
-    private val fragmentTwo = SMTOdeFragment(Model(listOf(v2), listOf(
-            Model.Parameter("p2", Pair(-2.0, 2.0))
+    private val fragmentTwo = SMTOdeFragment(OdeModel(listOf(v2), listOf(
+            OdeModel.Parameter("p2", Pair(-2.0, 2.0))
     )), UniformPartitionFunction<IDNode>())
 
     private val n0 = IDNode(0)
@@ -136,4 +130,4 @@ class OneDimWithParamGeneratorTest {
         ).normalize(), p2.normalize())
     }
 
-}
+}*/

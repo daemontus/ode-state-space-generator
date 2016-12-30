@@ -16,13 +16,13 @@ import java.util.*
 
 class Parser {
 
-    fun parse(input: String): Model
+    fun parse(input: String): OdeModel
             = processStream(ANTLRInputStream(input.toCharArray(), input.length))
 
-    fun parse(input: File): Model
+    fun parse(input: File): OdeModel
             = input.inputStream().use { processStream(ANTLRInputStream(it)) }
 
-    private fun processStream(input: ANTLRInputStream): Model {
+    private fun processStream(input: ANTLRInputStream): OdeModel {
         val lexer = ODELexer(input)
         val parser = ODEParser(CommonTokenStream(lexer))
         parser.removeErrorListeners()
@@ -63,7 +63,7 @@ private class ModelReader : ODEBaseListener() {
     private val constants = HashMap<String, Double>()
     private val initial = HashMap<String, Pair<Double, Double>>()
     private val varPoints = HashMap<String, Pair<Int, Int>>()
-    private var parameters = ArrayList<Model.Parameter>()    //preserve ordering
+    private var parameters = ArrayList<OdeModel.Parameter>()    //preserve ordering
     private var parameterNames = ArrayList<String>()    //preserve ordering
     private var variables = ArrayList<String>()
 
@@ -72,12 +72,12 @@ private class ModelReader : ODEBaseListener() {
     /**
      * Conversion to standard model, with various integrity checks.
      */
-    fun toModel(): Model {
+    fun toModel(): OdeModel {
         assert(parameters.map { it.name } == parameterNames)
 
         //basic integrity checks
         if (variables.isEmpty()) {
-            throw IllegalStateException("Model has no variables!")
+            throw IllegalStateException("OdeModel has no variables!")
         }
         for ((key, value) in thresholds) {
             if (value.size < 2) {
@@ -109,11 +109,11 @@ private class ModelReader : ODEBaseListener() {
             throw IllegalStateException("$nameClash2 can't be a variable and a parameter at the same time")
         }
 
-        return Model(
+        return OdeModel(
                 variables.map { vName ->
                     val threshold = thresholds[vName] ?: throw IllegalStateException("No thresholds for variable $vName")
                     val equation = equations[vName] ?: throw IllegalStateException("No equation for variable $vName")
-                    Model.Variable(
+                    OdeModel.Variable(
                             name = vName,
                             range = Pair(threshold.first(), threshold.last()),
                             thresholds = threshold,
@@ -210,7 +210,7 @@ private class ModelReader : ODEBaseListener() {
         if (name in parameterNames) {
             throw IllegalStateException("Redefinition of parameter $name")
         }
-        parameters.add(Model.Parameter(name,
+        parameters.add(OdeModel.Parameter(name,
                 Pair(ctx.NUMBER(0).text.toDouble(), ctx.NUMBER(1).text.toDouble())
         ))
         parameterNames.add(name)

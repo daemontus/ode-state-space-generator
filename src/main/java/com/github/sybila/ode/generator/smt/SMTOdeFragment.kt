@@ -1,14 +1,8 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.PartitionFunction
-import com.github.sybila.ode.generator.AbstractOdeFragment
-import com.github.sybila.ode.model.Model
-import com.microsoft.z3.ArithExpr
-import java.util.*
-
+/*
 class SMTOdeFragment(
-        model: Model,
+        model: OdeModel,
         partitioning: PartitionFunction<IDNode>,
         createSelfLoops: Boolean = true
 ) : AbstractOdeFragment<SMTColors>(model, partitioning, createSelfLoops) {
@@ -147,4 +141,4 @@ class SMTOdeFragment(
     private fun getFacets(from: IDNode) = facets.getOrPut(from) { Array(dimensions) {
         Array(2) { Array<SMTColors?>(2) { null } }
     } }
-}
+}*/

@@ -67,27 +67,27 @@ class SingleDimensionTests {
 
     @Test
     fun strictMinusTest() {
-        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 3.0))
-        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(0.0, 2.0))
+        assertEquals(mutableSetOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 3.0))
+        assertEquals(mutableSetOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(0.0, 2.0))
 
-        assertEquals(setOf(rectangleOf(0.0, 1.0), rectangleOf(2.0, 3.0)), rectangleOf(0.0, 3.0) - rectangleOf(1.0, 2.0))
-        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 3.0))
+        assertEquals(mutableSetOf(rectangleOf(0.0, 1.0), rectangleOf(2.0, 3.0)), rectangleOf(0.0, 3.0) - rectangleOf(1.0, 2.0))
+        assertEquals(mutableSetOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 3.0))
 
-        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(2.0, 3.0))
-        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(2.0, 3.0) - rectangleOf(0.0, 1.0))
+        assertEquals(mutableSetOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(2.0, 3.0))
+        assertEquals(mutableSetOf(rectangleOf(2.0, 3.0)), rectangleOf(2.0, 3.0) - rectangleOf(0.0, 1.0))
     }
 
     @Test
     fun equalMinusTest() {
-        assertEquals(setOf(), rectangleOf(0.0, 1.0) - rectangleOf(0.0, 1.0))
+        assertEquals(mutableSetOf(), rectangleOf(0.0, 1.0) - rectangleOf(0.0, 1.0))
 
-        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(1.0, 2.0))
-        assertEquals(setOf(rectangleOf(1.0, 2.0)), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 1.0))
+        assertEquals(mutableSetOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 1.0) - rectangleOf(1.0, 2.0))
+        assertEquals(mutableSetOf(rectangleOf(1.0, 2.0)), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 1.0))
 
-        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(1.0, 3.0))
-        assertEquals(setOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(1.0, 2.0))
-        assertEquals(setOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 2.0))
-        assertEquals(setOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 2.0))
+        assertEquals(mutableSetOf(), rectangleOf(1.0, 2.0) - rectangleOf(1.0, 3.0))
+        assertEquals(mutableSetOf(rectangleOf(2.0, 3.0)), rectangleOf(1.0, 3.0) - rectangleOf(1.0, 2.0))
+        assertEquals(mutableSetOf(), rectangleOf(1.0, 2.0) - rectangleOf(0.0, 2.0))
+        assertEquals(mutableSetOf(rectangleOf(0.0, 1.0)), rectangleOf(0.0, 2.0) - rectangleOf(1.0, 2.0))
     }
 
 }
@@ -219,42 +219,42 @@ class TwoDimensionsTests {
 
     @Test
     fun minusTest() {
-        assertEquals(setOf(), aabb - aabb)
+        assertEquals(mutableSetOf(), aabb - aabb)
 
-        assertEquals(setOf(aabb), aabb - ccdd)
-        assertEquals(setOf(ccdd), ccdd - aabb)
+        assertEquals(mutableSetOf(aabb), aabb - ccdd)
+        assertEquals(mutableSetOf(ccdd), ccdd - aabb)
 
-        assertEquals(setOf(bbcc), bbcc - aabd)
-        assertEquals(setOf(aabd), aabd - bbcc)
+        assertEquals(mutableSetOf(bbcc), bbcc - aabd)
+        assertEquals(mutableSetOf(aabd), aabd - bbcc)
 
-        assertEquals(setOf(aabb), aabb - bbcc)
-        assertEquals(setOf(bbcc), bbcc - aabb)
+        assertEquals(mutableSetOf(aabb), aabb - bbcc)
+        assertEquals(mutableSetOf(bbcc), bbcc - aabb)
 
-        assertEquals(setOf(aabb), aabb - cadb)
-        assertEquals(setOf(cadb), cadb - aabb)
+        assertEquals(mutableSetOf(aabb), aabb - cadb)
+        assertEquals(mutableSetOf(cadb), cadb - aabb)
 
-        assertEquals(setOf(aabb), aabb - bacb)
-        assertEquals(setOf(bacb), bacb - aabb)
+        assertEquals(mutableSetOf(aabb), aabb - bacb)
+        assertEquals(mutableSetOf(bacb), bacb - aabb)
 
-        assertEquals(setOf(), bbcc - aadd)
-        assertEquals(setOf(aabd, cadd, bacb, bccd), aadd - bbcc)
+        assertEquals(mutableSetOf(), bbcc - aadd)
+        assertEquals(mutableSetOf(aabd, cadd, bacb, bccd), aadd - bbcc)
 
-        assertEquals(setOf(), bacb - aacc)
-        assertEquals(setOf(aabc, bbcc), aacc - bacb)
+        assertEquals(mutableSetOf(), bacb - aacc)
+        assertEquals(mutableSetOf(aabc, bbcc), aacc - bacb)
 
-        assertEquals(setOf(), aabb - aadd)
-        assertEquals(setOf(abbd, badd), aadd - aabb)
+        assertEquals(mutableSetOf(), aabb - aadd)
+        assertEquals(mutableSetOf(abbd, badd), aadd - aabb)
 
-        assertEquals(setOf(), bacd - aadd)
-        assertEquals(setOf(aabd, cadd), aadd - bacd)
+        assertEquals(mutableSetOf(), bacd - aadd)
+        assertEquals(mutableSetOf(aabd, cadd), aadd - bacd)
 
-        assertEquals(setOf(), aabd - aadd)
-        assertEquals(setOf(badd), aadd - aabd)
+        assertEquals(mutableSetOf(), aabd - aadd)
+        assertEquals(mutableSetOf(badd), aadd - aabd)
 
-        assertEquals(setOf(aabc, bacb), aacc - bbdd)
-        assertEquals(setOf(bccd, cbdd), bbdd - aacc)
+        assertEquals(mutableSetOf(aabc, bacb), aacc - bbdd)
+        assertEquals(mutableSetOf(bccd, cbdd), bbdd - aacc)
 
-        assertEquals(setOf(aabc), aacc - badc)
-        assertEquals(setOf(cadc), badc - aacc)
+        assertEquals(mutableSetOf(aabc), aacc - badc)
+        assertEquals(mutableSetOf(cadc), badc - aacc)
     }
 }

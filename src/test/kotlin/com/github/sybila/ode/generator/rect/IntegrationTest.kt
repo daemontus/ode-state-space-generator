@@ -1,13 +1,5 @@
 package com.github.sybila.ode.generator.rect
-
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.UniformPartitionFunction
-import com.github.sybila.ode.generator.rect.RectangleOdeFragment
-import com.github.sybila.ode.model.Parser
-import com.github.sybila.ode.model.computeApproximation
-import org.junit.Test
-import java.io.File
-import kotlin.test.assertEquals
+/*
 
 /**
  * This test takes previously computed results for known models and compares them to values obtained from
@@ -38,7 +30,7 @@ class IntegrationTest {
 
         val results = resultsFile.inputStream().bufferedReader()
 
-        val fragment = RectangleOdeFragment(model, UniformPartitionFunction<IDNode>())
+        val fragment = RectangleOdeModel(model, UniformPartitionFunction<IDNode>())
 
         for (node in fragment.allNodes().entries.toList().sortedBy { it.key.id }) {
             assertEquals(results.readLine(), "Successors for ${node.key}:")
@@ -53,4 +45,4 @@ class IntegrationTest {
 
     }
 
-}
+}*/

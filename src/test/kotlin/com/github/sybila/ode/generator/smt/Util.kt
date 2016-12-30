@@ -1,8 +1,6 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.checker.IDNode
-import com.github.sybila.checker.Nodes
-
+/*
 fun Nodes<IDNode, SMTColors>.normalize(): List<Pair<IDNode, SMTColors>>
     = this.entries.map { Pair(it.key, it.value) }.sortedBy { it.first.id }
 
@@ -22,4 +20,4 @@ fun assertEquals(a: List<Pair<IDNode, SMTColors>>, b: List<Pair<IDNode, SMTColor
             }
         }
     }
-}
+}*/
