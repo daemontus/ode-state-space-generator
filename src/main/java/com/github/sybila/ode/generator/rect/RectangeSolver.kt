@@ -1,5 +1,6 @@
 package com.github.sybila.ode.generator.rect
 
+import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
 import java.nio.ByteBuffer
 import java.util.*
@@ -11,32 +12,77 @@ class RectangleSolver(
     override val ff: MutableSet<Rectangle> = mutableSetOf()
     override val tt: MutableSet<Rectangle> = mutableSetOf(bounds)
 
+    private var cache: DoubleArray? = null
+
     override fun MutableSet<Rectangle>.and(other: MutableSet<Rectangle>): MutableSet<Rectangle> {
-        val newItems = HashSet<Rectangle>()
-        for (item1 in this) {
-            for (item2 in other) {
-                val r = item1 * item2
-                if (r != null) newItems.add(r)
+        return if (this.isEmpty()) this
+        else if (other.isEmpty()) other
+        else if (this == tt) other
+        else if (other == tt) this
+        else {
+            val newItems = HashSet<Rectangle>()
+            for (item1 in this) {
+                for (item2 in other) {
+                    if (cache == null) cache = item1.newArray()
+                    val r = item1.intersect(item2, cache!!)
+                    //val r = item1 * item2
+                    if (r != null) {
+                        cache = null
+                        newItems.add(r)
+                    }
+                }
             }
+            newItems
         }
-        return newItems
     }
 
-    override fun MutableSet<Rectangle>.isSat(): Boolean = this.isNotEmpty()
+    private var maxSize = 0
+
+    override fun MutableSet<Rectangle>.isSat(): Boolean {
+        if (this.size > maxSize) {
+            maxSize = this.size
+            println(this.size)
+        }
+        return this.isNotEmpty()
+    }
 
     override fun MutableSet<Rectangle>.not(): MutableSet<Rectangle> {
-        //!(a | b) <=> (!a & !b) <=> ((a1 | a2) && (b1 | b2))
-        return this.map { bounds - it }.fold(tt) { a, i -> a and i }.toMutableSet()
+        return if (this.isEmpty()) {
+            tt
+        } else if (this == tt) {
+            ff
+        } else {
+            //!(a | b) <=> (!a & !b) <=> ((a1 | a2) && (b1 | b2))
+            this.map { bounds - it }.fold(tt) { a, i -> a and i }.toMutableSet()
+        }
+    }
+
+    override fun MutableSet<Rectangle>.andNot(other: MutableSet<Rectangle>): Boolean {
+        //(a | b) && !(c | d) = (a | b) && (c1 | c2) && (d1 | d2)
+        return if (this == ff) false
+        else if (other == tt) false
+        else {
+            other.asSequence().fold(this.asSequence()) { acc, rect ->
+                acc.flatMap { (it - rect).asSequence() }
+            }.any()
+        }
     }
 
     override fun MutableSet<Rectangle>.or(other: MutableSet<Rectangle>): MutableSet<Rectangle> {
-        val result = HashSet<Rectangle>()
-        result.addAll(this)
-        result.addAll(other)
-        return result
+        return if (this.isEmpty()) other
+        else if (other.isEmpty()) this
+        else if (this == tt || other == tt) tt
+        else {
+            val result = HashSet<Rectangle>()
+            result.addAll(this)
+            result.addAll(other)
+            result.minimize()
+            result
+        }
     }
 
     override fun MutableSet<Rectangle>.minimize() {
+        if (this.size < 2) return
         do {
             var merged = false
             search@ for (c in this) {
@@ -53,6 +99,7 @@ class RectangleSolver(
                     }
                 }
             }
+            if (this.size < 2) return
         } while (merged)
     }
 
@@ -80,6 +127,17 @@ class RectangleSolver(
     }
 
 
-
-
+    override fun MutableStateMap<MutableSet<Rectangle>>.setOrUnion(state: Int, value: MutableSet<Rectangle>): Boolean {
+        return if (value.isNotSat()) false
+        else if (state !in this && value.isSat()) {
+            this[state] = value
+            true
+        } else {
+            val current = this[state]
+            if (value andNot current) {
+                this[state] = value or current
+                true
+            } else false
+        }
+    }
 }

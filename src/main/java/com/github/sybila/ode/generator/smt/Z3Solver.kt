@@ -28,6 +28,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverB
     }.flatMap { it }.toTypedArray())
 
     override fun Z3Params.isSat(): Boolean {
+        if (Math.random() > 0.8) minimize()
         return this.sat ?: run {
             solver.add(bounds)
             solver.add(formula)
@@ -53,21 +54,44 @@ class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverB
         }
     }
 
+    override fun Z3Params.andNot(other: Z3Params): Boolean {
+        solver.add(bounds)
+        solver.add(formula)
+        solver.add(z3.mkNot(other.formula))
+        val status = solver.check()
+        solver.reset()
+        return status == Status.SATISFIABLE
+    }
 
     override fun Z3Params.and(other: Z3Params): Z3Params {
-        return Z3Params(this.formula and other.formula, null)
+        return if (this.formula.isFalse || this.sat == false) ff
+        else if (this.formula.isTrue) other
+        else if (other.formula.isFalse || other.sat == false) ff
+        else if (other.formula.isTrue) this
+        else {
+            return Z3Params(this.formula and other.formula, null)
+        }
     }
 
     override fun Z3Params.not(): Z3Params {
-        return Z3Params(z3.mkNot(this.formula), this.sat?.not())
+        return if (this.formula.isTrue) ff
+        else if (this.sat == false || this.formula.isFalse) tt
+        else {
+            return Z3Params(z3.mkNot(this.formula), null)
+        }
     }
 
     override fun Z3Params.or(other: Z3Params): Z3Params {
-        return Z3Params(this.formula or other.formula, if (this.sat == true || other.sat == true) true else null)
+        return if (this.formula.isTrue || other.formula.isTrue) tt
+        else if (this.formula.isFalse || this.sat == false) other
+        else if (other.formula.isFalse || other.sat == false) this
+        else {
+            return Z3Params(this.formula or other.formula, if (this.sat == true || other.sat == true) true else null)
+        }
     }
 
     override fun Z3Params.prettyPrint(): String {
-        this.minimize()
+        //this.minimize()
         return "{$sat: $formula}"
     }
 

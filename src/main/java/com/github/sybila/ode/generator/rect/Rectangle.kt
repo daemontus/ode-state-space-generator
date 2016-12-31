@@ -61,6 +61,23 @@ class Rectangle(
         return Rectangle(newCoordinates)
     }
 
+    fun intersect(other: Rectangle, into: DoubleArray): Rectangle? {
+        for (i in 0 until (this.coordinates.size / 2)) {
+            val iL = 2*i
+            val iH = 2*i+1
+            val low = Math.max(coordinates[iL], other.coordinates[iL])
+            val high = Math.min(coordinates[iH], other.coordinates[iH])
+            if (low >= high) return null
+            else {
+                into[iL] = low
+                into[iH] = high
+            }
+        }
+        return Rectangle(into)
+    }
+
+    fun newArray(): DoubleArray = DoubleArray(coordinates.size)
+
     private fun encloses(other: Rectangle): Boolean {
         for (i in coordinates.indices) {
             if (i % 2 == 0 && coordinates[i] > other.coordinates[i]) return false

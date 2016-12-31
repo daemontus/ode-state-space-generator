@@ -195,7 +195,6 @@ abstract class AbstractOdeFragment<Params : Any>(
 
                 encoder.higherNode(from, dim)?.let { higher ->
                     val colors = (if (successors) positiveOut else positiveIn).value
-                    colors.minimize()
                     if (colors.isSat()) {
                         result.add(Transition(
                                 target = higher,
@@ -213,7 +212,6 @@ abstract class AbstractOdeFragment<Params : Any>(
 
                 encoder.lowerNode(from, dim)?.let { lower ->
                     val colors = (if (successors) negativeOut else negativeIn).value
-                    colors.minimize()
                     if (colors.isSat()) {
                         result.add(Transition(
                                 target = lower,
@@ -232,7 +230,6 @@ abstract class AbstractOdeFragment<Params : Any>(
 
             selfloop = selfloop.not()
             if (selfloop.isSat()) {
-                selfloop.minimize()
                 result.add(Transition(from, DirectionFormula.Atom.Loop, selfloop))
             }
             result
