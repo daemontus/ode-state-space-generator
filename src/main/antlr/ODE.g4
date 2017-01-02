@@ -72,7 +72,8 @@ WS : [ \t\u]+ -> channel(HIDDEN) ;
 NEWLINE : '\r'?'\n';
 
 Block_comment : '/*' (Block_comment|.)*? '*/' -> channel(HIDDEN) ; // nesting allow
-Line_comment : ('//' | '#') .*? '\n' -> channel(HIDDEN) ;
+C_Line_comment : '//' ~('\n')* -> channel(HIDDEN) ;
+Python_Line_comment : '#' ~('\n')* -> channel(HIDDEN) ;
 
 //legacy rules - must be first, because they override char_string
 SYSTEM : 'system'(~[;])*';' -> channel(HIDDEN);
