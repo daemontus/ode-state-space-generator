@@ -5,6 +5,9 @@ import com.github.sybila.checker.Solver
 import java.nio.ByteBuffer
 import java.util.*
 
+private var lastProgressPrint = 0L
+private var solverCalls = 0L
+
 class RectangleSolver(
         private val bounds: Rectangle
 ) : Solver<MutableSet<Rectangle>> {
@@ -36,12 +39,10 @@ class RectangleSolver(
         }
     }
 
-    private var maxSize = 0
-
     override fun MutableSet<Rectangle>.isSat(): Boolean {
-        if (this.size > maxSize) {
-            maxSize = this.size
-            println(this.size)
+        solverCalls += 1
+        if (System.currentTimeMillis() > lastProgressPrint + 2000) {
+            System.err.println("Processing: ${solverCalls / 2.0} per second")
         }
         return this.isNotEmpty()
     }
