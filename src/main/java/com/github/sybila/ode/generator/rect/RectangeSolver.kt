@@ -43,6 +43,8 @@ class RectangleSolver(
         solverCalls += 1
         if (System.currentTimeMillis() > lastProgressPrint + 2000) {
             System.err.println("Processing: ${solverCalls / 2.0} per second")
+            solverCalls = 0
+            lastProgressPrint = System.currentTimeMillis()
         }
         return this.isNotEmpty()
     }

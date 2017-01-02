@@ -7,6 +7,9 @@ import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 import java.nio.ByteBuffer
 
+private var lastProgressPrint = 0L
+private var solverCalls = 0L
+
 class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverBase {
 
     override val z3 = Context()
@@ -28,6 +31,12 @@ class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverB
     }.flatMap { it }.toTypedArray())
 
     override fun Z3Params.isSat(): Boolean {
+        solverCalls += 1
+        if (System.currentTimeMillis() > lastProgressPrint + 2000) {
+            System.err.println("Processing: ${solverCalls / 2.0} per second")
+            solverCalls = 0
+            lastProgressPrint = System.currentTimeMillis()
+        }
         if (Math.random() > 0.8) minimize()
         return this.sat ?: run {
             solver.add(bounds)
