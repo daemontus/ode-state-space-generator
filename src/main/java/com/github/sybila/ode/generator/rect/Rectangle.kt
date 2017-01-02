@@ -179,4 +179,9 @@ class Rectangle(
 
     fun asParams(): MutableSet<Rectangle> = mutableSetOf(this)
 
+    fun asIntervals(): List<List<Double>> {
+        return (0 until (coordinates.size / 2)).map {
+            listOf(coordinates[2* it], coordinates[2* it +1])
+        }
+    }
 }
