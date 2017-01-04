@@ -19,14 +19,21 @@ class IntervalSolver(
         return if (this.isEmpty()) this
         else if (other.isEmpty()) other
         else {
-            (0 until this.size/2).asSequence().flatMap { left ->
-                (0 until other.size/2).asSequence().map { right ->
+            val result = ArrayList<Pair<Double, Double>>()
+            for (left in (0 until this.size/2)) {
+                for (right in (0 until other.size/2)) {
                     val newLow = Math.max(this[2*left], other[2*right])
                     val newHigh = Math.min(this[2*left+1], other[2*right+1])
-                    if (newLow >= newHigh) null else newLow to newHigh
+                    if (newLow < newHigh) result.add(newLow to newHigh)
                 }
-            }.filterNotNull().sortedBy { it.first }.flatMap { sequenceOf(it.first, it.second) }
-                    .toList().toDoubleArray()
+            }
+            result.sortBy { it.first }
+            DoubleArray(2*result.size).apply {
+                result.forEachIndexed { i, pair ->
+                    this[2*i] = pair.first
+                    this[2*i+1] = pair.second
+                }
+            }
         }
     }
 
