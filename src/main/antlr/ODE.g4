@@ -64,10 +64,10 @@ APPROX : [Aa]'pprox';
 
 BA_LINE : 'BA:'~[\n]+;
 
-NUMBER : [-]?[0-9]+([\.][0-9]+)?;
+NUMBER : [-]?[0-9]+('.'[0-9]+)?;
 NAME : [a-zA-Z]+[_0-9a-zA-Z~{}]*;
 
-WS : [ \t\u]+ -> channel(HIDDEN) ;
+WS : [ \t]+ -> channel(HIDDEN) ;
 
 NEWLINE : '\r'?'\n';
 

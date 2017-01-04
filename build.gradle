@@ -65,7 +65,7 @@ dependencies {
     compile 'com.github.sybila:ctl-parser:2.2.0'
     compile files('libs/mpj.jar')
     compile files('libs/com.microsoft.z3.jar')
-    antlr "org.antlr:antlr4:4.5.1-1"
+    antlr "org.antlr:antlr4:4.6"
 }
 
 //create a single Jar with all dependencies
