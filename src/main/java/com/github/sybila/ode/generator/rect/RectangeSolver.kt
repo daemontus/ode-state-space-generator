@@ -5,12 +5,12 @@ import com.github.sybila.checker.Solver
 import java.nio.ByteBuffer
 import java.util.*
 
-private var lastProgressPrint = 0L
-private var solverCalls = 0L
-
 class RectangleSolver(
         private val bounds: Rectangle
 ) : Solver<MutableSet<Rectangle>> {
+
+    private var lastProgressPrint = 0L
+    private var solverCalls = 0L
 
     override val ff: MutableSet<Rectangle> = mutableSetOf()
     override val tt: MutableSet<Rectangle> = mutableSetOf(bounds)

@@ -7,10 +7,10 @@ import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 import java.nio.ByteBuffer
 
-private var lastProgressPrint = 0L
-private var solverCalls = 0L
-
 class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverBase {
+
+    private var lastProgressPrint = 0L
+    private var solverCalls = 0L
 
     override val z3 = Context()
     private val simplifyTactic = z3.mkTactic("ctx-solver-simplify")
