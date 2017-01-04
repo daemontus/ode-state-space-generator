@@ -8,7 +8,8 @@ class Z3OdeFragment(
         model: OdeModel,
         createSelfLoops: Boolean = true,
         solver: Z3Solver = Z3Solver(
-                model.parameters.map { it.range }
+                model.parameters.map { it.range },
+                model.parameters.map { it.name }
         )
 ) : AbstractOdeFragment<Z3Params>(model, createSelfLoops, solver), Z3SolverBase by solver {
 

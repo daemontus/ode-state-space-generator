@@ -10,7 +10,8 @@ import java.nio.ByteBuffer
 private var lastProgressPrint = 0L
 private var solverCalls = 0L
 
-class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverBase {
+class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.indices.map { "p$it" })
+    : Solver<Z3Params>, Z3SolverBase {
 
     override val z3 = Context()
     private val simplifyTactic = z3.mkTactic("ctx-solver-simplify")
@@ -20,7 +21,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>) : Solver<Z3Params>, Z3SolverB
     override val ff: Z3Params = Z3Params(z3.mkFalse(), false, true)
     override val tt: Z3Params = Z3Params(z3.mkTrue(), true, true)
 
-    override val params: List<ArithExpr> = bounds.indices.map { "p$it".toZ3() }
+    override val params: List<ArithExpr> = names.map { it.toZ3() }
 
     val paramSymbols = bounds.indices.map { z3.mkSymbol("p$it") }.toTypedArray()
     val paramSorts = bounds.indices.map { z3.mkRealSort() }.toTypedArray()
