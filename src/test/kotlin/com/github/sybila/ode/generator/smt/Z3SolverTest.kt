@@ -7,7 +7,7 @@ class Z3SolverTest {
 
     val solver = Z3Solver(listOf(0.0 to 4.0))
 
-    private fun Z3Solver.x() = params[0]
+    private fun Z3Solver.x() = "p0".toZ3()
     private fun Z3Solver.three() = 3.toZ3()
     private fun Z3Solver.two() = 2.toZ3()
 

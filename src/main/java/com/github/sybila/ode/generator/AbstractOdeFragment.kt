@@ -173,6 +173,9 @@ abstract class AbstractOdeFragment<Params : Any>(
             //positiveFlow = (-in && +out) && !(-out || +In) <=> -in && +out && !-out && !+In
             var selfloop = ff
             for (dim in model.variables.indices) {
+
+                println("Loop $from in $dim: $selfloop")
+
                 val dimName = model.variables[dim].name
                 val positiveOut = lazy {
                     getFacetColors(from, dim, if (timeFlow) Orientation.PositiveOut else Orientation.PositiveIn)
@@ -225,11 +228,14 @@ abstract class AbstractOdeFragment<Params : Any>(
                         selfloop = selfloop or negativeFlow
                     }
                 }
+                println("Loop $from in $dim end: $selfloop")
 
             }
 
             selfloop = selfloop.not()
+            println("Loop $from: $selfloop")
             if (selfloop.isSat()) {
+                selfloop.minimize()
                 result.add(Transition(from, DirectionFormula.Atom.Loop, selfloop))
             }
             result

@@ -35,14 +35,6 @@ class OneDimWithParamGeneratorTest {
                     Summand(paramIndex = 0, constant = -2.0),
                     Summand(constant = -1.0)))
 
-    private val fragmentOne = Z3OdeFragment(OdeModel(listOf(v1), listOf(
-            OdeModel.Parameter("p", Pair(0.0, 2.0))
-    )))
-
-    private val fragmentTwo = Z3OdeFragment(OdeModel(listOf(v2), listOf(
-            OdeModel.Parameter("p2", Pair(-2.0, 2.0))
-    )))
-
     private val loop = DirectionFormula.Atom.Loop
     private val up = "v1".increaseProp()
     private val down = "v1".decreaseProp()
@@ -54,8 +46,11 @@ class OneDimWithParamGeneratorTest {
 
     @Test
     fun parameterTestOne() {
+        val fragmentOne = Z3OdeFragment(OdeModel(listOf(v1), listOf(
+                OdeModel.Parameter("p", Pair(0.0, 2.0))
+        )))
         fragmentOne.run {
-            val p = params[0]
+            val p = "p".toZ3()
             val one = 1.toZ3()
             val two = 2.toZ3()
             val three = 3.toZ3()
@@ -95,13 +90,16 @@ class OneDimWithParamGeneratorTest {
 
     @Test
     fun parameterTestTwo() {
+        val fragmentTwo = Z3OdeFragment(OdeModel(listOf(v2), listOf(
+                OdeModel.Parameter("p", Pair(-2.0, 2.0))
+        )))
         //dv2 = p(v1 - 2) - 1
         //(0) dv2 = p(-2) - 1 p>-1/2 => - // p < -1/2 => +
         //(1) dv2 = p(-1) - 1 p>-1 => - // p < -1 => +
         //(2) dv2 = p(0) - 1 // -1
         //(3) dv2 = p(1) - 1  p<1 => - // p > 1 => +
         fragmentTwo.run {
-            val q = params[0]
+            val q = "p".toZ3()
             val one = 1.toZ3()
             val mOne = (-1).toZ3()
             assertTransitionEquals(0.successors(true),
