@@ -61,7 +61,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile 'com.google.code.gson:gson:2.8.0'
     compile 'com.intellij:annotations:5.1'
-    compile 'com.github.sybila:ctl-model-checker:2.0.0'
+    compile 'com.github.sybila:ctl-model-checker:true-shared-memory-SNAPSHOT'
     compile 'com.github.sybila:ctl-parser:2.2.0'
     compile files('libs/mpj.jar')
     compile files('libs/com.microsoft.z3.jar')

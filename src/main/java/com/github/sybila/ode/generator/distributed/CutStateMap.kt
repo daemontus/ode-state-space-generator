@@ -1,6 +1,7 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.distributed
 
-import com.github.sybila.checker.StateMap
+import com.github.sybila.checker.distributed.StateMap
+import com.github.sybila.ode.generator.NodeEncoder
 
 class CutStateMap<out Params : Any>(
         private val encoder: NodeEncoder,

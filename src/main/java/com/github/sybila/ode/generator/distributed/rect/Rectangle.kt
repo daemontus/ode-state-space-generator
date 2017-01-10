@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.rect
+package com.github.sybila.ode.generator.distributed.rect
 
 import java.nio.ByteBuffer
 import java.util.*

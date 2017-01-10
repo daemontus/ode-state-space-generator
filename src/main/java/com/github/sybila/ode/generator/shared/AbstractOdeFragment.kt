@@ -1,16 +1,21 @@
-package com.github.sybila.ode.generator
+package com.github.sybila.ode.generator.shared
 
-import com.github.sybila.checker.*
+import com.github.sybila.checker.Transition
+import com.github.sybila.checker.decreaseProp
+import com.github.sybila.checker.shared.*
+import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.*
+import com.github.sybila.ode.generator.NodeEncoder
 import com.github.sybila.ode.model.OdeModel
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 
-abstract class AbstractOdeFragment<Params : Any>(
+abstract class AbstractOdeFragment(
         protected val model: OdeModel,
         private val createSelfLoops: Boolean,
-        solver: Solver<Params>
-) : Model<Params>, Solver<Params> by solver {
+        solver: Solver
+) : TransitionSystem, Solver by solver {
 
     protected val encoder = NodeEncoder(model)
     protected val dimensions = model.variables.size
@@ -32,7 +37,7 @@ abstract class AbstractOdeFragment<Params : Any>(
 
     //Facet param cache.
     //(a,b) -> P <=> p \in P: a -p-> b
-    private val facetColors = HashMap<FacetId, Params>()
+    private val facetColors = ConcurrentHashMap<FacetId, Params>()
 
     private enum class Orientation {
         PositiveIn, PositiveOut, NegativeIn, NegativeOut
@@ -47,7 +52,7 @@ abstract class AbstractOdeFragment<Params : Any>(
         val colors = vertexMasks.asSequence()
                 .filter { it.shr(dimension).and(1) == positiveFacet }
                 .map { encoder.nodeVertex(from, it) }
-                .fold(ff) { a, vertex ->
+                .fold(FF as Params) { a, vertex ->
                     //println("V: $vertex ${getVertexColor(vertex, dimension, positiveDerivation)}")
                     getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
                 }
@@ -57,7 +62,9 @@ abstract class AbstractOdeFragment<Params : Any>(
             encoder.higherNode(from, dimension)?.let { higher ->
                 val dual = if (orientation == Orientation.PositiveIn) {
                     Orientation.NegativeOut
-                } else { Orientation.NegativeIn }
+                } else {
+                    Orientation.NegativeIn
+                }
                 facetColors[FacetId(higher, dimension, dual)] = colors
             }
         } else {
@@ -82,7 +89,7 @@ abstract class AbstractOdeFragment<Params : Any>(
     /*** PROPOSITION RESOLVING ***/
 
 
-    override fun Formula.Atom.Float.eval(): StateMap<Params> {
+    override fun Formula.Atom.Float.eval(): StateMap {
         val left = this.left
         val right = this.right
         val dimension: Int
@@ -115,27 +122,20 @@ abstract class AbstractOdeFragment<Params : Any>(
             }
             else -> throw IllegalAccessException("Proposition is too complex: ${this}")
         }
-        val dimensionSize = model.variables[dimension].thresholds.size - 1
         return CutStateMap(
                 encoder = encoder,
                 dimension = dimension,
                 threshold = threshold,
                 gt = gt,
                 stateCount = stateCount,
-                value = tt,
-                default = ff,
-                sizeHint = if (gt) {
-                    (stateCount / dimensionSize) * (dimensionSize - threshold + 1)
-                } else {
-                    (stateCount / dimensionSize) * (threshold - 1)
-                }
+                value = TT
         )
     }
 
-    override fun Formula.Atom.Transition.eval(): StateMap<Params> {
+    override fun Formula.Atom.Transition.eval(): StateMap {
         val dimension = model.variables.indexOfFirst { it.name == this.name }
         if (dimension < 0) throw IllegalStateException("Unknown variable name: ${this.name}")
-        return LazyStateMap(stateCount, ff) {
+        return LazyStateMap(stateCount) {
             val c = getFacetColors(it, dimension, when {
                 facet == Facet.POSITIVE && direction == Direction.IN -> Orientation.PositiveIn
                 facet == Facet.POSITIVE && direction == Direction.OUT -> Orientation.PositiveOut
@@ -143,23 +143,23 @@ abstract class AbstractOdeFragment<Params : Any>(
                 else -> Orientation.NegativeOut
             })
             val exists = (facet == Facet.POSITIVE && encoder.higherNode(it, dimension) != null)
-            || (facet == Facet.NEGATIVE && encoder.lowerNode(it, dimension) != null)
-            if (exists && c.canSat()) c else null
+                    || (facet == Facet.NEGATIVE && encoder.lowerNode(it, dimension) != null)
+            if (exists) c.isSat() else null
         }
     }
 
     /*** Successor/Predecessor resolving ***/
 
-    private val successorCache = HashMap<Int, List<Transition<Params>>>()
-    private val pastSuccessorCache = HashMap<Int, List<Transition<Params>>>()
-    private val predecessorCache = HashMap<Int, List<Transition<Params>>>()
-    private val pastPredecessorCache = HashMap<Int, List<Transition<Params>>>()
+    private val successorCache = ConcurrentHashMap<Int, List<Transition<Params>>>()
+    private val pastSuccessorCache = ConcurrentHashMap<Int, List<Transition<Params>>>()
+    private val predecessorCache = ConcurrentHashMap<Int, List<Transition<Params>>>()
+    private val pastPredecessorCache = ConcurrentHashMap<Int, List<Transition<Params>>>()
 
     override fun Int.predecessors(timeFlow: Boolean): Iterator<Transition<Params>>
-        = getStep(this, timeFlow, false).iterator()
+            = getStep(this, timeFlow, false).iterator()
 
     override fun Int.successors(timeFlow: Boolean): Iterator<Transition<Params>>
-        = getStep(this, timeFlow, true).iterator()
+            = getStep(this, timeFlow, true).iterator()
 
     private fun getStep(from: Int, timeFlow: Boolean, successors: Boolean): List<Transition<Params>> {
         return (when {
@@ -171,7 +171,7 @@ abstract class AbstractOdeFragment<Params : Any>(
             val result = ArrayList<Transition<Params>>()
             //selfLoop <=> !positiveFlow && !negativeFlow <=> !(positiveFlow || negativeFlow)
             //positiveFlow = (-in && +out) && !(-out || +In) <=> -in && +out && !-out && !+In
-            var selfloop = ff
+            var selfloop: Params = FF
             for (dim in model.variables.indices) {
                 val dimName = model.variables[dim].name
                 val positiveOut = lazy {
@@ -187,15 +187,9 @@ abstract class AbstractOdeFragment<Params : Any>(
                     getFacetColors(from, dim, if (timeFlow) Orientation.NegativeIn else Orientation.NegativeOut)
                 }
 
-                /*println("$from")
-                println("${positiveIn.value} <-")
-                println("${positiveOut.value} ->")
-                println("-> ${negativeIn.value}")
-                println("<- ${negativeOut.value}")*/
-
                 encoder.higherNode(from, dim)?.let { higher ->
                     val colors = (if (successors) positiveOut else positiveIn).value
-                    if (colors.isSat()) {
+                    colors.isSat()?.let { colors ->
                         result.add(Transition(
                                 target = higher,
                                 direction = if (successors) dimName.increaseProp() else dimName.decreaseProp(),
@@ -212,7 +206,7 @@ abstract class AbstractOdeFragment<Params : Any>(
 
                 encoder.lowerNode(from, dim)?.let { lower ->
                     val colors = (if (successors) negativeOut else negativeIn).value
-                    if (colors.isSat()) {
+                    colors.isSat()?.let {
                         result.add(Transition(
                                 target = lower,
                                 direction = if (successors) dimName.decreaseProp() else dimName.increaseProp(),
@@ -229,7 +223,7 @@ abstract class AbstractOdeFragment<Params : Any>(
             }
 
             selfloop = selfloop.not()
-            if (selfloop.isSat()) {
+            selfloop.isSat()?.let {
                 result.add(Transition(from, DirectionFormula.Atom.Loop, selfloop))
             }
             result

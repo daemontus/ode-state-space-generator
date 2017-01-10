@@ -1,6 +1,6 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.distributed.smt
 
-import com.github.sybila.ode.generator.AbstractOdeFragment
+import com.github.sybila.ode.generator.distributed.AbstractOdeFragment
 import com.github.sybila.ode.model.OdeModel
 import java.util.*
 

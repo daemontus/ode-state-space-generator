@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.distributed.smt
 
 import com.microsoft.z3.BoolExpr
 

@@ -1,6 +1,8 @@
 package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.ode.assertDeepEquals
+import com.github.sybila.ode.generator.distributed.rect.RectangleSolver
+import com.github.sybila.ode.generator.distributed.rect.rectangleOf
 import org.junit.Test
 import kotlin.test.assertTrue
 

@@ -4,6 +4,8 @@ import com.github.sybila.huctl.negativeIn
 import com.github.sybila.huctl.negativeOut
 import com.github.sybila.huctl.positiveIn
 import com.github.sybila.huctl.positiveOut
+import com.github.sybila.ode.generator.distributed.rect.RectangleOdeModel
+import com.github.sybila.ode.generator.distributed.rect.rectangleOf
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test

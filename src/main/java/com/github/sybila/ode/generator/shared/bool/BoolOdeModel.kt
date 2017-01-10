@@ -1,14 +1,15 @@
-package com.github.sybila.ode.generator.bool
-
-import com.github.sybila.checker.solver.BoolSolver
-import com.github.sybila.ode.generator.AbstractOdeFragment
+package com.github.sybila.ode.generator.shared.bool
+/*
+import com.github.sybila.checker.shared.solver.BoolSolver
+import com.github.sybila.ode.generator.shared.AbstractOdeFragment
 import com.github.sybila.ode.model.OdeModel
 import java.util.*
+
 
 class BoolOdeModel(
         model: OdeModel,
         createSelfLoops: Boolean = true
-) : AbstractOdeFragment<Boolean>(model, createSelfLoops, BoolSolver()) {
+) : AbstractOdeFragment(model, createSelfLoops, BoolSolver()) {
 
     init {
         if (model.parameters.isNotEmpty()) throw IllegalArgumentException("Can't use bool model for model with parameters")
@@ -48,4 +49,4 @@ class BoolOdeModel(
         }[dimension]
     }
 
-}
+}*/

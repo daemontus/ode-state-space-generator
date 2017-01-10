@@ -1,6 +1,7 @@
 package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.huctl.*
+import com.github.sybila.ode.generator.distributed.rect.RectangleOdeModel
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test

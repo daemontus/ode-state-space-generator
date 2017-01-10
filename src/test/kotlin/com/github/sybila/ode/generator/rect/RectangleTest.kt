@@ -1,5 +1,7 @@
 package com.github.sybila.ode.generator.rect
 
+import com.github.sybila.ode.generator.distributed.rect.rectangleFromPoints
+import com.github.sybila.ode.generator.distributed.rect.rectangleOf
 import org.junit.Test
 import kotlin.test.assertEquals
 

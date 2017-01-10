@@ -5,6 +5,8 @@ import com.github.sybila.checker.decreaseProp
 import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.ode.assertTransitionEquals
+import com.github.sybila.ode.generator.distributed.smt.Z3OdeFragment
+import com.github.sybila.ode.generator.distributed.smt.toParams
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test

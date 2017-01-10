@@ -5,7 +5,7 @@ import com.github.sybila.checker.decreaseProp
 import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.ode.generator.ExplicitEvaluable
-import com.github.sybila.ode.generator.bool.BoolOdeModel
+import com.github.sybila.ode.generator.distributed.bool.BoolOdeModel
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test

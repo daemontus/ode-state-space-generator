@@ -1,6 +1,6 @@
 package com.github.sybila.ode
 
-import com.github.sybila.checker.Solver
+import com.github.sybila.checker.distributed.Solver
 import com.github.sybila.checker.Transition
 
 fun <P: Any> Solver<P>.assertTransitionEquals(t1: Transition<P>, t2: Transition<P>) {

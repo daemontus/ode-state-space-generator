@@ -1,14 +1,12 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.distributed.smt
 
-import com.github.sybila.checker.Solver
+import com.github.sybila.checker.distributed.Solver
+import com.github.sybila.checker.shared.solver.solverCalled
 import com.microsoft.z3.ArithExpr
 import com.microsoft.z3.BoolExpr
 import com.microsoft.z3.Context
 import com.microsoft.z3.Status
 import java.nio.ByteBuffer
-
-private var lastProgressPrint = 0L
-private var solverCalls = 0L
 
 class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.indices.map { "p$it" })
     : Solver<Z3Params>, Z3SolverBase {
@@ -32,12 +30,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
     }.flatMap { it }.toTypedArray())
 
     override fun Z3Params.isSat(): Boolean {
-        solverCalls += 1
-        if (System.currentTimeMillis() > lastProgressPrint + 2000) {
-            System.err.println("Processing: ${solverCalls / 2.0} per second")
-            solverCalls = 0
-            lastProgressPrint = System.currentTimeMillis()
-        }
+        solverCalled()
         if (Math.random() > 0.8) minimize()
         return this.sat ?: run {
             solver.add(bounds)

@@ -5,6 +5,9 @@ import com.github.sybila.checker.decreaseProp
 import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.ode.assertTransitionEquals
+import com.github.sybila.ode.generator.distributed.rect.Rectangle
+import com.github.sybila.ode.generator.distributed.rect.RectangleOdeModel
+import com.github.sybila.ode.generator.distributed.rect.rectangleOf
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
@@ -78,7 +81,7 @@ class TwoDimWithParamGeneratorTest {
     val v2Up = "v2".increaseProp()
     val v2Down = "v2".decreaseProp()
 
-    private fun singleRectangle(vararg values: Double): MutableSet<Rectangle> 
+    private fun singleRectangle(vararg values: Double): MutableSet<Rectangle>
             = mutableSetOf(rectangleOf(*values))
 
     @Test 
