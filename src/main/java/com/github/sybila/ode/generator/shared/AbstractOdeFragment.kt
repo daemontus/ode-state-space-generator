@@ -44,41 +44,46 @@ abstract class AbstractOdeFragment(
     }
     private data class FacetId(val state: Int, val dimension: Int, val orientation: Orientation)
 
-    private fun getFacetColors(from: Int, dimension: Int, orientation: Orientation): Params
-            = facetColors.computeIfAbsent(FacetId(from, dimension, orientation)) {
-        //iterate over vertices
-        val positiveFacet = if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) 1 else 0
-        val positiveDerivation = orientation == Orientation.PositiveOut || orientation == Orientation.NegativeIn
-        val colors = vertexMasks.asSequence()
-                .filter { it.shr(dimension).and(1) == positiveFacet }
-                .map { encoder.nodeVertex(from, it) }
-                .fold(FF as Params) { a, vertex ->
-                    //println("V: $vertex ${getVertexColor(vertex, dimension, positiveDerivation)}")
-                    getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
-                }
+    private fun getFacetColors(from: Int, dimension: Int, orientation: Orientation): Params {
+        val key = FacetId(from, dimension, orientation)
+        val current = facetColors[key]
+        return if (current == null) {
+            //iterate over vertices
+            val positiveFacet = if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) 1 else 0
+            val positiveDerivation = orientation == Orientation.PositiveOut || orientation == Orientation.NegativeIn
+            val colors = vertexMasks.asSequence()
+                    .filter { it.shr(dimension).and(1) == positiveFacet }
+                    .map { encoder.nodeVertex(from, it) }
+                    .fold(FF as Params) { a, vertex ->
+                        //println("V: $vertex ${getVertexColor(vertex, dimension, positiveDerivation)}")
+                        getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
+                    }
 
-        //also update dual facet
-        if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) {
-            encoder.higherNode(from, dimension)?.let { higher ->
-                val dual = if (orientation == Orientation.PositiveIn) {
-                    Orientation.NegativeOut
-                } else {
-                    Orientation.NegativeIn
-                }
-                facetColors[FacetId(higher, dimension, dual)] = colors
-            }
-        } else {
-            encoder.lowerNode(from, dimension)?.let { lower ->
-                val dual = if (orientation == Orientation.NegativeIn) {
-                    Orientation.PositiveOut
-                } else {
-                    Orientation.PositiveIn
-                }
-                facetColors[FacetId(lower, dimension, dual)] = colors
-            }
-        }
+            facetColors[key] = colors
 
-        colors
+            //also update dual facet
+            if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) {
+                encoder.higherNode(from, dimension)?.let { higher ->
+                    val dual = if (orientation == Orientation.PositiveIn) {
+                        Orientation.NegativeOut
+                    } else {
+                        Orientation.NegativeIn
+                    }
+                    facetColors[FacetId(higher, dimension, dual)] = colors
+                }
+            } else {
+                encoder.lowerNode(from, dimension)?.let { lower ->
+                    val dual = if (orientation == Orientation.NegativeIn) {
+                        Orientation.PositiveOut
+                    } else {
+                        Orientation.PositiveIn
+                    }
+                    facetColors[FacetId(lower, dimension, dual)] = colors
+                }
+            }
+
+            colors
+        } else current
     }
 
     //enumerate all bit masks corresponding to vertices of a state

@@ -9,27 +9,29 @@ import java.io.File
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val elapsed = measureTimeMillis {
-        val model = Parser().parse(File("/Users/daemontus/heap/sybila/models/tcbb.bio")).computeApproximation()
-        val prop = HUCTLParser().parse(File("/Users/daemontus/heap/sybila/models/test_prop.huctl"))
+    val model = Parser().parse(File("/Users/daemontus/heap/sybila/models/tcbb.bio")).computeApproximation()
+    val prop = HUCTLParser().parse(File("/Users/daemontus/heap/sybila/models/test_prop.huctl"))
 
-        val fragment = RectangleOdeModel(model)
-        println()
-/*
-        for (state in 0 until fragment.stateCount) {
-            fragment.run {
-                state.successors(true)
-                state.predecessors(true)
-            }
-        }
-        println("Precomputed: ${fragment.stateCount}")*/
+    val fragment = RectangleOdeModel(model)
+    println()
 
-        Checker(fragment, parallelism = 1).use { checker ->
-            val r = checker.verify(prop)
-            for ((f, map) in r) {
-                println("$f ${map.entries.count()}")
-            }
+    for (state in 0 until fragment.stateCount) {
+        fragment.run {
+            state.successors(true)
+            state.predecessors(true)
         }
     }
-    println("Elapsed: $elapsed")
+    println("Precomputed: ${fragment.stateCount}")
+
+    repeat(10) {
+        val elapsed = measureTimeMillis {
+            Checker(fragment, parallelism = 4).use { checker ->
+                val r = checker.verify(prop)
+                for ((f, map) in r) {
+                    println("$f ${map.entries.count()}")
+                }
+            }
+        }
+        println("Elapsed: $elapsed")
+    }
 }

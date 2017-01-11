@@ -22,7 +22,10 @@ class RectangleOdeModel(
     private val negativeVertexCache = ConcurrentHashMap<Int, List<Params?>>()
 
     override fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): Params? {
-        return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
+        val primaryStorage = if (positive) positiveVertexCache else negativeVertexCache
+        val secondaryStorage = if (!positive) positiveVertexCache else negativeVertexCache
+        val current = primaryStorage[vertex]
+        return if (current == null) {
             val p: List<Params?> = (0 until dimensions).map { dim ->
                 var derivationValue = 0.0
                 var denominator = 0.0
@@ -70,9 +73,10 @@ class RectangleOdeModel(
                 bounds
             }
             //save also dual values
-            (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: TT }
-            p
-        }[dimension]
+            secondaryStorage[vertex] = p.map { it?.not() ?: TT }
+            primaryStorage[vertex] = p
+            p[dimension]
+        } else current[dimension]
     }
 
 }

@@ -16,25 +16,38 @@ import java.io.File
 import kotlin.system.measureTimeMillis
 
 fun main(args: Array<String>) {
-    val elapsed = measureTimeMillis {
-        val model = Parser().parse(File("/Users/daemontus/heap/sybila/models/tcbb.bio")).computeApproximation()
-        val prop = HUCTLParser().parse(File("/Users/daemontus/heap/sybila/models/test_prop.huctl"))
+    val model = Parser().parse(File("/Users/daemontus/heap/sybila/models/tcbb.bio")).computeApproximation()
+    val prop = HUCTLParser().parse(File("/Users/daemontus/heap/sybila/models/test_prop.huctl"))
 
-        val workers = 1
-        val fragment = (1..workers).map { RectangleOdeModel(model) }.asUniformPartitions()
+    val workers = 4
+    val fragments = (1..workers).map { RectangleOdeModel(model) }.asUniformPartitions()
 
-        println("Dist")
+    println()
 
-        Checker(fragment.connectWithSharedMemory()).use { checker ->
-            val r = checker.verify(prop)
-            for ((f, map) in r) {
-                fragment.first().run {
-                    println("$f ${map.map { it.sizeHint }}")
+    fragments.forEach { fragment ->
+        for (state in 0 until fragment.stateCount) {
+            fragment.run {
+                state.successors(true)
+                state.predecessors(true)
+            }
+        }
+        println("Precomputed: ${fragment.stateCount}")
+    }
+
+    repeat(10) {
+        val elapsed = measureTimeMillis {
+            Checker(fragments.connectWithSharedMemory()).use { checker ->
+                val r = checker.verify(prop)
+                for ((f, map) in r) {
+                    fragments.first().run {
+                        println("$f ${map.map { it.sizeHint }}")
+                    }
                 }
             }
         }
+        println("Elapsed: $elapsed")
     }
-    println("Elapsed: $elapsed")
+
 
 
 

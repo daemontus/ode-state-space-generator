@@ -17,6 +17,37 @@ class RectangleSolver(
         val bounds: Rectangle
 ) : Solver {
 
+    override fun Params.and(other: Params): Params {
+        return if (this is TT) other
+        else if (other is TT) this
+        else if (this is FF || other is FF) FF
+        else if (this is And && other is And) And(this.args + other.args)
+        else if (this is And) And(this.args + other)
+        else if (other is And) And(other.args + other)
+        else And(listOf(this, other))
+    }
+
+    override fun Params.not(): Params {
+        return if (this is TT) FF
+        else if (this is FF) TT
+        else if (this is Not) this.inner
+        else if (this is And) Or(args.map { it.not() })
+        //WTF? else if (this is Or) And(args.map { Not(it) })
+        else Not(this)
+    }
+
+    override fun Params.or(other: Params): Params {
+        return if (this is FF) other
+        else if (other is FF) this
+        else if (this is TT || other is TT) TT
+        else if (this is Or && other is Or) Or(this.args + other.args)
+        else if (this is Or) Or(this.args + other)
+        else if (other is Or) Or(other.args + this)
+        else Or(listOf(this, other))
+    }
+
+
+
     private val max = AtomicInteger(0)
 
     override fun Params.extendWith(other: Params): Params? {
@@ -35,6 +66,28 @@ class RectangleSolver(
         }
         //println("isSat $this to $rectangles")
         return if (rectangles.isNotEmpty()) rectangles.asParams() else null
+    }
+
+    private fun Params.purgeBoolean(): Params {
+        return when (this) {
+            is And -> {
+                val purgedArgs = args.map { it.purgeBoolean() }
+                if (purgedArgs.any { it is FF }) FF
+                else And(purgedArgs.filter { it !is TT })
+            }
+            is Or -> {
+                val purgedArgs = args.map { it.purgeBoolean() }
+                if (purgedArgs.any { it is TT }) TT
+                else Or(purgedArgs.filter { it !is FF })
+            }
+            is Not -> {
+                val purgedInner = inner.purgeBoolean()
+                if (purgedInner is TT) FF
+                else if (purgedInner is FF) TT
+                else Not(purgedInner)
+            }
+            else -> this
+        }
     }
 
     private fun Params.toRectangles(): List<Rectangle> {
@@ -58,12 +111,6 @@ class RectangleSolver(
             is Not -> And(inner.toRectangles()
                     .map { RectParams(bounds - it) }).toRectangles()
             else -> throw UnsupportedParameterValue(this)
-        }
-    }
-
-    private fun Params.purge(): Params {
-        return when (this) {
-            is Or -> 
         }
     }
 

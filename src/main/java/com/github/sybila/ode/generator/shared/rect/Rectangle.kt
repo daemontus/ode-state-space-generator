@@ -62,12 +62,15 @@ class Rectangle(
     }
 
     fun intersect(other: Rectangle): Rectangle? {
-        val into = DoubleArray(coordinates.size)
-        for (i in 0 until (this.coordinates.size / 2)) {
+        val thisCoordinates = this.coordinates
+        val otherCoordinates = other.coordinates
+        val size = thisCoordinates.size
+        val into = DoubleArray(size)
+        for (i in 0 until (size / 2)) {
             val iL = 2*i
             val iH = 2*i+1
-            val low = Math.max(coordinates[iL], other.coordinates[iL])
-            val high = Math.min(coordinates[iH], other.coordinates[iH])
+            val low = Math.max(thisCoordinates[iL], otherCoordinates[iL])
+            val high = Math.min(thisCoordinates[iH], otherCoordinates[iH])
             if (low >= high) return null
             else {
                 into[iL] = low
