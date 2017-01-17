@@ -48,9 +48,10 @@ abstract class AbstractOdeFragment<Params : Any>(
                 .filter { it.shr(dimension).and(1) == positiveFacet }
                 .map { encoder.nodeVertex(from, it) }
                 .fold(ff) { a, vertex ->
-                    //println("V: $vertex ${getVertexColor(vertex, dimension, positiveDerivation)}")
                     getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
                 }
+
+        colors.minimize()
 
         //also update dual facet
         if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) {
@@ -171,10 +172,8 @@ abstract class AbstractOdeFragment<Params : Any>(
             val result = ArrayList<Transition<Params>>()
             //selfLoop <=> !positiveFlow && !negativeFlow <=> !(positiveFlow || negativeFlow)
             //positiveFlow = (-in && +out) && !(-out || +In) <=> -in && +out && !-out && !+In
-            var selfloop = ff
+            var selfloop = tt
             for (dim in model.variables.indices) {
-
-                println("Loop $from in $dim: $selfloop")
 
                 val dimName = model.variables[dim].name
                 val positiveOut = lazy {
@@ -190,12 +189,6 @@ abstract class AbstractOdeFragment<Params : Any>(
                     getFacetColors(from, dim, if (timeFlow) Orientation.NegativeIn else Orientation.NegativeOut)
                 }
 
-                /*println("$from")
-                println("${positiveIn.value} <-")
-                println("${positiveOut.value} ->")
-                println("-> ${negativeIn.value}")
-                println("<- ${negativeOut.value}")*/
-
                 encoder.higherNode(from, dim)?.let { higher ->
                     val colors = (if (successors) positiveOut else positiveIn).value
                     if (colors.isSat()) {
@@ -207,9 +200,8 @@ abstract class AbstractOdeFragment<Params : Any>(
                     }
 
                     if (createSelfLoops) {
-                        //selfLoop -= positiveFlow
-                        val positiveFlow = negativeIn.value and positiveOut.value and negativeOut.value.not() and positiveIn.value.not()
-                        selfloop = selfloop or positiveFlow
+                        val positiveFlow = negativeIn.value and positiveOut.value and (negativeOut.value or positiveIn.value).not()
+                        selfloop = selfloop and positiveFlow.not()
                     }
                 }
 
@@ -224,16 +216,13 @@ abstract class AbstractOdeFragment<Params : Any>(
                     }
 
                     if (createSelfLoops) {
-                        val negativeFlow = negativeOut.value and positiveIn.value and negativeIn.value.not() and positiveOut.value.not()
-                        selfloop = selfloop or negativeFlow
+                        val negativeFlow = negativeOut.value and positiveIn.value and (negativeIn.value or positiveOut.value).not()
+                        selfloop = selfloop and negativeFlow.not()
                     }
                 }
-                println("Loop $from in $dim end: $selfloop")
 
             }
 
-            selfloop = selfloop.not()
-            println("Loop $from: $selfloop")
             if (selfloop.isSat()) {
                 selfloop.minimize()
                 result.add(Transition(from, DirectionFormula.Atom.Loop, selfloop))

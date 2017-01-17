@@ -1,6 +1,5 @@
 package com.github.sybila.ode.generator.smt
 
-import com.github.sybila.huctl.CompareOp
 import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.safeString
@@ -45,27 +44,24 @@ class Z3OdeFragment(
                 }
 
                 val solution = const.asSequence()
-                val constant = solution.take(1).map { if (it == 0.0) null else Z3Formula.Value(it.safeString()) }
+                val constant = solution.take(1).map { if (it == 0.0) null else it.safeString() }
                 val params = solution.drop(1).mapIndexed { i, d ->
-                    if (d == 0.0) null else Z3Formula.Times(listOf(
-                            Z3Formula.Value(model.parameters[i].name), Z3Formula.Value(d.safeString())
-                    ))
+                    if (d == 0.0) null else "(* ${model.parameters[i].name} ${d.safeString()})"
                 }
                 val equation = (constant + params).filterNotNull().toList()
                 val eq: Z3Params? = if (equation.isEmpty()) {
                     null
                 } else {
-                    val cmp = Z3Formula.Compare(Z3Formula.Plus(equation), if (positive) CompareOp.GT else CompareOp.LT, Z3Formula.Value("0.0"))
-                    Z3Params(cmp, null, false)
+                    val cmp = if (positive) ">" else "<"
+                    val formula = equation.joinToString(prefix = "($cmp (+ ", postfix = ") 0.0)", separator = " ")
+                    Z3Params(formula, null, false)
                 }
 
-                println("Minimize edge $vertex $positive $eq")
-                eq?.minimize()
-                println("To $eq which is ${eq?.isSat()}")
+                eq?.minimize(true)
                 if (eq?.isSat() ?: true) eq else null
             }
             //null only if all is zero, dual value is then also zero (null)
-            (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() }
+            //TODO weird (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() }
             p
         }[dimension]
     }

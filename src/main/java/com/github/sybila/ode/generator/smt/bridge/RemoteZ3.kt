@@ -1,6 +1,5 @@
 package com.github.sybila.ode.generator.smt.bridge
 
-import com.github.sybila.ode.generator.smt.Z3Formula
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.safeString
 import java.io.Closeable
@@ -15,6 +14,7 @@ class RemoteZ3(
 ) : Closeable {
 
     val parameters =  listOf(
+            "model=false",
             "pp.single_line=true",
             "pp.fixed_indent=true",
             "pp.flat_assoc=true",
@@ -30,9 +30,11 @@ class RemoteZ3(
     val results = process.inputStream.bufferedReader().lineSequence().iterator()
     val commands = process.outputStream.bufferedWriter()
 
-    val bounds: Z3Formula = params.flatMap {
+    val bounds: String = params.flatMap {
         listOf("(< ${it.name} ${it.range.second.safeString()})", "(> ${it.name} ${it.range.first.safeString()})")
-    }.joinToString(separator = " ", prefix = "(and ", postfix = ")").readSMT().asZ3Formula()
+    }.joinToString(separator = " ", prefix = "(and ", postfix = ")")
+
+    val activeAssertions = HashSet<String>()
 
     init {
         //setup solver
@@ -42,37 +44,68 @@ class RemoteZ3(
         params.forEach {
             "(declare-const ${it.name} Real)".execute()
         }
-        "(assert ${bounds.asCommand()})".execute()
-    }
+        "(assert $bounds)".execute()
 
-    fun checkSat(formula: Z3Formula): Boolean {
-        "(push)".execute()
-        val command = formula.asCommand()
-        "(assert $command)".execute()
-        "(check-sat)".execute()
-        val r = readResult()
-        "(pop)".execute()
-        return r == "sat"
-    }
-
-    fun minimize(formula: Z3Formula): Z3Formula {
-        "(push)".execute()
-        val command = formula.asCommand()
-        "(assert $command)".execute()
         "(apply ctx-solver-simplify)".execute()
         if ("(goals" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
         if ("(goal" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
-        val assertions = ArrayList<Z3Formula>()
         var line = readResult()
         while (!line.trim().startsWith(":precision")) {
-            val smt = line.readSMT().asZ3Formula()
-            println("Read: $smt")
-            assertions.add(smt)
+            activeAssertions.add(line.filter { it != '?' })
             line = readResult()
         }
         if (")" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
+
+        /*println()
+        val check = measureTimeMillis {
+            repeat (1000) {
+                minimize("(and (>= y_pRB 0.0005412787) (not (<= y_pRB 0.0005378015)))")
+            }
+        }
+        println("elapsed $check" )*/
+    }
+
+    fun checkSat(formula: String): Boolean {
+        if (formula.length > size) {
+            size = formula.length
+            println("Send: $size")
+        }
+        "(push)".execute()
+        "(assert $formula)".execute()
+        "(check-sat-using (using-params qflra :logic QF_LRA))".execute()
+        val result = readResult()
         "(pop)".execute()
-        return if (assertions.size == 1) assertions.first() else Z3Formula.And(assertions)
+        return result == "sat"
+    }
+
+    var size = 0
+
+    fun minimize(formula: String): String {
+        if (formula.length > size) {
+            size = formula.length
+            println("Send: $size")
+        }
+        "(push)".execute()
+        "(assert $formula)".execute()
+        "(apply (repeat ctx-solver-simplify))".execute()
+        //println("Minimize: $formula")
+        if ("(goals" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
+        if ("(goal" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
+        val assertions = ArrayList<String>()
+        var line = readResult()
+        while (!line.startsWith(":precision")) {
+            //println("assertion: $line")
+            if (line !in activeAssertions) assertions.add(line)
+            line = readResult()
+        }
+        if (")" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
+        //println("To: $assertions")
+        "(pop)".execute()
+        return when {
+            assertions.isEmpty() -> "true"
+            assertions.size == 1 -> assertions.first()
+            else -> assertions.joinToString(prefix = "(and ", postfix = ")", separator = " ")
+        }
     }
 
     private fun String.execute() {
@@ -82,7 +115,7 @@ class RemoteZ3(
     }
 
     private fun readResult(): String {
-        val r = results.next()
+        val r = results.next().filter { it != '?' }.trim()
         if (verbose) println(r)
         return r
     }
@@ -94,34 +127,3 @@ class RemoteZ3(
     }
 
 }
-/*
-fun main(args: Array<String>) {
-
-    val params = listOf(
-            OdeModel.Parameter("p1", 0.0 to 2.0),
-            OdeModel.Parameter("p2", 0.0 to 2.0)
-    )
-    val z3 = RemoteZ3(params, verbose = true)
-
-    val elapsed = measureTimeMillis {
-        val f = Z3Formula.Compare(Z3Formula.Plus(listOf(
-                Z3Formula.Value("-1.0"),
-                Z3Formula.Times(listOf(
-                        Z3Formula.Value("1.0"),
-                        Z3Formula.Value("p1")
-                )),
-                Z3Formula.Times(listOf(
-                        Z3Formula.Value("1.0"),
-                        Z3Formula.Value("p2")
-                ))
-        )), true, Z3Formula.Value("0.0"))
-        val min = z3.minimize(f)
-        println("Minimal ${min.asCommand(params)} ${z3.minimize(min).asCommand(params)}")
-
-
-    }
-
-    println("Elapsed: $elapsed")
-
-    z3.close()
-}*/
