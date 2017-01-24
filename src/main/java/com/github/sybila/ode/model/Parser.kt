@@ -116,7 +116,7 @@ private class ModelReader : ODEBaseListener() {
                     OdeModel.Variable(
                             name = vName,
                             range = Pair(threshold.first(), threshold.last()),
-                            thresholds = threshold,
+                            thresholds = threshold.sorted(),
                             varPoints = varPoints[vName],
                             equation = flattenAndResolve(equation)
                     )
