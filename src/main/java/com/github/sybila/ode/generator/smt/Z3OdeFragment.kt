@@ -60,8 +60,6 @@ class Z3OdeFragment(
                 eq?.minimize(true)
                 if (eq?.isSat() ?: true) eq else null
             }
-            //null only if all is zero, dual value is then also zero (null)
-            //TODO weird (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() }
             p
         }[dimension]
     }

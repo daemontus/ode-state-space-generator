@@ -54,22 +54,11 @@ class RemoteZ3(
             activeAssertions.add(line.filter { it != '?' })
             line = readResult()
         }
-        if (")" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
 
-        /*println()
-        val check = measureTimeMillis {
-            repeat (1000) {
-                minimize("(and (>= y_pRB 0.0005412787) (not (<= y_pRB 0.0005378015)))")
-            }
-        }
-        println("elapsed $check" )*/
+        if (")" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
     }
 
     fun checkSat(formula: String): Boolean {
-        if (formula.length > size) {
-            size = formula.length
-            println("Send: $size")
-        }
         "(push)".execute()
         "(assert $formula)".execute()
         "(check-sat-using (using-params qflra :logic QF_LRA))".execute()
@@ -78,28 +67,19 @@ class RemoteZ3(
         return result == "sat"
     }
 
-    var size = 0
-
     fun minimize(formula: String): String {
-        if (formula.length > size) {
-            size = formula.length
-            println("Send: $size")
-        }
         "(push)".execute()
         "(assert $formula)".execute()
         "(apply (repeat ctx-solver-simplify))".execute()
-        //println("Minimize: $formula")
         if ("(goals" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
         if ("(goal" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
         val assertions = ArrayList<String>()
         var line = readResult()
         while (!line.startsWith(":precision")) {
-            //println("assertion: $line")
             if (line !in activeAssertions) assertions.add(line)
             line = readResult()
         }
         if (")" != readResult()) throw IllegalStateException("Unexpected z3 output when minimizing")
-        //println("To: $assertions")
         "(pop)".execute()
         return when {
             assertions.isEmpty() -> "true"

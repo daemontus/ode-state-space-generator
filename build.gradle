@@ -34,9 +34,6 @@ generateGrammarSource {
 // make the Java compile task depend on the antlr4 task
 compileKotlin.dependsOn generateGrammarSource
 
-// add the generated source files to the list of java sources
-sourceSets.main.java.srcDirs += new File('src/main/gen')
-
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }

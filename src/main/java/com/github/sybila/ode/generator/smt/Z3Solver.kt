@@ -7,8 +7,6 @@ import com.github.sybila.ode.generator.smt.bridge.readSMT
 import com.github.sybila.ode.model.OdeModel
 import java.io.Closeable
 import java.nio.ByteBuffer
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.system.measureNanoTime
 
 
 private fun pow (a: Int, b: Int): Int {
@@ -17,20 +15,6 @@ private fun pow (a: Int, b: Int): Int {
     if ( b % 2 == 0)    return pow (a * a, b / 2)       //even a=(a^2)^b/2
     else                return a * pow (a * a, b / 2)   //odd  a=a*(a^2)^b/2
 }
-
-private var lastProgressPrint = System.currentTimeMillis()
-var solverCalls = AtomicLong(0)
-
-var satCalled = 0
-var satFromPoint = 0
-
-var satTime = 0L
-var minTime = 0L
-
-var minCalled = 0L
-
-var c1 = 0L
-var c2 = 0L
 
 class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.indices.map { "p$it" })
     : Solver<Z3Params>, Closeable, Z3SolverBase {
@@ -58,25 +42,13 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
     private var coreSize = 0
 
     override fun Z3Params.isSat(): Boolean {
-        satTime += measureNanoTime {
-            solverCalls.incrementAndGet()
-            satCalled += 1
-            if (this.formula.checkCorners()) {
-                satFromPoint += 1
-                return true
-            }
-            if (System.currentTimeMillis() > lastProgressPrint + 2000) {
-                System.err.println("Processing: ${solverCalls.get() / 2.0} per second")
-                //solverCalls
-                lastProgressPrint = System.currentTimeMillis()
-            }
-            this.minimize()
-            //if (Math.random() > 0.8) minimize()
-            this.sat ?: run {
-                val sat = z3.checkSat(this.formula)
-                this.sat = sat
-                sat
-            }
+        if (this.formula.checkCorners()) {
+            return true
+        }
+        this.sat ?: run {
+            val sat = z3.checkSat(this.formula)
+            this.sat = sat
+            sat
         }
         return this.sat ?: true
     }
@@ -99,7 +71,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
                 "or" -> this.funArgs.fold(false) { a, i -> a || i.checkAt(point) }
                 ">" -> this.funArgs[0].evalExpr(point) > this.funArgs[1].evalExpr(point)
                 "<" -> this.funArgs[0].evalExpr(point) < this.funArgs[1].evalExpr(point)
-                ">=" -> this.funArgs[0].evalExpr(point) < this.funArgs[1].evalExpr(point)
+                ">=" -> this.funArgs[0].evalExpr(point) >= this.funArgs[1].evalExpr(point)
                 "<=" -> this.funArgs[0].evalExpr(point) <= this.funArgs[1].evalExpr(point)
                 else -> throw IllegalArgumentException(this.toString())
             }
@@ -120,24 +92,21 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
     }
 
     override fun Z3Params.minimize(force: Boolean) {
-        minTime += measureNanoTime {
-            if (force || (!minimal && this.formula.length > 16 * coreSize)) {
-                val isSat = this.sat ?: z3.checkSat(this.formula)
-                this.sat = isSat
-                if (!isSat) {
-                    this.formula = "false"
-                    this.minimal = true
-                    return
-                }
-                minCalled += 1
-                val simplified = z3.minimize(this.formula)
-                this.formula = simplified
-                sat = simplified != "false"
-                if (simplified.length > coreSize) {
-                    coreSize = simplified.length
-                }
-                minimal = true
+        if (force || (!minimal && this.formula.length > 16 * coreSize)) {
+            val isSat = this.sat ?: z3.checkSat(this.formula)
+            this.sat = isSat
+            if (!isSat) {
+                this.formula = "false"
+                this.minimal = true
+                return
             }
+            val simplified = z3.minimize(this.formula)
+            this.formula = simplified
+            sat = simplified != "false"
+            if (simplified.length > coreSize) {
+                coreSize = simplified.length
+            }
+            minimal = true
         }
     }
 
@@ -224,10 +193,6 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
 interface Z3SolverBase {
 
     val bounds: String
-
-    //fun String.toZ3() = Z3Formula.Value(this)
-    //fun Double.toZ3() = Z3Formula.Value(this.safeString())
-    //fun Int.toZ3() = Z3Formula.Value(this.toString())
 
     infix fun String.and(other: String) = "(and $this $other)"
     infix fun String.or(other: String) = "(or $this $other)"

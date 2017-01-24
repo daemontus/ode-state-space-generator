@@ -58,6 +58,7 @@ class OneDimWithParamGeneratorTest {
             val half = one div two
             val third = one div three
             val fourth = one div four
+            val thirdApprox = "0.3333333333"
             //bounds are already in the solver
             assertTransitionEquals(0.successors(true),
                     Transition(0, loop, (p le one).toParams()),
@@ -65,11 +66,11 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(1.successors(true),
                     Transition(0, down, ((p lt half).toParams())),
-                    Transition(1, loop, ((p ge third) and (p le half)).toParams()),
-                    Transition(2, up, (p gt third).toParams())
+                    Transition(1, loop, ((p ge thirdApprox) and (p le half)).toParams()),
+                    Transition(2, up, (p gt thirdApprox).toParams())
             )
             assertTransitionEquals(2.successors(true),
-                    Transition(1, down, (p lt third).toParams()),
+                    Transition(1, down, (p lt thirdApprox).toParams()),
                     Transition(2, loop, (p ge fourth).toParams())
             )
             assertTransitionEquals(0.predecessors(true),
@@ -78,11 +79,11 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(1.predecessors(true),
                     Transition(0, up, ((p gt half).toParams())),
-                    Transition(1, loop, ((p ge third) and (p le half)).toParams()),
-                    Transition(2, down, (p lt third).toParams())
+                    Transition(1, loop, ((p ge thirdApprox) and (p le half)).toParams()),
+                    Transition(2, down, (p lt thirdApprox).toParams())
             )
             assertTransitionEquals(2.predecessors(true),
-                    Transition(1, up, (p gt third).toParams()),
+                    Transition(1, up, (p gt thirdApprox).toParams()),
                     Transition(2, loop, (p ge fourth).toParams())
             )
         }
