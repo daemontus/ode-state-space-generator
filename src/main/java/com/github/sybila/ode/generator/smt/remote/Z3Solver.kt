@@ -1,9 +1,9 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.remote
 
 import com.github.sybila.checker.Solver
-import com.github.sybila.ode.generator.smt.bridge.RemoteZ3
-import com.github.sybila.ode.generator.smt.bridge.SMT
-import com.github.sybila.ode.generator.smt.bridge.readSMT
+import com.github.sybila.ode.generator.smt.remote.bridge.RemoteZ3
+import com.github.sybila.ode.generator.smt.remote.bridge.SMT
+import com.github.sybila.ode.generator.smt.remote.bridge.readSMT
 import com.github.sybila.ode.model.OdeModel
 import java.io.Closeable
 import java.nio.ByteBuffer

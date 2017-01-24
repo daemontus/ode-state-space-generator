@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt.bridge
+package com.github.sybila.ode.generator.smt.remote.bridge
 
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.safeString

@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt.bridge
+package com.github.sybila.ode.generator.smt.remote.bridge
 
 /**
  * An abstract syntax tree of a smt lib 2 formula.
@@ -13,7 +13,7 @@ sealed class SMT {
             if (this === other) return true
             if (other?.javaClass != javaClass) return false
 
-            other as Terminal
+            other as SMT.Terminal
 
             if (data != other.data) return false
 
@@ -36,7 +36,7 @@ sealed class SMT {
             if (this === other) return true
             if (other?.javaClass != javaClass) return false
 
-            other as Expression
+            other as SMT.Expression
 
             if (funName != other.funName) return false
             if (funArgs != other.funArgs) return false

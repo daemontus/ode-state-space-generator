@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.remote
 
 class Z3Params(
         var formula: String,

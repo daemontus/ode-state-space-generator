@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt.bridge
+package com.github.sybila.ode.generator.smt.remote.bridge
 
 import java.util.*
 
@@ -26,7 +26,7 @@ private fun AdvancingIterator.readSMT(topLevel: Boolean = false): SMT {
     return if (get() == '(') {
         nextToken() //move from '('
         val funName = readString()
-        val args = ArrayList<SMT>()
+        val args = java.util.ArrayList<SMT>()
         while (get() != ')') {
             if (get() == ':') {
                 //extra parameters are skipped

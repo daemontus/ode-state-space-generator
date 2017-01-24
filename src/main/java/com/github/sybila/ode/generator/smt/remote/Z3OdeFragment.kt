@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.remote
 
 import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.OdeModel
