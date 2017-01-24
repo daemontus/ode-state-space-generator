@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.ParseTreeProperty
 import org.antlr.v4.runtime.tree.ParseTreeWalker
 import java.io.File
+import java.io.InputStream
 import java.util.*
 
 class Parser {
@@ -21,6 +22,9 @@ class Parser {
 
     fun parse(input: File): OdeModel
             = input.inputStream().use { processStream(ANTLRInputStream(it)) }
+
+    fun parse(input: InputStream): OdeModel
+            = input.use { processStream(ANTLRInputStream(it)) }
 
     private fun processStream(input: ANTLRInputStream): OdeModel {
         val lexer = ODELexer(input)
