@@ -1,14 +1,12 @@
-package com.github.sybila.ode.generator.smt
-
-import com.microsoft.z3.BoolExpr
+package com.github.sybila.ode.generator.smt.remote
 
 class Z3Params(
-        var formula: BoolExpr,
+        var formula: String,
         var sat: Boolean?,
         var minimal: Boolean = false
 ) {
 
-    var asString: ByteArray? = null
+    var bytes: ByteArray? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -25,8 +23,7 @@ class Z3Params(
         return formula.hashCode()
     }
 
-    override fun toString(): String = formula.toString()
-
+    override fun toString(): String = formula
 }
 
-fun BoolExpr.toParams(): Z3Params = Z3Params(this, null, false)
+fun String.toParams(): Z3Params = Z3Params(this, null, false)

@@ -1,6 +1,6 @@
 package com.github.sybila.ode.model
 
-import java.util.*
+import com.github.sybila.ode.safeString
 
 fun OdeModel.toBio(): String {
     return (if (this.parameters.isNotEmpty()) {
@@ -30,8 +30,4 @@ fun OdeModel.toBio(): String {
                     }.joinToString(separator = "")
                 }.joinToString(separator = " + ")}"
             }.joinToString(separator = "\n"))
-}
-
-fun Double.safeString(): String {
-    return String.format(Locale.ROOT, "%f", this)
 }

@@ -1,7 +1,8 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.remote
 
 import com.github.sybila.ode.generator.AbstractOdeFragment
 import com.github.sybila.ode.model.OdeModel
+import com.github.sybila.ode.safeString
 import java.util.*
 
 class Z3OdeFragment(
@@ -43,26 +44,22 @@ class Z3OdeFragment(
                 }
 
                 val solution = const.asSequence()
-                val constant = solution.take(1).map { if (it == 0.0) null else it.toZ3() }
+                val constant = solution.take(1).map { if (it == 0.0) null else it.safeString() }
                 val params = solution.drop(1).mapIndexed { i, d ->
-                    if (d == 0.0) null else params[i] times d.toZ3()
+                    if (d == 0.0) null else "(* ${model.parameters[i].name} ${d.safeString()})"
                 }
-                val equation = (constant + params).filterNotNull().toList().toTypedArray()
+                val equation = (constant + params).filterNotNull().toList()
                 val eq: Z3Params? = if (equation.isEmpty()) {
                     null
                 } else {
-                    val cmp = if (positive) {
-                        z3.mkAdd(*equation) gt 0.0.toZ3()
-                    } else {
-                        z3.mkAdd(*equation) lt 0.0.toZ3()
-                    }
-                    Z3Params(cmp, null, false)
+                    val cmp = if (positive) ">" else "<"
+                    val formula = equation.joinToString(prefix = "($cmp (+ ", postfix = ") 0.0)", separator = " ")
+                    Z3Params(formula, null, false)
                 }
 
-                eq
+                eq?.minimize(true)
+                if (eq?.isSat() ?: true) eq else null
             }
-            //null only if all is zero, dual value is then also zero (null)
-            (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() }
             p
         }[dimension]
     }

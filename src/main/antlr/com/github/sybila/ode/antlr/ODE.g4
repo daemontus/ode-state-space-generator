@@ -1,6 +1,10 @@
 
 grammar ODE;
 
+@header {
+package com.github.sybila.ode.antlr;
+}
+
 root : fullStop? (line fullStop)*;
 
 line : 'EQ:' NAME '=' expr                           # equation

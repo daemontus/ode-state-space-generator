@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.local
 
 import org.junit.Test
 import kotlin.test.assertTrue

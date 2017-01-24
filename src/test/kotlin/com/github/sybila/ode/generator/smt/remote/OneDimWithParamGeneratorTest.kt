@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.smt
+package com.github.sybila.ode.generator.smt.remote
 
 import com.github.sybila.checker.Transition
 import com.github.sybila.checker.decreaseProp
@@ -35,14 +35,6 @@ class OneDimWithParamGeneratorTest {
                     Summand(paramIndex = 0, constant = -2.0),
                     Summand(constant = -1.0)))
 
-    private val fragmentOne = Z3OdeFragment(OdeModel(listOf(v1), listOf(
-            OdeModel.Parameter("p", Pair(0.0, 2.0))
-    )))
-
-    private val fragmentTwo = Z3OdeFragment(OdeModel(listOf(v2), listOf(
-            OdeModel.Parameter("p2", Pair(-2.0, 2.0))
-    )))
-
     private val loop = DirectionFormula.Atom.Loop
     private val up = "v1".increaseProp()
     private val down = "v1".decreaseProp()
@@ -54,40 +46,44 @@ class OneDimWithParamGeneratorTest {
 
     @Test
     fun parameterTestOne() {
+        val fragmentOne = Z3OdeFragment(OdeModel(listOf(v1), listOf(
+                OdeModel.Parameter("p", Pair(0.0, 2.0))
+        )))
         fragmentOne.run {
-            val p = params[0]
-            val one = 1.toZ3()
-            val two = 2.toZ3()
-            val three = 3.toZ3()
-            val four = 4.toZ3()
+            val p = "p"
+            val one = "1"
+            val two = "2"
+            val three = "3"
+            val four = "4"
             val half = one div two
             val third = one div three
             val fourth = one div four
+            val thirdApprox = "0.3333333333"
             //bounds are already in the solver
             assertTransitionEquals(0.successors(true),
                     Transition(0, loop, (p le one).toParams()),
                     Transition(1, up, (p gt half).toParams())
             )
             assertTransitionEquals(1.successors(true),
-                    Transition(0, down, ((p le half).toParams())),
-                    Transition(1, loop, ((p gt third) and (p le half)).toParams()),
-                    Transition(2, up, (p gt third).toParams())
+                    Transition(0, down, ((p lt half).toParams())),
+                    Transition(1, loop, ((p ge thirdApprox) and (p le half)).toParams()),
+                    Transition(2, up, (p gt thirdApprox).toParams())
             )
             assertTransitionEquals(2.successors(true),
-                    Transition(1, down, (p le third).toParams()),
+                    Transition(1, down, (p lt thirdApprox).toParams()),
                     Transition(2, loop, (p ge fourth).toParams())
             )
             assertTransitionEquals(0.predecessors(true),
                     Transition(0, loop, (p le one).toParams()),
-                    Transition(1, down, (p le half).toParams())
+                    Transition(1, down, (p lt half).toParams())
             )
             assertTransitionEquals(1.predecessors(true),
                     Transition(0, up, ((p gt half).toParams())),
-                    Transition(1, loop, ((p gt third) and (p le half)).toParams()),
-                    Transition(2, down, (p le third).toParams())
+                    Transition(1, loop, ((p ge thirdApprox) and (p le half)).toParams()),
+                    Transition(2, down, (p lt thirdApprox).toParams())
             )
             assertTransitionEquals(2.predecessors(true),
-                    Transition(1, up, (p gt third).toParams()),
+                    Transition(1, up, (p gt thirdApprox).toParams()),
                     Transition(2, loop, (p ge fourth).toParams())
             )
         }
@@ -95,22 +91,25 @@ class OneDimWithParamGeneratorTest {
 
     @Test
     fun parameterTestTwo() {
+        val fragmentTwo = Z3OdeFragment(OdeModel(listOf(v2), listOf(
+                OdeModel.Parameter("p", Pair(-2.0, 2.0))
+        )))
         //dv2 = p(v1 - 2) - 1
         //(0) dv2 = p(-2) - 1 p>-1/2 => - // p < -1/2 => +
         //(1) dv2 = p(-1) - 1 p>-1 => - // p < -1 => +
         //(2) dv2 = p(0) - 1 // -1
         //(3) dv2 = p(1) - 1  p<1 => - // p > 1 => +
         fragmentTwo.run {
-            val q = params[0]
-            val one = 1.toZ3()
-            val mOne = (-1).toZ3()
+            val q = "p"
+            val one = "1"
+            val mOne = "-1"
             assertTransitionEquals(0.successors(true),
                     Transition(0, loop, (q ge mOne).toParams()),
                     Transition(1, up, (q lt mOne).toParams())
             )
             assertTransitionEquals(1.successors(true),
-                    Transition(0, down, (q ge mOne).toParams()),
-                    Transition(1, loop, (q lt mOne).toParams())
+                    Transition(0, down, (q gt mOne).toParams()),
+                    Transition(1, loop, (q le mOne).toParams())
             )
             assertTransitionEquals(2.successors(true),
                     Transition(1, down, tt),
@@ -118,11 +117,11 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(0.predecessors(true),
                     Transition(0, loop, (q ge mOne).toParams()),
-                    Transition(1, down, (q ge mOne).toParams())
+                    Transition(1, down, (q gt mOne).toParams())
             )
             assertTransitionEquals(1.predecessors(true),
                     Transition(0, up, (q lt mOne).toParams()),
-                    Transition(1, loop, (q lt mOne).toParams()),
+                    Transition(1, loop, (q le mOne).toParams()),
                     Transition(2, down, tt)
             )
             assertTransitionEquals(2.predecessors(true),
