@@ -1,6 +1,7 @@
 package com.github.sybila.ode.generator.smt.remote
 
 import com.github.sybila.checker.Solver
+import com.github.sybila.checker.solver.SolverStats
 import com.github.sybila.ode.generator.smt.remote.bridge.RemoteZ3
 import com.github.sybila.ode.generator.smt.remote.bridge.SMT
 import com.github.sybila.ode.generator.smt.remote.bridge.readSMT
@@ -25,10 +26,6 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
         bounds.mapIndexed { i, pair -> if (mask.shl(i).and(1) == 1) pair.second else pair.first }
     }.map { names.zip(it).toMap() }.plus(names.zip(bounds.map { (it.first + it.second) / 2 }).toMap())
 
-    init {
-        println(cornerPoints)
-    }
-
     override val bounds: String
         get() = z3.bounds
 
@@ -42,6 +39,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
     private var coreSize = 0
 
     override fun Z3Params.isSat(): Boolean {
+        SolverStats.solverCall()
         if (this.formula.checkCorners()) {
             return true
         }
