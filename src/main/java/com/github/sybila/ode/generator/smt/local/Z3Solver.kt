@@ -12,7 +12,7 @@ class Z3Solver(bounds: List<Pair<Double, Double>>, names: List<String> = bounds.
     : Solver<Z3Params>, Z3SolverBase {
 
     override val z3 = Context()
-    private val simplifyTactic = z3.mkTactic("ctx-solver-simplify")
+    private val simplifyTactic = z3.repeat(z3.mkTactic("ctx-solver-simplify"), Int.MAX_VALUE)
     private val goal = z3.mkGoal(false, false, false)
     private val solver = z3.mkSolver(z3.mkTactic("qflra"))
 
