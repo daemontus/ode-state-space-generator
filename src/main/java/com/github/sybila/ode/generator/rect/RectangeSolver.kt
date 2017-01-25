@@ -2,11 +2,9 @@ package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
+import com.github.sybila.checker.solver.SolverStats
 import java.nio.ByteBuffer
 import java.util.*
-
-private var lastProgressPrint = 0L
-private var solverCalls = 0L
 
 class RectangleSolver(
         private val bounds: Rectangle
@@ -40,12 +38,7 @@ class RectangleSolver(
     }
 
     override fun MutableSet<Rectangle>.isSat(): Boolean {
-        solverCalls += 1
-        if (System.currentTimeMillis() > lastProgressPrint + 2000) {
-            System.err.println("Processing: ${solverCalls / 2.0} per second")
-            solverCalls = 0
-            lastProgressPrint = System.currentTimeMillis()
-        }
+        SolverStats.solverCall()
         return this.isNotEmpty()
     }
 
