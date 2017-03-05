@@ -13,7 +13,7 @@ class RectangleSolver(
     override val ff: MutableSet<Rectangle> = mutableSetOf()
     override val tt: MutableSet<Rectangle> = mutableSetOf(bounds)
 
-    private var cache: DoubleArray? = null
+    private val cache = ThreadLocal<DoubleArray?>()
 
     override fun MutableSet<Rectangle>.and(other: MutableSet<Rectangle>): MutableSet<Rectangle> {
         return if (this.isEmpty()) this
@@ -24,12 +24,15 @@ class RectangleSolver(
             val newItems = HashSet<Rectangle>()
             for (item1 in this) {
                 for (item2 in other) {
-                    if (cache == null) cache = item1.newArray()
-                    val r = item1.intersect(item2, cache!!)
+                    var c = cache.get()
+                    if (c == null) c = item1.newArray()
+                    val r = item1.intersect(item2, c)
                     //val r = item1 * item2
                     if (r != null) {
-                        cache = null
+                        cache.set(null)
                         newItems.add(r)
+                    } else {
+                        cache.set(c)
                     }
                 }
             }
