@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.rect
+package com.github.sybila.ode.generator.preprocess
 
 import com.github.sybila.checker.SequentialChecker
 import com.github.sybila.huctl.HUCTLParser
@@ -9,14 +9,15 @@ import com.github.sybila.ode.model.computeApproximation
 import java.io.File
 import java.util.*
 
-class RectangleOdeModel(
+class PreprocessedOdeModel(
         model: OdeModel,
+        private val paramCoder: ParamCoder,
         createSelfLoops: Boolean = true
 ) : AbstractOdeFragment<MutableSet<Rectangle>>(model, createSelfLoops, RectangleSolver(Rectangle(
-        model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray()
+        model.parameters.indices.flatMap { listOf(0, paramCoder.lastIndex(it)) }.toIntArray()
 ))) {
 
-    private val boundsRect = model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray()
+    private val boundsRect = model.parameters.indices.flatMap { listOf(0, paramCoder.lastIndex(it)) }.toIntArray()
 
     private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
     private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
@@ -54,9 +55,15 @@ class RectangleOdeModel(
                 } else {
                     //if you divide by negative number, you have to flip the condition
                     val newPositive = if (denominator > 0) positive else !positive
-                    val range = model.parameters[parameterIndex].range
+                    val range = 0 to paramCoder.lastIndex(parameterIndex)
                     //min <= split <= max
-                    val split = Math.min(range.second, Math.max(range.first, -derivationValue / denominator))
+                    val split = min(
+                            range.second,
+                            max(
+                                    range.first,
+                                    paramCoder.valueToIndex(-derivationValue / denominator, parameterIndex)
+                            )
+                    )
                     val newLow = if (newPositive) split else range.first
                     val newHigh = if (newPositive) range.second else split
 
@@ -82,12 +89,12 @@ fun main(args: Array<String>) {
     val odeModel = Parser().parse(model).computeApproximation(fast = true)
 
     var timer = System.currentTimeMillis()
-   // val paramCoder = ParamCoder(odeModel)
-   // println("Pre-processing: ${System.currentTimeMillis() - timer}")
+    val paramCoder = ParamCoder(odeModel)
+    println("Pre-processing: ${System.currentTimeMillis() - timer}")
 
     val property = HUCTLParser().formula("EF (x > 10 || y > 10)")
 
-    val checker = SequentialChecker(RectangleOdeModel(odeModel, true))
+    val checker = SequentialChecker(PreprocessedOdeModel(odeModel, paramCoder, true))
 
     checker.run {
         repeat(10) {

@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.rect
+package com.github.sybila.ode.generator.preprocess
 
 import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
+
 class RectangleSolver(
         private val bounds: Rectangle
 ) : Solver<MutableSet<Rectangle>> {
@@ -14,7 +15,7 @@ class RectangleSolver(
     override val ff: MutableSet<Rectangle> = mutableSetOf()
     override val tt: MutableSet<Rectangle> = mutableSetOf(bounds)
 
-    private val cache = ThreadLocal<DoubleArray?>()
+    private val cache = ThreadLocal<IntArray?>()
 
     private var coreSize = AtomicInteger(2)
 
@@ -95,6 +96,8 @@ class RectangleSolver(
         }
     }
 
+    private var maxSize = 0
+
     override fun MutableSet<Rectangle>.minimize() {
         if (4 * this.size < coreSize.get()) return
         do {
@@ -115,7 +118,11 @@ class RectangleSolver(
             }
             //if (this.size < 2) return
         } while (merged)
-        coreSize.set(this.size)
+        coreSize.set(max(this.size, coreSize.get()))
+        if (size > maxSize) {
+            maxSize = size
+            println("Size: $maxSize")
+        }
     }
 
     override fun MutableSet<Rectangle>.prettyPrint(): String = toString()
