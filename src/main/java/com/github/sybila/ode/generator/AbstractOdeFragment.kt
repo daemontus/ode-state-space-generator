@@ -2,9 +2,13 @@ package com.github.sybila.ode.generator
 
 import com.github.sybila.checker.*
 import com.github.sybila.huctl.*
+import com.github.sybila.ode.generator.bool.BoolOdeModel
 import com.github.sybila.ode.model.OdeModel
+import com.github.sybila.ode.model.Parser
+import java.io.File
 import java.util.*
 
+//-XX:+UnlockDiagnosticVMOptions -XX:+TraceClassLoading -XX:+LogCompilation -XX:+PrintAssembly
 
 abstract class AbstractOdeFragment<Params : Any>(
         protected val model: OdeModel,
@@ -32,53 +36,63 @@ abstract class AbstractOdeFragment<Params : Any>(
 
     //Facet param cache.
     //(a,b) -> P <=> p \in P: a -p-> b
-    private val facetColors = HashMap<FacetId, Params>()
+    private val facetColors = arrayOfNulls<Any>(stateCount * dimensions * 4)//HashMap<FacetId, Params>(stateCount * dimensions * 4)
 
-    private enum class Orientation {
-        PositiveIn, PositiveOut, NegativeIn, NegativeOut
-    }
-    private data class FacetId(val state: Int, val dimension: Int, val orientation: Orientation)
+    private val PositiveIn = 0
+    private val PositiveOut = 1
+    private val NegativeIn = 2
+    private val NegativeOut = 3
 
-    private fun getFacetColors(from: Int, dimension: Int, orientation: Orientation): Params
-            = facetColors.computeIfAbsent(FacetId(from, dimension, orientation)) {
-        //iterate over vertices
-        val positiveFacet = if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) 1 else 0
-        val positiveDerivation = orientation == Orientation.PositiveOut || orientation == Orientation.NegativeIn
-        val colors = vertexMasks.asSequence()
-                .filter { it.shr(dimension).and(1) == positiveFacet }
-                .map { encoder.nodeVertex(from, it) }
-                .fold(ff) { a, vertex ->
-                    getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
+    private fun facetIndex(from: Int, dimension: Int, orientation: Int)
+        = from + (stateCount * dimension) + (stateCount * dimensions * orientation)
+
+    private fun getFacetColors(from: Int, dimension: Int, orientation: Int): Params {
+        val index = facetIndex(from, dimension, orientation)
+        val value = facetColors[index] ?: run {
+            //iterate over vertices
+            val positiveFacet = if (orientation == PositiveIn || orientation == PositiveOut) 1 else 0
+            val positiveDerivation = orientation == PositiveOut || orientation == NegativeIn
+            val colors = vertexMasks
+                    .filter { it.shr(dimension).and(1) == positiveFacet }
+                    .fold(ff) { a, mask ->
+                        val vertex = encoder.nodeVertex(from, mask)
+                        getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
+                    }
+            //val colors = tt
+
+            colors.minimize()
+
+            facetColors[index] = colors
+
+            //also update dual facet
+            if (orientation == PositiveIn || orientation == PositiveOut) {
+                encoder.higherNode(from, dimension)?.let { higher ->
+                    val dual = if (orientation == PositiveIn) {
+                        NegativeOut
+                    } else { NegativeIn }
+                    facetColors[facetIndex(higher, dimension, dual)] = colors
                 }
-
-        colors.minimize()
-
-        //also update dual facet
-        if (orientation == Orientation.PositiveIn || orientation == Orientation.PositiveOut) {
-            encoder.higherNode(from, dimension)?.let { higher ->
-                val dual = if (orientation == Orientation.PositiveIn) {
-                    Orientation.NegativeOut
-                } else { Orientation.NegativeIn }
-                facetColors[FacetId(higher, dimension, dual)] = colors
-            }
-        } else {
-            encoder.lowerNode(from, dimension)?.let { lower ->
-                val dual = if (orientation == Orientation.NegativeIn) {
-                    Orientation.PositiveOut
-                } else {
-                    Orientation.PositiveIn
+            } else {
+                encoder.lowerNode(from, dimension)?.let { lower ->
+                    val dual = if (orientation == NegativeIn) {
+                        PositiveOut
+                    } else {
+                        PositiveIn
+                    }
+                    facetColors[facetIndex(lower, dimension, dual)] = colors
                 }
-                facetColors[FacetId(lower, dimension, dual)] = colors
             }
+
+            colors
         }
 
-        colors
+        return value as Params
     }
 
     //enumerate all bit masks corresponding to vertices of a state
-    private val vertexMasks: List<Int> = (0 until dimensions).fold(listOf(0)) { a, d ->
+    private val vertexMasks: IntArray = (0 until dimensions).fold(listOf(0)) { a, d ->
         a.map { it.shl(1) }.flatMap { listOf(it, it.or(1)) }
-    }
+    }.toIntArray()
 
     /*** PROPOSITION RESOLVING ***/
 
@@ -138,10 +152,10 @@ abstract class AbstractOdeFragment<Params : Any>(
         if (dimension < 0) throw IllegalStateException("Unknown variable name: ${this.name}")
         return LazyStateMap(stateCount, ff) {
             val c = getFacetColors(it, dimension, when {
-                facet == Facet.POSITIVE && direction == Direction.IN -> Orientation.PositiveIn
-                facet == Facet.POSITIVE && direction == Direction.OUT -> Orientation.PositiveOut
-                facet == Facet.NEGATIVE && direction == Direction.IN -> Orientation.NegativeIn
-                else -> Orientation.NegativeOut
+                facet == Facet.POSITIVE && direction == Direction.IN -> PositiveIn
+                facet == Facet.POSITIVE && direction == Direction.OUT -> PositiveOut
+                facet == Facet.NEGATIVE && direction == Direction.IN -> NegativeIn
+                else -> NegativeOut
             })
             val exists = (facet == Facet.POSITIVE && encoder.higherNode(it, dimension) != null)
             || (facet == Facet.NEGATIVE && encoder.lowerNode(it, dimension) != null)
@@ -151,10 +165,10 @@ abstract class AbstractOdeFragment<Params : Any>(
 
     /*** Successor/Predecessor resolving ***/
 
-    private val successorCache = HashMap<Int, List<Transition<Params>>>()
-    private val pastSuccessorCache = HashMap<Int, List<Transition<Params>>>()
-    private val predecessorCache = HashMap<Int, List<Transition<Params>>>()
-    private val pastPredecessorCache = HashMap<Int, List<Transition<Params>>>()
+    private val successorCache = HashMap<Int, List<Transition<Params>>>(stateCount)
+    private val pastSuccessorCache = HashMap<Int, List<Transition<Params>>>(stateCount)
+    private val predecessorCache = HashMap<Int, List<Transition<Params>>>(stateCount)
+    private val pastPredecessorCache = HashMap<Int, List<Transition<Params>>>(stateCount)
 
     override fun Int.predecessors(timeFlow: Boolean): Iterator<Transition<Params>>
         = getStep(this, timeFlow, false).iterator()
@@ -176,21 +190,13 @@ abstract class AbstractOdeFragment<Params : Any>(
             for (dim in model.variables.indices) {
 
                 val dimName = model.variables[dim].name
-                val positiveOut = lazy {
-                    getFacetColors(from, dim, if (timeFlow) Orientation.PositiveOut else Orientation.PositiveIn)
-                }
-                val positiveIn = lazy {
-                    getFacetColors(from, dim, if (timeFlow) Orientation.PositiveIn else Orientation.PositiveOut)
-                }
-                val negativeOut = lazy {
-                    getFacetColors(from, dim, if (timeFlow) Orientation.NegativeOut else Orientation.NegativeIn)
-                }
-                val negativeIn = lazy {
-                    getFacetColors(from, dim, if (timeFlow) Orientation.NegativeIn else Orientation.NegativeOut)
-                }
+                val positiveOut = getFacetColors(from, dim, if (timeFlow) PositiveOut else PositiveIn)
+                val positiveIn = getFacetColors(from, dim, if (timeFlow) PositiveIn else PositiveOut)
+                val negativeOut = getFacetColors(from, dim, if (timeFlow) NegativeOut else NegativeIn)
+                val negativeIn = getFacetColors(from, dim, if (timeFlow) NegativeIn else NegativeOut)
 
                 encoder.higherNode(from, dim)?.let { higher ->
-                    val colors = (if (successors) positiveOut else positiveIn).value
+                    val colors = (if (successors) positiveOut else positiveIn)
                     if (colors.isSat()) {
                         result.add(Transition(
                                 target = higher,
@@ -200,13 +206,13 @@ abstract class AbstractOdeFragment<Params : Any>(
                     }
 
                     if (createSelfLoops) {
-                        val positiveFlow = negativeIn.value and positiveOut.value and (negativeOut.value or positiveIn.value).not()
+                        val positiveFlow = negativeIn and positiveOut and (negativeOut or positiveIn).not()
                         selfloop = selfloop and positiveFlow.not()
                     }
                 }
 
                 encoder.lowerNode(from, dim)?.let { lower ->
-                    val colors = (if (successors) negativeOut else negativeIn).value
+                    val colors = (if (successors) negativeOut else negativeIn)
                     if (colors.isSat()) {
                         result.add(Transition(
                                 target = lower,
@@ -216,7 +222,7 @@ abstract class AbstractOdeFragment<Params : Any>(
                     }
 
                     if (createSelfLoops) {
-                        val negativeFlow = negativeOut.value and positiveIn.value and (negativeIn.value or positiveOut.value).not()
+                        val negativeFlow = negativeOut and positiveIn and (negativeIn or positiveOut).not()
                         selfloop = selfloop and negativeFlow.not()
                     }
                 }
