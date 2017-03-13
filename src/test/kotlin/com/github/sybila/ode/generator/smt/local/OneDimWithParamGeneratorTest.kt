@@ -65,7 +65,7 @@ class OneDimWithParamGeneratorTest {
             val fourth = one div four
             //bounds are already in the solver
             assertTransitionEquals(0.successors(true),
-                    Transition(0, loop, (p le one).toParams()),
+                    Transition(0, loop, (p lt one).toParams()),
                     Transition(1, up, (p gt half).toParams())
             )
             assertTransitionEquals(1.successors(true),
@@ -75,10 +75,10 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(2.successors(true),
                     Transition(1, down, (p le third).toParams()),
-                    Transition(2, loop, (p ge fourth).toParams())
+                    Transition(2, loop, (p gt fourth).toParams())
             )
             assertTransitionEquals(0.predecessors(true),
-                    Transition(0, loop, (p le one).toParams()),
+                    Transition(0, loop, (p lt one).toParams()),
                     Transition(1, down, (p le half).toParams())
             )
             assertTransitionEquals(1.predecessors(true),
@@ -88,7 +88,7 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(2.predecessors(true),
                     Transition(1, up, (p gt third).toParams()),
-                    Transition(2, loop, (p ge fourth).toParams())
+                    Transition(2, loop, (p gt fourth).toParams())
             )
         }
     }
@@ -114,7 +114,7 @@ class OneDimWithParamGeneratorTest {
             )
             assertTransitionEquals(2.successors(true),
                     Transition(1, down, tt),
-                    Transition(2, loop, (q ge one).toParams())
+                    Transition(2, loop, (q gt one).toParams())
             )
             assertTransitionEquals(0.predecessors(true),
                     Transition(0, loop, (q ge mOne).toParams()),
@@ -126,7 +126,7 @@ class OneDimWithParamGeneratorTest {
                     Transition(2, down, tt)
             )
             assertTransitionEquals(2.predecessors(true),
-                    Transition(2, loop, (q ge one).toParams())
+                    Transition(2, loop, (q gt one).toParams())
             )
         }
     }
