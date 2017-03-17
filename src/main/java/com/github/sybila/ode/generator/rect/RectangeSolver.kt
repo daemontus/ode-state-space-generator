@@ -2,7 +2,6 @@ package com.github.sybila.ode.generator.rect
 
 import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
-import com.github.sybila.checker.solver.SolverStats
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -44,7 +43,7 @@ class RectangleSolver(
     }
 
     override fun MutableSet<Rectangle>.isSat(): Boolean {
-        SolverStats.solverCall()
+        //SolverStats.solverCall()
         return this.isNotEmpty()
     }
 
