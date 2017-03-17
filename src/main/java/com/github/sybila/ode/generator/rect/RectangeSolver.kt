@@ -4,7 +4,6 @@ import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
 import java.nio.ByteBuffer
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 class RectangleSolver(
         private val bounds: Rectangle
@@ -15,7 +14,7 @@ class RectangleSolver(
 
     private val cache = ThreadLocal<DoubleArray?>()
 
-    private var coreSize = AtomicInteger(2)
+    private var coreSize = 2//AtomicInteger(2)
 
     override fun MutableSet<Rectangle>.and(other: MutableSet<Rectangle>): MutableSet<Rectangle> {
         return if (this.isEmpty()) this
@@ -95,7 +94,7 @@ class RectangleSolver(
     }
 
     override fun MutableSet<Rectangle>.minimize() {
-        if (4 * this.size < coreSize.get()) return
+        if (4 * this.size < coreSize/*.get()*/) return
         do {
             var merged = false
             search@ for (c in this) {
@@ -114,7 +113,7 @@ class RectangleSolver(
             }
             //if (this.size < 2) return
         } while (merged)
-        coreSize.set(this.size)
+        coreSize = this.size //.set(this.size)
     }
 
     override fun MutableSet<Rectangle>.prettyPrint(): String = toString()
