@@ -64,8 +64,8 @@ class RectangleSolver(
         return if (this == ff) false
         else if (other == tt) false
         else {
-            other.asSequence().fold(this.asSequence()) { acc, rect ->
-                acc.flatMap { (it - rect).asSequence() }
+            other.fold<Rectangle, Collection<Rectangle>>(this) { acc, rect ->
+                acc.flatMap { (it - rect) }
             }.any()
         }
     }
