@@ -52,18 +52,18 @@ class RectangleSet(
             values.stream().forEach { value ->
                 val X = value % modifier
                 val Y = value / modifier
-                val newXlow = newX.binarySearch(thresholdsX[X])
-                val newYlow = newY.binarySearch(thresholdsY[Y])
-                val newXhigh = newX.binarySearch(thresholdsX[X + 1])
-                val newYhigh = newY.binarySearch(thresholdsY[Y + 1])
-                if (newXlow + 1 == newXhigh && newYlow + 1 == newYhigh) {
+                val newXLow = newX.binarySearch(thresholdsX[X])
+                val newYLow = newY.binarySearch(thresholdsY[Y])
+                val newXHigh = newX.binarySearch(thresholdsX[X + 1])
+                val newYHigh = newY.binarySearch(thresholdsY[Y + 1])
+                if (newXLow + 1 == newXHigh && newYLow + 1 == newYHigh) {
                     // the rectangle just moved, it did not split
-                    newValues.set(newYlow * newModifier + newXlow)
+                    newValues.set(newYLow * newModifier + newXLow)
                 } else {
                     // the rectangle is split into several smaller ones
-                    for (allY in newYlow..newYhigh-1) {
+                    for (allY in newYLow..newYHigh-1) {
                         // note: set is not inclusive on the last index, hence no -1
-                        newValues.set(allY * newModifier + newXlow, allY * modifier + newXhigh)
+                        newValues.set(allY * newModifier + newXLow, allY * modifier + newXHigh)
                     }
                 }
             }
@@ -75,25 +75,30 @@ class RectangleSet(
 }
 
 class RectangleSetSolver(
-        bounds: List<Pair<Double, Double>>
+        boundsX: Pair<Double, Double>,
+        boundsY: Pair<Double, Double>
 ) : Solver<RectangleSet> {
-
-    val parameterCount = bounds.size
 
     // empty parameter set has no thresholds and no rectangles
     override val ff: RectangleSet = RectangleSet(
-            thresholds = Array(parameterCount) { DoubleArray(0) },
+            thresholdsX = DoubleArray(0),
+            thresholdsY = DoubleArray(0),
             values = BitSet()
     )
 
     // full parameter set has the bound thresholds and exactly one rectangle
     override val tt: RectangleSet = RectangleSet(
-            thresholds = Array(parameterCount) { dim -> doubleArrayOf(bounds[dim].first, bounds[dim].second) },
+            thresholdsX = doubleArrayOf(boundsX.first, boundsX.second),
+            thresholdsY = doubleArrayOf(boundsY.first, boundsY.second),
             values = BitSet(1).apply { set(0) }
     )
 
     override fun RectangleSet.and(other: RectangleSet): RectangleSet {
-
+        val cutLeft = this.cut(other.thresholdsX, other.thresholdsY)
+        val cutRight = other.cut(this.thresholdsX, this.thresholdsY)
+        val newValues: BitSet = cutLeft.values.clone() as BitSet
+        newValues.and(cutRight.values)
+        return RectangleSet(cutLeft.thresholdsX, cutLeft.thresholdsY, newValues)
     }
 
     override fun RectangleSet.byteSize(): Int {
