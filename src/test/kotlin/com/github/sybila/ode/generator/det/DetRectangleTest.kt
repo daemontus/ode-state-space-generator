@@ -54,7 +54,14 @@ class RectangleTest {
             val s1 = rectangleOf(0.0, 1.0, 0.0, 0.5).toRectangleSet()
             val s2 = rectangleOf(0.0, 1.0, 0.5, 1.0).toRectangleSet()
 
+            val k1 = rectangleOf(0.0, 0.5, 0.0, 1.0).toRectangleSet()
+            val k2 = rectangleOf(0.5, 1.0, 0.0, 1.0).toRectangleSet()
+
             assertEquals(s2, s1.not())
+            assertEquals(s1, s2.not())
+
+            assertEquals(k1, k2.not())
+            assertEquals(k2, k1.not())
         }
     }
 

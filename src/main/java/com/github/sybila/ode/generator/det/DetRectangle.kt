@@ -1,6 +1,7 @@
 package com.github.sybila.ode.generator.det
 
 import com.github.sybila.checker.Solver
+import com.github.sybila.checker.solver.SolverStats
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.stream.Collectors
@@ -179,8 +180,7 @@ class RectangleSetSolver(
 
     override fun RectangleSet.not(): RectangleSet {
         val cutWithTrue = this.cut(tt.thresholdsX, tt.thresholdsY)
-        // don't have to clone because no one will see this copy
-        val newValues = cutWithTrue.values
+        val newValues = cutWithTrue.values.clone() as BitSet    // we have to clone, because cut might not copy
         newValues.flip(0, (cutWithTrue.thresholdsX.size - 1) * (cutWithTrue.thresholdsY.size - 1))
         return RectangleSet(cutWithTrue.thresholdsX, cutWithTrue.thresholdsY, newValues).simplify()
     }
@@ -194,6 +194,7 @@ class RectangleSetSolver(
     }
 
     override fun RectangleSet.isSat(): Boolean {
+        SolverStats.solverCall()
         return !this.values.isEmpty
     }
 
