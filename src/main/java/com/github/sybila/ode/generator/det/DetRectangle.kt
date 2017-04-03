@@ -1,7 +1,6 @@
 package com.github.sybila.ode.generator.det
 
 import com.github.sybila.checker.Solver
-import com.github.sybila.ode.generator.rect.Rectangle
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.stream.Collectors
@@ -99,12 +98,12 @@ class RectangleSet(
             values.stream().forEach { value ->
                 val X = value % modifier
                 val Y = value / modifier
-                val newXlow = newThresholdsX.binarySearch(thresholdsX[X])
-                val newYlow = newThresholdsY.binarySearch(thresholdsY[Y])
+                val newXLow = newThresholdsX.binarySearch(thresholdsX[X])
+                val newYLow = newThresholdsY.binarySearch(thresholdsY[Y])
                 // Note: If reduction is correct, then the lowest rectangle of the merged area must
                 // be present and matched. Everything else can be safely ignored.
-                if (newXlow >= 0 && newYlow >= 0) {
-                    newValues.set(newYlow * newModifier + newXlow)
+                if (newXLow >= 0 && newYLow >= 0) {
+                    newValues.set(newYLow * newModifier + newXLow)
                 }
             }
             return RectangleSet(newThresholdsX, newThresholdsY, newValues)
@@ -116,10 +115,6 @@ class RectangleSet(
         if (other?.javaClass != javaClass) return false
 
         other as RectangleSet
-
-        //println("ThresholdsX: ${Arrays.toString(thresholdsX)} ${Arrays.toString(other.thresholdsX)}")
-        //println("ThresholdsY: ${Arrays.toString(thresholdsY)} ${Arrays.toString(other.thresholdsY)}")
-        //println("Values: ${values} ${other.values}")
 
         if (!Arrays.equals(thresholdsX, other.thresholdsX)) return false
         if (!Arrays.equals(thresholdsY, other.thresholdsY)) return false
