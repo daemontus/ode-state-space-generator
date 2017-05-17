@@ -16,5 +16,4 @@ data class Sine private constructor(
 
     override fun toString(): String
         = "Sin($varIndex)"
-
 }
