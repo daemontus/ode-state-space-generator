@@ -313,6 +313,12 @@ private class ModelReader : ODEBaseListener() {
                 ctx.approx().pair().map { it.NUMBER(0).text.toDouble() to it.NUMBER(1).text.toDouble() }
         )
     }
+	
+	override fun exitSineEval(ctx: ODEParser.SineEvalContext) {
+		expressionTree[ctx] = AbstractSine(
+				ctx.sin().NAME().text
+		)
+	}
 
     override fun exitNegativeEvaluable(ctx: ODEParser.NegativeEvaluableContext) {
         expressionTree[ctx] = Negation(expressionTree[ctx.eval()])
@@ -469,5 +475,13 @@ private class AbstractStep(
             a = reader.resolveArgument(a),
             b = reader.resolveArgument(b),
             positive = positive
+    )
+}
+
+private class AbstractSine(
+        private val name: String
+) : Resolvable {
+    fun toSine(reader: ModelReader): Sine = Sine(
+            varIndex = reader.resolveVarName(name)
     )
 }
