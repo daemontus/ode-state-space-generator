@@ -81,6 +81,7 @@ private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: Lis
 //compute points at which the function should be evaluated
 private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>, thresholds: List<Double>): DoubleArray {
     var max = 0.0
+	var min = thresholds.min()!!
     @Suppress("LoopToCallChain")    // much faster this way
     for (e in functions) {  //find last evaluation point
         val newMax: Double = if (e is Hill) {
@@ -92,8 +93,11 @@ private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>, th
         } else throw IllegalStateException("Unsupported function $e")
         max = Math.max(newMax, max)
     }
-    val dx = max / (pointCount-1)
-    return DoubleArray(pointCount) { i -> dx * i }
+//    val dx = max / (pointCount-1)
+//    return DoubleArray(pointCount) { i -> dx * i }
+	
+	val dx = (max - min) / (pointCount-1)
+	return DoubleArray(pointCount) { i -> dx * i + min}
 }
 
 //performs approximation using accurate cost function
