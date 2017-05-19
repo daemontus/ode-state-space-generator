@@ -83,12 +83,12 @@ private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>, th
     var max = 0.0
     @Suppress("LoopToCallChain")    // much faster this way
     for (e in functions) {  //find last evaluation point
-        val newMax = if (e is Hill) {
+        val newMax: Double = if (e is Hill) {
             2.0 * e.theta + (5.0 / e.n) * e.theta
         } else if (e is Sigmoid) {
             e.theta + (2.0 / e.k) * 1.5
 		} else if (e is Sine) {
-			thresholds.max()
+			thresholds.max()!!
         } else throw IllegalStateException("Unsupported function $e")
         max = Math.max(newMax, max)
     }
