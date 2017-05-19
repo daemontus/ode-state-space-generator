@@ -137,6 +137,7 @@ private class ModelReader : ODEBaseListener() {
             in constants -> listOf(Summand(constant = constants[target.value]!!))
             else -> throw IllegalStateException("Undefined reference: ${target.value}")
         }
+		is AbstractSine -> listOf(Summand(evaluable = listOf(target.toSine(this))))
         is AbstractHill -> listOf(Summand(evaluable = listOf(target.toHill(this))))
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
         is AbstractRamp -> listOf(Summand(evaluable = listOf(target.toRamp(this))))
