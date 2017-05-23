@@ -43,6 +43,7 @@ eval : NUMBER       # numberEval
      | hill         # hillEval
      | approx       # approxEval
 	 | sin			# sineEval
+	 | pow			# powEval	 
      ;
 
 /** Lexer rules **/
@@ -61,6 +62,8 @@ approx : APPROX'('NAME')''('(pair',')* pair')';
 
 sin : SIN'('NAME')';
 
+pow : POW'('NAME','arg')';
+
 
 pair : '['NUMBER','NUMBER']';
 
@@ -70,6 +73,7 @@ HILL : [Hh]'ill'[mp];
 SIGM : [Ss][mp]('inv')?;
 APPROX : [Aa]'pprox';
 SIN : [Ss]'in';
+POW : [Pp]'ow';
 
 BA_LINE : 'BA:'~[\n]+;
 

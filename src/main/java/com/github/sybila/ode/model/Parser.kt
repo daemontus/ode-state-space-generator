@@ -137,6 +137,7 @@ private class ModelReader : ODEBaseListener() {
             in constants -> listOf(Summand(constant = constants[target.value]!!))
             else -> throw IllegalStateException("Undefined reference: ${target.value}")
         }
+		is AbstractPow -> listOf(Summand(evaluable = listOf(target.toPow(this))))
 		is AbstractSine -> listOf(Summand(evaluable = listOf(target.toSine(this))))
         is AbstractHill -> listOf(Summand(evaluable = listOf(target.toHill(this))))
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
@@ -320,6 +321,13 @@ private class ModelReader : ODEBaseListener() {
 				ctx.sin().NAME().text
 		)
 	}
+	
+	override fun exitPowEval(ctx: ODEParser.PowEvalContext) {
+		expressionTree[ctx] = AbstractPow(
+				ctx.pow().NAME().text,
+                ctx.pow().arg(0).toReference()
+		)
+	}
 
     override fun exitNegativeEvaluable(ctx: ODEParser.NegativeEvaluableContext) {
         expressionTree[ctx] = Negation(expressionTree[ctx.eval()])
@@ -486,3 +494,14 @@ private class AbstractSine(
             varIndex = reader.resolveVarName(name)
     )
 }
+
+private class AbstractPow(
+        private val name: String,
+		private val degree: Reference
+) : Resolvable {
+    fun toPow(reader: ModelReader): Pow = Pow(
+            varIndex = reader.resolveVarName(name),
+			degree = reader.resolveArgument(degree)
+    )
+}
+
