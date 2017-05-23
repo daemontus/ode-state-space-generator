@@ -325,7 +325,7 @@ private class ModelReader : ODEBaseListener() {
 	override fun exitPowEval(ctx: ODEParser.PowEvalContext) {
 		expressionTree[ctx] = AbstractPow(
 				ctx.pow().NAME().text,
-                ctx.pow().arg(0).toReference()
+                ctx.pow().arg().toReference()
 		)
 	}
 

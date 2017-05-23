@@ -3,7 +3,7 @@ package com.github.sybila.ode.model
 /**
  * Power function: https://en.wikipedia.org/wiki/Power_function
  *
- * Takes the degree of resulting polynomial function.
+ * Takes the degree of resulting polynomial function as second argument.
  *
  */
 data class Pow constructor(
