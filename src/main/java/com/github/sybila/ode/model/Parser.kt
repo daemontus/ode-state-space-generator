@@ -137,6 +137,8 @@ private class ModelReader : ODEBaseListener() {
             in constants -> listOf(Summand(constant = constants[target.value]!!))
             else -> throw IllegalStateException("Undefined reference: ${target.value}")
         }
+		is AbstractPow -> listOf(Summand(evaluable = listOf(target.toPow(this))))
+		is AbstractSine -> listOf(Summand(evaluable = listOf(target.toSine(this))))
         is AbstractHill -> listOf(Summand(evaluable = listOf(target.toHill(this))))
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
         is AbstractRamp -> listOf(Summand(evaluable = listOf(target.toRamp(this))))
@@ -313,6 +315,19 @@ private class ModelReader : ODEBaseListener() {
                 ctx.approx().pair().map { it.NUMBER(0).text.toDouble() to it.NUMBER(1).text.toDouble() }
         )
     }
+	
+	override fun exitSineEval(ctx: ODEParser.SineEvalContext) {
+		expressionTree[ctx] = AbstractSine(
+				ctx.sin().NAME().text
+		)
+	}
+	
+	override fun exitPowEval(ctx: ODEParser.PowEvalContext) {
+		expressionTree[ctx] = AbstractPow(
+				ctx.pow().NAME().text,
+                ctx.pow().arg().toReference()
+		)
+	}
 
     override fun exitNegativeEvaluable(ctx: ODEParser.NegativeEvaluableContext) {
         expressionTree[ctx] = Negation(expressionTree[ctx.eval()])
@@ -471,3 +486,22 @@ private class AbstractStep(
             positive = positive
     )
 }
+
+private class AbstractSine(
+        private val name: String
+) : Resolvable {
+    fun toSine(reader: ModelReader): Sine = Sine(
+            varIndex = reader.resolveVarName(name)
+    )
+}
+
+private class AbstractPow(
+        private val name: String,
+		private val degree: Reference
+) : Resolvable {
+    fun toPow(reader: ModelReader): Pow = Pow(
+            varIndex = reader.resolveVarName(name),
+			degree = reader.resolveArgument(degree)
+    )
+}
+

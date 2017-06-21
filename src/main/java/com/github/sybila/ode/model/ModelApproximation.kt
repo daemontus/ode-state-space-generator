@@ -19,7 +19,8 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
         val functions = variables
                 .flatMap { it.equation }.flatMap { it.evaluable }
                 .filter {
-                    (it is Hill && it.varIndex == vIndex) || (it is Sigmoid && it.varIndex == vIndex)
+					it.varIndex == vIndex && (it is Hill || it is Sigmoid || it is Sine || it is Pow)
+                    //(it is Hill && it.varIndex == vIndex) || (it is Sigmoid && it.varIndex == vIndex) || (it is Sine && it.varIndex == vIndex)
                 }
 
         if (functions.isEmpty()) variable.thresholds
@@ -27,7 +28,7 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
             //compute new thresholds
             val (pointCount, segmentCount) = variable.varPoints ?:
                     throw IllegalStateException("Can't run abstraction for ${variable.name} without specified var points!")
-            val thresholds = computeThresholds(pointCount, segmentCount, functions, fast)
+            val thresholds = computeThresholds(pointCount, segmentCount, functions, fast, variable.thresholds)
 
             (thresholds + variable.thresholds).filter {
                 !cutToRange || (it >= variable.range.first && it <= variable.range.second)
@@ -46,7 +47,7 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
                     it.copy(
                             evaluable = it.evaluable.map { f ->
                                 when (f) {
-                                    is Hill, is Sigmoid -> {
+                                    is Hill, is Sigmoid, is Sine, is Pow -> {
                                         RampApproximation(
                                                 f.varIndex,
                                                 newThresholds[f.varIndex].toDoubleArray(),
@@ -65,9 +66,9 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
 }
 
 //compute approximated thresholds for one variable
-private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: List<Evaluable>, fast: Boolean): DoubleArray {
+private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: List<Evaluable>, fast: Boolean, thresholds: List<Double>): DoubleArray {
 
-    val xPoints = findEvaluationPoints(pointCount, functions)
+    val xPoints = findEvaluationPoints(pointCount, functions, thresholds)
     val curves = Array(functions.size) { f -> DoubleArray(pointCount) { functions[f](xPoints[it]) } }
 
     return if (fast) {
@@ -79,19 +80,25 @@ private fun computeThresholds(pointCount: Int, segmentCount: Int, functions: Lis
 }
 
 //compute points at which the function should be evaluated
-private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>): DoubleArray {
+private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>, thresholds: List<Double>): DoubleArray {
     var max = 0.0
+	var min = thresholds.min()!!
     @Suppress("LoopToCallChain")    // much faster this way
     for (e in functions) {  //find last evaluation point
-        val newMax = if (e is Hill) {
+        val newMax: Double = if (e is Hill) {
             2.0 * e.theta + (5.0 / e.n) * e.theta
         } else if (e is Sigmoid) {
             e.theta + (2.0 / e.k) * 1.5
+		} else if (e is Sine || e is Pow) {
+			thresholds.max()!!
         } else throw IllegalStateException("Unsupported function $e")
         max = Math.max(newMax, max)
     }
-    val dx = max / (pointCount-1)
-    return DoubleArray(pointCount) { i -> dx * i }
+//    val dx = max / (pointCount-1)
+//    return DoubleArray(pointCount) { i -> dx * i }
+	
+	val dx = (max - min) / (pointCount-1)
+	return DoubleArray(pointCount) { i -> dx * i + min}
 }
 
 //performs approximation using accurate cost function
