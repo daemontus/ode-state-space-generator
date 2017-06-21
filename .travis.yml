@@ -4,8 +4,17 @@ sudo: false
 jdk:
   - oraclejdk8
 
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5
+
 env:
   global:
+    - CC=gcc-5
+    - CXX=g++-5
     - Z3_DIR=~/z3
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$Z3_DIR/build/
     - PATH=$PATH:$Z3_DIR/build/
