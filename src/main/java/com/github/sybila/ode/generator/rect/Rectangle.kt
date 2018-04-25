@@ -125,6 +125,13 @@ class Rectangle(
         return Rectangle(newCoordinates)
     }
 
+    fun restrict(pI: Int, low: Double, high: Double): Rectangle = Rectangle(DoubleArray(coordinates.size) { i ->
+        val dim = i / 2
+        if (dim != pI) coordinates[i] else {
+            if (i % 2 == 0) Math.max(low, coordinates[i]) else Math.min(high, coordinates[i])
+        }
+    })
+
     /**
      * Create a set of smaller rectangles that together form a result of subtraction of given rectangle.
      */
