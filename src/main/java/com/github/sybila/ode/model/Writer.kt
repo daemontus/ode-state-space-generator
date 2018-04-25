@@ -27,7 +27,7 @@ fun OdeModel.toBio(): String {
                                         })"
                                     }
                                     is Step -> {
-                                        " * H${if (it.a < it.b) "p" else "m"}(${it.theta}, ${it.a}, ${it.b})"
+                                        " * H${if (it.a < it.b) "p" else "m"}(${this.variables[it.varIndex]}, ${it.theta}, ${it.a}, ${it.b})"
                                     }
                                     else -> throw IllegalArgumentException("Cannot serialize models with non-ramp functions.")
                                 }
