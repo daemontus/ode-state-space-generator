@@ -14,26 +14,66 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val odeParser = Parser()
-    val modelFile1 = File("/meej/...")
+    val modelFile1 = File("E:\\test\\multimodel\\model1.bio")
     val model1 = odeParser.parse(modelFile1).computeApproximation()
     val gen1 = RectangleOdeModel(model1)
-    val modelFile2 = File("/meej/...")
-    val model2 = odeParser.parse(modelFile1).computeApproximation()
-    val gen2 = RectangleOdeModel(model1)
+    val enc1 = NodeEncoder(model1)
+    val modelFile2 = File("E:\\test\\multimodel\\model2.bio")
+    val model2 = odeParser.parse(modelFile2).computeApproximation()
+    val gen2 = RectangleOdeModel(model2)
+    val enc2 = NodeEncoder(model2)
 
-    val mm = Multimodel(listOf(gen1,gen2),model1.parameters.size,gen1)
+    val mm = Multimodel(listOf(gen1,gen2), listOf(enc1, enc2), model1.parameters.size,gen1)
+
+
 }
 
 typealias RParams = MutableSet<Rectangle>
 
 class Multimodel(
         private val models: List<RectangleOdeModel>,
+        private val encoders: List<NodeEncoder>,
         private val pCount: Int,
         solver: Solver<RParams>
 ) : Model<RParams>, Solver<RParams> by solver {
 
     override val stateCount: Int
-        get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
+    val dimensions: Int
+    val modelCount: Int
+
+
+    init {
+        // assuming the models got unified variables with same thresholds, hence same states
+        //I
+        modelCount = models.size
+        println("# of models: " + modelCount)
+
+        //dim (new dimensions)
+        var tempdimensions=0
+        for ((model, encoder) in models.zip(encoders)) if (encoder.dimensions > tempdimensions) tempdimensions=encoder.dimensions
+        dimensions=tempdimensions
+        println("new dimensions: " +dimensions)
+
+        for ((model, encoder) in models.zip(encoders)) println("state count: " + model.stateCount + " dimensions: " +encoder.dimensions)
+
+        /* checking dimensions
+        for ((model, encoder) in models.zip(encoders)) println("state count: " + model.stateCount + " dimensions: " +encoder.dimensions + " dimensionStateCounts: " + encoder.dimensionStateCounts.joinToString())
+        */
+
+        /*
+        var i:Int
+        i=0
+        for ((model, encoder) in models.zip(encoders)) {
+            i++
+            for (node in 1..model.stateCount) println("model: "+ i +" node "+ node + " ="+encoder.decodeNode(node).joinToString())
+        }
+        */
+        
+        this.stateCount = models[0].stateCount
+        println(stateCount)
+    }
+
+
 
     override fun Formula.Atom.Float.eval(): StateMap<RParams> {
 
