@@ -5,22 +5,28 @@ import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.model.OdeModel
 import java.util.*
 
-class DetOdeModel(
+/**
+ * IntervalSetOdeModel uses a 1D adaptive grid to maintain the set of parameter values.
+ * It is faster than general rectangle model, because it does not have explicit
+ * rectangle objects, but it is applicable only to 1-parameter models.
+ *
+ * @see [RectangleSetOdeModel]
+ */
+class IntervalSetOdeModel(
         model: OdeModel,
         createSelfLoops: Boolean = true
-) : AbstractOdeFragment<RectangleSet>(model, createSelfLoops, RectangleSetSolver(
-        model.parameters[0].range.let { it.first to it.second },
-        model.parameters[1].range.let { it.first to it.second }
+) : AbstractOdeFragment<IntervalSet>(model, createSelfLoops, IntervalSetSolver(
+        model.parameters[0].range.let { it.first to it.second }
 )) {
 
     private val boundsRect = model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray()
 
-    private val positiveVertexCache = HashMap<Int, List<RectangleSet?>>()
-    private val negativeVertexCache = HashMap<Int, List<RectangleSet?>>()
+    private val positiveVertexCache = HashMap<Int, List<IntervalSet?>>()
+    private val negativeVertexCache = HashMap<Int, List<IntervalSet?>>()
 
-    override fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): RectangleSet? {
+    override fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): IntervalSet? {
         return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
-            val p: List<RectangleSet?> = (0 until dimensions).map { dim ->
+            val p: List<IntervalSet?> = (0 until dimensions).map { dim ->
                 var derivationValue = 0.0
                 var denominator = 0.0
                 var parameterIndex = -1
@@ -45,7 +51,7 @@ class DetOdeModel(
                     }
                 }
 
-                val bounds: RectangleSet? = if (parameterIndex == -1 || denominator == 0.0) {
+                val bounds: IntervalSet? = if (parameterIndex == -1 || denominator == 0.0) {
                     //there is no parameter in this equation
                     if (derivationValue > 0 == positive) tt else ff
                 } else {
@@ -61,7 +67,7 @@ class DetOdeModel(
                         val r = boundsRect.clone()
                         r[2*parameterIndex] = newLow
                         r[2*parameterIndex+1] = newHigh
-                        Rectangle(r).toRectangleSet()
+                        Rectangle(r).toIntervalSet()
                     }
                 }
                 bounds
