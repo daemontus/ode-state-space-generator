@@ -181,9 +181,17 @@ class Rectangle(
 
     fun asParams(): MutableSet<Rectangle> = mutableSetOf(this)
 
+    fun volume(): Double {
+        var vol = 1.0
+        for (dim in 0 until coordinates.size/2) {
+            vol *= coordinates[2*dim + 1] - coordinates[2*dim]
+        }
+        return vol
+    }
+
     fun asIntervals(): Array<DoubleArray> {
         return Array(coordinates.size / 2) { i ->
-            doubleArrayOf(coordinates[2*i], coordinates[2*i +1])
+            doubleArrayOf(coordinates[2*i], coordinates[2*i + 1])
         }
     }
 
