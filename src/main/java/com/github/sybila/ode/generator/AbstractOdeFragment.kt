@@ -13,7 +13,7 @@ import java.util.*
 abstract class AbstractOdeFragment<Params : Any>(
         protected val model: OdeModel,
         private val createSelfLoops: Boolean,
-        solver: Solver<Params>
+        val solver: Solver<Params>
 ) : Model<Params>, Solver<Params> by solver {
 
     protected val encoder = NodeEncoder(model)
