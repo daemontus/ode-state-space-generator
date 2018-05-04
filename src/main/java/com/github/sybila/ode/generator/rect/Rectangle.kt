@@ -1,5 +1,7 @@
 package com.github.sybila.ode.generator.rect
 
+import com.github.sybila.ode.generator.det.IntervalSet
+import com.github.sybila.ode.generator.det.RectangleSet
 import java.nio.ByteBuffer
 import java.util.*
 
@@ -179,9 +181,27 @@ class Rectangle(
 
     fun asParams(): MutableSet<Rectangle> = mutableSetOf(this)
 
-    fun asIntervals(): List<List<Double>> {
-        return (0 until (coordinates.size / 2)).map {
-            listOf(coordinates[2* it], coordinates[2* it +1])
+    fun asIntervals(): Array<DoubleArray> {
+        return Array(coordinates.size / 2) { i ->
+            doubleArrayOf(coordinates[2*i], coordinates[2*i +1])
         }
     }
+
+    fun toRectangleSet(): RectangleSet {
+        if (this.coordinates.size != 4) throw IllegalStateException("Wrong rectangle dimension")
+        return RectangleSet(
+            thresholdsX = doubleArrayOf(coordinates[0], coordinates[1]),
+            thresholdsY = doubleArrayOf(coordinates[2], coordinates[3]),
+            values = BitSet().apply { set(0) }
+        )
+    }
+
+    fun toIntervalSet(): IntervalSet {
+        if (this.coordinates.size != 2) throw IllegalStateException("Wrong rectangle dimension")
+        return IntervalSet(
+                thresholds = coordinates,
+                values = BitSet().apply { set(0) }
+        )
+    }
+
 }
