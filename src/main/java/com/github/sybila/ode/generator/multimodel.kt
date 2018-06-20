@@ -4,10 +4,13 @@ import com.github.sybila.checker.Model
 import com.github.sybila.checker.Solver
 import com.github.sybila.checker.StateMap
 import com.github.sybila.checker.Transition
+import com.github.sybila.checker.map.mutable.HashStateMap
+import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.huctl.Formula
 import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.RectangleOdeModel
 import com.github.sybila.ode.generator.rect.RectangleSolver
+import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Parser
 import com.github.sybila.ode.model.computeApproximation
 import java.io.File
@@ -16,90 +19,92 @@ fun main(args: Array<String>) {
     val odeParser = Parser()
     val modelFile1 = File("E:\\test\\multimodel\\model1.bio")
     val model1 = odeParser.parse(modelFile1).computeApproximation()
-    val gen1 = RectangleOdeModel(model1)
-    val enc1 = NodeEncoder(model1)
     val modelFile2 = File("E:\\test\\multimodel\\model2.bio")
     val model2 = odeParser.parse(modelFile2).computeApproximation()
-    val gen2 = RectangleOdeModel(model2)
-    val enc2 = NodeEncoder(model2)
 
-    val mm = Multimodel(listOf(gen1,gen2), listOf(enc1, enc2), model1.parameters.size,gen1)
-
-
+    val mm = MultiModel(listOf(model1, model2))
 }
 
 typealias RParams = MutableSet<Rectangle>
 
-class Multimodel(
-        private val models: List<RectangleOdeModel>,
-        private val encoders: List<NodeEncoder>,
-        private val pCount: Int,
-        solver: Solver<RParams>
+/**
+ * Multi-model is a structure which unifies several ODE odeModels into one executable model.
+ *
+ * For now, we assume each model has the same state space and parameter space (You can always
+ * extend incomplete model with dummy variables).
+ *
+ * Multi-model will then add one extra parameter which corresponds to the model index and append this
+ * parameter to all parameter sets.
+ */
+class MultiModel(
+        odeModels: List<OdeModel>,
+        solver: RectangleSolver = run {
+            val realParamCount = odeModels[0].parameters.size
+            RectangleSolver(Rectangle(DoubleArray((realParamCount + 1) * 2) {
+                val pIndex = it / 2
+                val isLow = it % 2 == 0
+                if (pIndex < realParamCount) {
+                    val pRange = odeModels[0].parameters[pIndex].range
+                    if (isLow) pRange.first else pRange.second
+                } else {
+                    if (isLow) 0.0 else odeModels.size.toDouble()
+                }
+            }))
+        }
 ) : Model<RParams>, Solver<RParams> by solver {
 
-    override val stateCount: Int
-    val dimensions: Int
-    val modelCount: Int
+    private val models = odeModels.map { RectangleOdeModel(it) }
 
-
-    init {
-        // assuming the models got unified variables with same thresholds, hence same states
-        //I
-        modelCount = models.size
-        println("# of models: " + modelCount)
-
-        //dim (new dimensions)
-        var tempdimensions=0
-        for ((model, encoder) in models.zip(encoders)) if (encoder.dimensions > tempdimensions) tempdimensions=encoder.dimensions
-        dimensions=tempdimensions
-        println("new dimensions: " +dimensions)
-
-        for ((model, encoder) in models.zip(encoders)) println("state count: " + model.stateCount + " dimensions: " +encoder.dimensions)
-
-        /* checking dimensions
-        for ((model, encoder) in models.zip(encoders)) println("state count: " + model.stateCount + " dimensions: " +encoder.dimensions + " dimensionStateCounts: " + encoder.dimensionStateCounts.joinToString())
-        */
-
-        /*
-        var i:Int
-        i=0
-        for ((model, encoder) in models.zip(encoders)) {
-            i++
-            for (node in 1..model.stateCount) println("model: "+ i +" node "+ node + " ="+encoder.decodeNode(node).joinToString())
-        }
-        */
-        
-        this.stateCount = models[0].stateCount
-        println(stateCount)
-    }
-
-
+    override val stateCount: Int = models.first().stateCount
 
     override fun Formula.Atom.Float.eval(): StateMap<RParams> {
+        val prop = this
+        val map = HashStateMap(ff)
+        models.forEachIndexed { m, model -> model.run {
+            val partialMap = prop.eval()
+            partialMap.entries().forEach { (s, p) ->
+                map.setOrUnion(s, p.setModelIndex(m))
+            }
+        } }
 
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return map
     }
 
     override fun Formula.Atom.Transition.eval(): StateMap<RParams> {
+        // We don't need this. This is just for var:in+ propositions.
         TODO("not implemented")
     }
 
     override fun Int.predecessors(timeFlow: Boolean): Iterator<Transition<RParams>> = successors(!timeFlow)
 
+    private val cacheSuccessor = arrayOfNulls<List<Transition<RParams>>>(stateCount)
+    private val cachePredecessor = arrayOfNulls<List<Transition<RParams>>>(stateCount)
+
     override fun Int.successors(timeFlow: Boolean): Iterator<Transition<RParams>> { // sucessor(s: Int, timeFlow: Boolean)
-        // s.successors(true)
-        // successors(s, true)
-        val s = this
-        val m1 = models[0]
-        m1.run {
-            val rect = tt.iterator().next()
-            val p = rect.restrict(pCount - 1, 0.0, 1.0)
-            val pSet = mutableSetOf(p)
-            val list: List<Transition<RParams>> = s.successors(timeFlow).asSequence().map {
-                it.copy(bound = it.bound and pSet)
-            }.toList()
+        val sourceState = this
+        val cache = if (timeFlow) cacheSuccessor else cachePredecessor
+        if (cache[sourceState] == null) {
+            val transitions = models.mapIndexed { m, model -> model.run {
+                // compute successors in a specific model and extend them with model index
+                val successors = sourceState.successors(timeFlow).asSequence().map { it.target to it.bound }
+                successors.map { it.first to it.second.setModelIndex(m) }.toList()
+            } }.flatMap { it }.groupBy({ it.first }, { it.second }).mapValues {(_, params) ->
+                // merge successors from different models
+                params.fold(ff) { a, b -> a or b }
+            }.map { (s, p) ->
+                // create transitions
+                Transition(s, DirectionFormula.Atom.True, p)
+            }
+            // save to cache
+            cache[sourceState] = transitions    // this can happen concurrently, but it is safe because value only increases.
         }
 
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return cache[sourceState]!!.iterator()
     }
+
+    // extend all rectangles with appropriate model index
+    private fun RParams.setModelIndex(modelIndex: Int): RParams = this.mapTo(HashSet()) {
+        it.extend(modelIndex.toDouble(), (modelIndex + 1).toDouble())
+    }
+
 }

@@ -125,6 +125,18 @@ class Rectangle(
         return Rectangle(newCoordinates)
     }
 
+    /**
+     * Extend this rectangle with
+     */
+    fun extend(low: Double, high: Double): Rectangle = Rectangle(DoubleArray(coordinates.size + 2) { i ->
+        if (i < coordinates.size) coordinates[i] else {
+            if (i % 2 == 0) low else high
+        }
+    })
+
+    /**
+     * Intersect this rectangle with an interval [[low], [high]] in dimension [pI].
+     */
     fun restrict(pI: Int, low: Double, high: Double): Rectangle = Rectangle(DoubleArray(coordinates.size) { i ->
         val dim = i / 2
         if (dim != pI) coordinates[i] else {
