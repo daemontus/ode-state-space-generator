@@ -72,8 +72,8 @@ class IntervalSetOdeModel(
                 }
                 bounds
             }
-            //save also dual values
-            (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
+            //save also dual values THIS DOES NOT WORK WHEN DERIVATION IS ZERO!
+            //(if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
             p
         }[dimension]
     }

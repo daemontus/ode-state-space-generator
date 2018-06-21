@@ -45,7 +45,7 @@ class RectangleOdeModel(
 
                 val bounds: MutableSet<Rectangle>? = if (parameterIndex == -1 || denominator == 0.0) {
                     //there is no parameter in this equation
-                    if (derivationValue > 0 == positive) tt else ff
+                    if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) tt else ff
                 } else {
                     //if you divide by negative number, you have to flip the condition
                     val newPositive = if (denominator > 0) positive else !positive
@@ -64,8 +64,8 @@ class RectangleOdeModel(
                 }
                 bounds
             }
-            //save also dual values
-            (if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
+            //save also dual values. THIS DOES NOT WORK WHEN DERIVATION IS ZERO!
+            //(if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
             p
         }[dimension]
     }
