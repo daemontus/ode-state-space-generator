@@ -1,12 +1,8 @@
 package com.github.sybila.ode.generator
 
-import com.github.sybila.checker.Model
-import com.github.sybila.checker.Solver
-import com.github.sybila.checker.StateMap
-import com.github.sybila.checker.Transition
+import com.github.sybila.checker.*
 import com.github.sybila.checker.map.mutable.HashStateMap
-import com.github.sybila.huctl.DirectionFormula
-import com.github.sybila.huctl.Formula
+import com.github.sybila.huctl.*
 import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.RectangleOdeModel
 import com.github.sybila.ode.generator.rect.RectangleSolver
@@ -23,6 +19,13 @@ fun main(args: Array<String>) {
     val model2 = odeParser.parse(modelFile2).computeApproximation()
 
     val mm = MultiModel(listOf(model1, model2))
+
+    val prop = EX(EF("x".asVariable() gt 3.0.asConstant()))
+    val props = HUCTLParser().parse("E:...")
+
+    val mc = SequentialChecker(mm)
+    val resuls = mc.verify(props)
+    print(resuls)
 }
 
 typealias RParams = MutableSet<Rectangle>
@@ -86,8 +89,7 @@ class MultiModel(
         if (cache[sourceState] == null) {
             val transitions = models.mapIndexed { m, model -> model.run {
                 // compute successors in a specific model and extend them with model index
-                val successors = sourceState.successors(timeFlow).asSequence().map { it.target to it.bound }
-                successors.map { it.first to it.second.setModelIndex(m) }.toList()
+                sourceState.successors(timeFlow).asSequence().map { it.target to it.bound.setModelIndex(m) }.toList()
             } }.flatMap { it }.groupBy({ it.first }, { it.second }).mapValues {(_, params) ->
                 // merge successors from different models
                 params.fold(ff) { a, b -> a or b }
