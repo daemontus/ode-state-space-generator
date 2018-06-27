@@ -18,7 +18,8 @@ fun main(args: Array<String>) {
     val modelFile2 = File("E:\\test\\multimodel\\model2.bio")
     val model2 = odeParser.parse(modelFile2).computeApproximation()
 
-    val mm = MultiModel(listOf(model1, model2))
+    val models = listOf(model1, model2)
+    val mm = MultiModel(models)
 
     val prop = EX(EF("x".asVariable() gt 3.0.asConstant()))
     val props = HUCTLParser().parse("E:...")
@@ -26,6 +27,12 @@ fun main(args: Array<String>) {
     val mc = SequentialChecker(mm)
     val resuls = mc.verify(props)
     print(resuls)
+
+    // Model with one extra parameter
+    val extendedModel = model1.copy(parameters = model1.parameters + OdeModel.Parameter("Model", 0.0 to models.size.toDouble()))
+
+    val jsonString = printJsonRectResults(extendedModel, resuls)
+    File("output path").writeText(jsonString)
 }
 
 typealias RParams = MutableSet<Rectangle>
