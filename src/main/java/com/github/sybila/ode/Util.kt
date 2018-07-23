@@ -4,5 +4,5 @@ import java.util.*
 
 
 fun Double.safeString(): String {
-    return String.format(Locale.ROOT, "%f", this)
+    return String.format(Locale.ROOT, "%.20f", this)
 }
