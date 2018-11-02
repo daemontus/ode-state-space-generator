@@ -7,6 +7,7 @@ import com.github.sybila.ode.model.Parser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
@@ -21,15 +22,24 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     @NotNull
     @Override
-    public List<Integer> successors(@NotNull Integer $receiver) {
-        return null;
+    public List<Integer> successors(@NotNull Integer from) {
+        List<Integer> result = new ArrayList<>();
+        for (int dim = 0; dim < model.getVariables().size(); dim++) {
+            String dimName = model.getVariables().get(dim).getName();
+            encoder.higherNode(from, dim);
+
+        }
+        return result;
     }
 
     @NotNull
     @Override
-    public List<Integer> predecessors(@NotNull Integer $receiver) {
-        return null;
+    public List<Integer> predecessors(@NotNull Integer from) {
+        List<Integer> result = new ArrayList<>();
+        return result;
     }
+
+
 
     @NotNull
     @Override
