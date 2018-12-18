@@ -19,7 +19,7 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
         val functions = variables
                 .flatMap { it.equation }.flatMap { it.evaluable }
                 .filter {
-					it.varIndex == vIndex && (it is Hill || it is Sigmoid || it is Sine || it is Pow)
+					it.varIndex == vIndex && (it is Hill || it is Sigmoid || it is Sine || it is Pow || it is Monod || it is Moser || it is Tessier || it is Haldane || it is Aiba || it is TessierType || it is Andrews)
                     //(it is Hill && it.varIndex == vIndex) || (it is Sigmoid && it.varIndex == vIndex) || (it is Sine && it.varIndex == vIndex)
                 }
 
@@ -47,7 +47,7 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
                     it.copy(
                             evaluable = it.evaluable.map { f ->
                                 when (f) {
-                                    is Hill, is Sigmoid, is Sine, is Pow -> {
+                                    is Hill, is Sigmoid, is Sine, is Pow, is Monod, is Moser, is Tessier, is Haldane, is Aiba, is TessierType, is Andrews -> {
                                         RampApproximation(
                                                 f.varIndex,
                                                 newThresholds[f.varIndex].toDoubleArray(),
@@ -89,8 +89,8 @@ private fun findEvaluationPoints(pointCount: Int, functions: List<Evaluable>, th
             2.0 * e.theta + (5.0 / e.n) * e.theta
         } else if (e is Sigmoid) {
             e.theta + (2.0 / e.k) * 1.5
-		} else if (e is Sine || e is Pow) {
-			thresholds.max()!!
+    		} else if (e is Sine || e is Pow || e is Monod || e is Moser || e is Tessier || e is Haldane || e is Aiba || e is TessierType || e is Andrews) {
+    			thresholds.max()!!
         } else throw IllegalStateException("Unsupported function $e")
         max = Math.max(newMax, max)
     }

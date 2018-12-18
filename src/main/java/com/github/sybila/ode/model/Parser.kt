@@ -137,8 +137,15 @@ private class ModelReader : ODEBaseListener() {
             in constants -> listOf(Summand(constant = constants[target.value]!!))
             else -> throw IllegalStateException("Undefined reference: ${target.value}")
         }
-		is AbstractPow -> listOf(Summand(evaluable = listOf(target.toPow(this))))
-		is AbstractSine -> listOf(Summand(evaluable = listOf(target.toSine(this))))
+      is AbstractPow -> listOf(Summand(evaluable = listOf(target.toPow(this))))
+      is AbstractSine -> listOf(Summand(evaluable = listOf(target.toSine(this))))
+      is AbstractMonod -> listOf(Summand(evaluable = listOf(target.toMonod(this))))
+      is AbstractMoser -> listOf(Summand(evaluable = listOf(target.toMoser(this))))
+      is AbstractTessier -> listOf(Summand(evaluable = listOf(target.toTessier(this))))
+      is AbstractHaldane -> listOf(Summand(evaluable = listOf(target.toHaldane(this))))
+      is AbstractAiba -> listOf(Summand(evaluable = listOf(target.toAiba(this))))
+      is AbstractTessierType -> listOf(Summand(evaluable = listOf(target.toTessierType(this))))
+      is AbstractAndrews -> listOf(Summand(evaluable = listOf(target.toAndrews(this))))
         is AbstractHill -> listOf(Summand(evaluable = listOf(target.toHill(this))))
         is AbstractSigmoid -> listOf(Summand(evaluable = listOf(target.toSigmoid(this))))
         is AbstractRamp -> listOf(Summand(evaluable = listOf(target.toRamp(this))))
@@ -318,16 +325,71 @@ private class ModelReader : ODEBaseListener() {
 	
 	override fun exitSineEval(ctx: ODEParser.SineEvalContext) {
 		expressionTree[ctx] = AbstractSine(
-				ctx.sin().NAME().text
+		  ctx.sin().NAME().text
 		)
 	}
 	
 	override fun exitPowEval(ctx: ODEParser.PowEvalContext) {
 		expressionTree[ctx] = AbstractPow(
-				ctx.pow().NAME().text,
-                ctx.pow().arg().toReference()
+		  ctx.pow().NAME().text,
+		  ctx.pow().arg().toReference()
 		)
 	}
+    
+    override fun exitMonodEval(ctx: ODEParser.MonodEvalContext) {
+      expressionTree[ctx] = AbstractMonod(
+        ctx.monod().NAME().text,
+        ctx.monod().arg(0).toReference(),
+        ctx.monod().arg(1).toReference()
+      )
+    }
+    
+    override fun exitMoserEval(ctx: ODEParser.MoserEvalContext) {
+      expressionTree[ctx] = AbstractMoser(
+        ctx.moser().NAME().text,
+        ctx.moser().arg(0).toReference(),
+        ctx.moser().arg(1).toReference()
+      )
+    }
+    
+    override fun exitTessierEval(ctx: ODEParser.TessierEvalContext) {
+      expressionTree[ctx] = AbstractTessier(
+        ctx.tessier().NAME().text,
+        ctx.tessier().arg().toReference()
+      )
+    }
+    
+    override fun exitHaldaneEval(ctx: ODEParser.HaldaneEvalContext) {
+      expressionTree[ctx] = AbstractHaldane(
+        ctx.haldane().NAME().text,
+        ctx.haldane().arg(0).toReference(),
+        ctx.haldane().arg(1).toReference()
+      )
+    }
+    
+    override fun exitAibaEval(ctx: ODEParser.AibaEvalContext) {
+      expressionTree[ctx] = AbstractAiba(
+        ctx.aiba().NAME().text,
+        ctx.aiba().arg(0).toReference(),
+        ctx.aiba().arg(1).toReference()
+      )
+    }
+    
+    override fun exitTessierTypeEval(ctx: ODEParser.TessierTypeEvalContext) {
+      expressionTree[ctx] = AbstractTessierType(
+        ctx.tessiert().NAME().text,
+        ctx.tessiert().arg(0).toReference(),
+        ctx.tessiert().arg(1).toReference()
+      )
+    }
+    
+    override fun exitAndrewsEval(ctx: ODEParser.AndrewsEvalContext) {
+      expressionTree[ctx] = AbstractAndrews(
+        ctx.andrews().NAME().text,
+        ctx.andrews().arg(0).toReference(),
+        ctx.andrews().arg(1).toReference()
+      )
+    }
 
     override fun exitNegativeEvaluable(ctx: ODEParser.NegativeEvaluableContext) {
         expressionTree[ctx] = Negation(expressionTree[ctx.eval()])
@@ -488,20 +550,101 @@ private class AbstractStep(
 }
 
 private class AbstractSine(
-        private val name: String
+    private val name: String
 ) : Resolvable {
     fun toSine(reader: ModelReader): Sine = Sine(
-            varIndex = reader.resolveVarName(name)
+      varIndex = reader.resolveVarName(name)
     )
 }
 
 private class AbstractPow(
-        private val name: String,
+    private val name: String,
 		private val degree: Reference
 ) : Resolvable {
     fun toPow(reader: ModelReader): Pow = Pow(
-            varIndex = reader.resolveVarName(name),
+      varIndex = reader.resolveVarName(name),
 			degree = reader.resolveArgument(degree)
     )
 }
 
+private class AbstractMonod(
+    private val name: String,
+    private val theta: Reference,
+    private val yield: Reference
+) : Resolvable {
+  fun toMonod(reader: ModelReader): Monod = Monod(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    yield = reader.resolveArgument(yield)
+  )
+}
+
+private class AbstractMoser(
+    private val name: String,
+    private val theta: Reference,
+    private val n: Reference
+) : Resolvable {
+  fun toMoser(reader: ModelReader): Moser = Moser(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    n = reader.resolveArgument(n)
+  )
+}
+
+private class AbstractTessier(
+    private val name: String,
+    private val theta: Reference
+) : Resolvable {
+  fun toTessier(reader: ModelReader): Tessier = Tessier(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta)
+  )
+}
+
+private class AbstractHaldane(
+    private val name: String,
+    private val theta: Reference,
+    private val kappa: Reference
+) : Resolvable {
+  fun toHaldane(reader: ModelReader): Haldane = Haldane(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    kappa = reader.resolveArgument(kappa)
+  )
+}
+
+private class AbstractAiba(
+    private val name: String,
+    private val theta: Reference,
+    private val kappa: Reference
+) : Resolvable {
+  fun toAiba(reader: ModelReader): Aiba = Aiba(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    kappa = reader.resolveArgument(kappa)
+  )
+}
+
+private class AbstractTessierType(
+    private val name: String,
+    private val theta: Reference,
+    private val kappa: Reference
+) : Resolvable {
+  fun toTessierType(reader: ModelReader): TessierType = TessierType(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    kappa = reader.resolveArgument(kappa)
+  )
+}
+
+private class AbstractAndrews(
+    private val name: String,
+    private val theta: Reference,
+    private val kappa: Reference
+) : Resolvable {
+  fun toAndrews(reader: ModelReader): Andrews = Andrews(
+    varIndex = reader.resolveVarName(name),
+    theta = reader.resolveArgument(theta),
+    kappa = reader.resolveArgument(kappa)
+  )
+}

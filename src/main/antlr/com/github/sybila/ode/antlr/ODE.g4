@@ -43,7 +43,14 @@ eval : NUMBER       # numberEval
      | hill         # hillEval
      | approx       # approxEval
 	 | sin			# sineEval
-	 | pow			# powEval	 
+	 | pow			# powEval
+	 | monod   # monodEval
+	 | moser    # moserEval
+	 | tessier  # tessierEval
+	 | haldane  # haldaneEval
+	 | aiba     # aibaEval
+	 | tessiert # tessierTypeEval
+	 | andrews  # andrewsEval
      ;
 
 /** Lexer rules **/
@@ -64,6 +71,20 @@ sin : SIN'('NAME')';
 
 pow : POW'('NAME','arg')';
 
+monod : MONOD'('NAME','arg','arg')';
+
+moser : MOSER'('NAME','arg','arg')';
+
+tessier : TESSIER'('NAME','arg')';
+
+haldane : HALDANE'('NAME','arg','arg')';
+
+aiba : AIBA'('NAME','arg','arg')';
+
+tessiert : TESSIERT'('NAME','arg','arg')';
+
+andrews : ANDREWS'('NAME','arg','arg')';
+
 
 pair : '['NUMBER','NUMBER']';
 
@@ -74,6 +95,13 @@ SIGM : [Ss][mp]('inv')?;
 APPROX : [Aa]'pprox';
 SIN : [Ss]'in';
 POW : [Pp]'ow';
+MONOD : [Mm]'onod';
+MOSER  : [Mm]'oser';
+TESSIER : [Tt]'essier';
+HALDANE : [Hh]'aldane';
+AIBA : [Aa]'iba';
+TESSIERT : [Tt]'essier_type';
+ANDREWS : [Aa]'ndrews';
 
 BA_LINE : 'BA:'~[\n]+;
 
