@@ -10,17 +10,17 @@ package com.github.sybila.ode.model
 data class Monod private constructor(
         override val varIndex: Int,
         val theta: Double,
-        val yield: Double
+        val y: Double
 ) : Evaluable {
 
-    constructor(varIndex: Int, theta: Double, yield: Double):
-            this(varIndex, theta, yield)
+    constructor(varIndex: Int, theta: Double, y: Double):
+            this(varIndex, theta, y)
 
     override fun eval(value: Double): Double {
-        return (value / (yield * (theta + value)))
+        return (value / (y * (theta + value)))
     }
 
     override fun toString(): String
-        = "Monod($varIndex, $theta, $yield)"
+        = "Monod($varIndex, $theta, $y)"
 
 }

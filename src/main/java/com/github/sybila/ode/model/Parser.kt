@@ -570,12 +570,12 @@ private class AbstractPow(
 private class AbstractMonod(
     private val name: String,
     private val theta: Reference,
-    private val yield: Reference
+    private val y: Reference
 ) : Resolvable {
   fun toMonod(reader: ModelReader): Monod = Monod(
     varIndex = reader.resolveVarName(name),
     theta = reader.resolveArgument(theta),
-    yield = reader.resolveArgument(yield)
+    y = reader.resolveArgument(y)
   )
 }
 
