@@ -3,13 +3,14 @@ package com.github.sybila.ode.generator.rect
 import com.github.sybila.checker.MutableStateMap
 import com.github.sybila.checker.Solver
 import com.github.sybila.checker.solver.SolverStats
+import com.github.sybila.ode.generator.IntervalSolver
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class RectangleSolver(
         private val bounds: Rectangle
-) : Solver<MutableSet<Rectangle>> {
+) : Solver<MutableSet<Rectangle>>, IntervalSolver<MutableSet<Rectangle>> {
 
     override val ff: MutableSet<Rectangle> = mutableSetOf()
     override val tt: MutableSet<Rectangle> = mutableSetOf(bounds)
@@ -143,4 +144,9 @@ class RectangleSolver(
             } else false
         }
     }
+
+    override fun MutableSet<Rectangle>.asIntervals(): Array<Array<DoubleArray>> {
+        return this.map { it.asIntervals() }.toTypedArray()
+    }
+
 }

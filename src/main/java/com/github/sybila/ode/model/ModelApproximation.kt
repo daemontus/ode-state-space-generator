@@ -54,6 +54,13 @@ fun OdeModel.computeApproximation(fast: Boolean = true, cutToRange: Boolean = fa
                                                 newThresholds[f.varIndex].map { x -> f(x) }.toDoubleArray()
                                         )
                                     }
+                                    is Ramp -> {
+                                        RampApproximation(
+                                                f.varIndex,
+                                                doubleArrayOf(f.lowThreshold, f.highThreshold),
+                                                doubleArrayOf(f.a, f.b)
+                                        )
+                                    }
                                     else -> f
                                 }
                             }
