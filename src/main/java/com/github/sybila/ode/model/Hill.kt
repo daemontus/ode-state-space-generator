@@ -3,13 +3,13 @@ package com.github.sybila.ode.model
 /**
  * Hill function: https://en.wikipedia.org/wiki/Hill_equation_(biochemistry)
  *
- * Original hill function has image <0,1)
+ * Original Hill function has image <0,1)
  * Values a and b serve as scaling factor so that the image is stretched to <a, b).
  * In case the function is negative, a and b are switched, and then the
  * image of the function is <b, a) and whole function is decreasing.
  *
  */
-data class Hill private constructor(
+data class Hill constructor(
         override val varIndex: Int,
         val theta: Double,
         val n: Double,

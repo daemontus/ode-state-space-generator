@@ -151,7 +151,7 @@ class HillTest {
 
 }
 
-class RampTest() {
+class RampTest {
 
     @Test
     fun simpleTest() = test(1.0, 2.0, 0.0, 1.0)
@@ -201,7 +201,7 @@ class RampTest() {
 
 }
 
-class StepTest() {
+class StepTest {
 
     @Test
     fun simpleTest() = test(1.0, 1.0, 0.0)
