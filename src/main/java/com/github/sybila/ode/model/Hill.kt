@@ -9,7 +9,7 @@ package com.github.sybila.ode.model
  * image of the function is <b, a) and whole function is decreasing.
  *
  */
-data class Hill private constructor(
+data class Hill constructor(
         override val varIndex: Int,
         val theta: Double,
         val n: Double,

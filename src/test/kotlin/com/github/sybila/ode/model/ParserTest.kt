@@ -589,6 +589,168 @@ class ParserTest {
             """))
     }
 
+    @Test
+    fun powFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                            Summand(evaluable = listOf(Pow(0, 3.2)))
+                        )
+                ))
+        ),
+        parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = pow(V1, 3.2)
+        """))
+    }
+
+    @Test
+    fun sineFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Sine(0)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = sin(V1)
+        """))
+    }
+
+    @Test
+    fun aibaFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Aiba(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = aiba(V1, 3.2, -4.5)
+        """))
+    }
+
+    @Test
+    fun andrewsFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Andrews(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = andrews(V1, 3.2, -4.5)
+        """))
+    }
+
+    @Test
+    fun haldaneFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Haldane(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = haldane(V1, 3.2, -4.5)
+        """))
+    }
+
+    @Test
+    fun monodFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Monod(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = monod(V1, 3.2, -4.5)
+        """))
+    }
+
+    @Test
+    fun moserFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Moser(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = moser(V1, 3.2, -4.5)
+        """))
+    }
+
+    @Test
+    fun tessierFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(Tessier(0, 3.2)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = tessier(V1, 3.2)
+        """))
+    }
+
+    @Test
+    fun tessierTypeFunctionTest() {
+        assertEquals(OdeModel(
+                listOf(OdeModel.Variable(
+                        name = "V1", range = 0.0 to 2.0,
+                        thresholds = listOf(0.0, 1.0, 2.0),
+                        varPoints = null, equation = listOf(
+                        Summand(evaluable = listOf(TessierType(0, 3.2, -4.5)))
+                )
+                ))
+        ),
+                parser.parse("""
+           VARS: V1
+           THRES: V1: 0, 1, 2
+           EQ: V1 = tessier_type(V1, 3.2, -4.5)
+        """))
+    }
+
 
 
     /*
