@@ -1,0 +1,2 @@
+Once you add new function into ode-generator (files: Parser.kt, ModelApproximation.kt, new_function_name.kt, ../../../../../../antlr/com/github/sybila/ode/antlr/ODE.g4) 
+you also need to add new function into visualisation model_explorer/templates/model_explorer.mako in your model_explorer location.
