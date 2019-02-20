@@ -28,7 +28,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private List<Boolean> facetColors;
     private List<List<Summand>> equations = new ArrayList<>();
     private List<List<Double>> thresholds = new ArrayList<>();
-    private int[] vertexMasks = getVertexMasks();
+    //private int[] vertexMasks = getVertexMasks();
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -52,6 +52,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         }
     }
 
+    /*
     private int[] getVertexMasks() {
         Iterable receiver = RangesKt.until(0, dimensions);
         Object accumulator = CollectionsKt.listOf(0);
@@ -86,6 +87,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
         return CollectionsKt.toIntArray((Collection) accumulator);
     }
+    */
 
     private Integer getStateCount() {
         Integer result = 1;
@@ -141,34 +143,32 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
     private Boolean getFacetColors(Integer from, Integer dimension, Integer orientation) {
-        //need to iterate over vertices
-        Integer facetIndex = facetIndex(from, dimension, orientation);
-        /*
-        val colors = vertexMasks
-                .filter { it.shr(dimension).and(1) == positiveFacet }
-                    .fold(ff) { a, mask ->
-                val vertex = encoder.nodeVertex(from, mask)
-            getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
-        }
-        //val colors = tt
-        encoder.nodeVertex(from, )
-        */
-        //Arrays.stream(vertexMasks).filter(i -> (i >> dimension & 1) == positiveFacet)
 
-        Boolean value = facetColors.get(facetIndex);
-        if (value != null) {
-            return value;
+
+        Integer facetIndex = facetIndex(from, dimension, orientation);
+        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0; // ??
+        Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
+
+        Boolean facetColor = facetColors.get(facetIndex);
+
+        if (facetColor != null) {
+            return facetColor;
         } else {
-            Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0;
-            Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
-            value = Arrays.stream(vertexMasks)
-                    .filter(e -> (e >> dimension & 1) == positiveFacet)
-                    .reduce((a, mask) -> {
-                        Integer vertex =  encoder.nodeVertex(from, mask);
-                        getVertexColor(vertex, dimension, positiveDerivation);
-                    });
+
+            for (int i = 0; i < Math.pow(2, dimension); i++) {
+                Boolean vertexColor = getVertexColor(i, dimension, positiveDerivation);
+                if (vertexColor != null) {
+                    if (vertexColor) {
+                        facetColors.set(facetIndex, true);
+                        return true;
+                    }
+                }
+            }
+
+            facetColors.set(facetIndex, false);
+            return false;
         }
-        return value;
+
     }
 
     private Boolean getVertexColor(Integer vertex, Integer dimension, Boolean positive) {
