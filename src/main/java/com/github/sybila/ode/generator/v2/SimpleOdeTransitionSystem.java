@@ -132,7 +132,6 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             if (higherNode != null && colors) {
                 result.add(lowerNode);
             }
-
         }
         return result;
     }
@@ -143,36 +142,28 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
     private Boolean getFacetColors(Integer from, Integer dimension, Integer orientation) {
-
-
         Integer facetIndex = facetIndex(from, dimension, orientation);
         Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0; // ??
         Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
-
         Boolean facetColor = facetColors.get(facetIndex);
 
         if (facetColor != null) {
             return facetColor;
         } else {
-
             for (int i = 0; i < Math.pow(2, dimension); i++) {
                 Boolean vertexColor = getVertexColor(i, dimension, positiveDerivation);
-                if (vertexColor != null) {
-                    if (vertexColor) {
-                        facetColors.set(facetIndex, true);
-                        return true;
-                    }
+                if (vertexColor != null && vertexColor) {
+                    facetColors.set(facetIndex, true);
+                    return true;
                 }
             }
 
             facetColors.set(facetIndex, false);
             return false;
         }
-
     }
 
     private Boolean getVertexColor(Integer vertex, Integer dimension, Boolean positive) {
-
         Double derivationValue = 0.0;
 
         for (Summand summand : equations.get(dimension)) {
@@ -180,6 +171,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             for (Integer v : summand.getVariableIndices()) {
                 partialSum *= thresholds.get(v).get(encoder.vertexCoordinate(vertex, v));
             }
+
             if (partialSum != 0.0) {
                 for (Evaluable function : summand.getEvaluable()) {
                     Integer index = function.getVarIndex();
