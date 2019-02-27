@@ -194,9 +194,9 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     public static void main(String[] args) {
         Parser modelParser = new Parser();
-        OdeModel model = modelParser.parse(new File("model.txt"));
-        OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
-        SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
+        //OdeModel model = modelParser.parse(new File("model.txt"));
+        //OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
+        //SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
     }
 
 }
