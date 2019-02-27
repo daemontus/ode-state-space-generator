@@ -103,7 +103,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     private Boolean getFacetColors(Integer from, Integer dimension, Integer orientation) {
         Integer facetIndex = facetIndex(from, dimension, orientation);
-        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0; // ??
+        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0;
         Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
         Boolean facetColor = facetColors.get(facetIndex);
 
@@ -111,6 +111,11 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             return facetColor;
         } else {
             for (int i = 0; i < Math.pow(2, dimension); i++) {
+                /*
+                if ((i >> dimension) & 1) != positiveFacet) {
+                    continue;
+                }
+                */
                 Integer vertex = encoder.nodeVertex(from, i);
                 Boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
                 if (vertexColor != null && vertexColor) {
