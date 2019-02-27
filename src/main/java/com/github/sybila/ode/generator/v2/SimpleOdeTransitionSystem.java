@@ -28,7 +28,6 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private List<Boolean> facetColors;
     private List<List<Summand>> equations = new ArrayList<>();
     private List<List<Double>> thresholds = new ArrayList<>();
-    //private int[] vertexMasks = getVertexMasks();
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -51,43 +50,6 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             this.thresholds.add(var.getThresholds());
         }
     }
-
-    /*
-    private int[] getVertexMasks() {
-        Iterable receiver = RangesKt.until(0, dimensions);
-        Object accumulator = CollectionsKt.listOf(0);
-
-        Collection destination$iv$iv;
-        for(Iterator var5 = receiver.iterator(); var5.hasNext(); accumulator = (List)destination$iv$iv) {
-            int element$iv = ((IntIterator)var5).nextInt();
-            receiver = (Iterable) accumulator;
-            destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault(receiver, 10)));
-            Iterator var12 = receiver.iterator();
-
-            Object element$iv$iv;
-            int it;
-            while(var12.hasNext()) {
-                element$iv$iv = var12.next();
-                it = ((Number)element$iv$iv).intValue();
-                Integer var16 = it << 1;
-                destination$iv$iv.add(var16);
-            }
-
-            receiver = (Iterable)((List)destination$iv$iv);
-            destination$iv$iv = (Collection)(new ArrayList());
-            var12 = receiver.iterator();
-
-            while(var12.hasNext()) {
-                element$iv$iv = var12.next();
-                it = ((Number)element$iv$iv).intValue();
-                Iterable list$iv$iv = (Iterable)CollectionsKt.listOf(new Integer[]{it, it | 1});
-                CollectionsKt.addAll(destination$iv$iv, list$iv$iv);
-            }
-        }
-
-        return CollectionsKt.toIntArray((Collection) accumulator);
-    }
-    */
 
     private Integer getStateCount() {
         Integer result = 1;
@@ -113,13 +75,11 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private List<Integer> getStep(Integer from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
-            String dimName = model.getVariables().get(dim).getName();
-            Boolean timeFlow = true;
 
-            Boolean positiveIn = getFacetColors(from, dim, timeFlow ? PositiveIn : PositiveOut);
-            Boolean negativeIn = getFacetColors(from, dim, timeFlow ? NegativeIn : NegativeOut);
-            Boolean positiveOut = getFacetColors(from, dim, timeFlow ? PositiveOut : PositiveIn);
-            Boolean negativeOut = getFacetColors(from, dim, timeFlow ? NegativeOut : NegativeIn);
+            Boolean positiveIn = getFacetColors(from, dim, PositiveIn);
+            Boolean negativeIn = getFacetColors(from, dim, NegativeIn);
+            Boolean positiveOut = getFacetColors(from, dim, PositiveOut);
+            Boolean negativeOut = getFacetColors(from, dim, NegativeOut);
 
             Integer higherNode = encoder.higherNode(from, dim);
             Boolean colors = successors ? positiveOut : positiveIn;
@@ -129,7 +89,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
             Integer lowerNode = encoder.lowerNode(from, dim);
             colors = successors ? negativeOut : negativeIn;
-            if (higherNode != null && colors) {
+            if (lowerNode != null && colors) {
                 result.add(lowerNode);
             }
         }
@@ -151,7 +111,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             return facetColor;
         } else {
             for (int i = 0; i < Math.pow(2, dimension); i++) {
-                Boolean vertexColor = getVertexColor(i, dimension, positiveDerivation);
+                Integer vertex = encoder.nodeVertex(from, i);
+                Boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
                 if (vertexColor != null && vertexColor) {
                     facetColors.set(facetIndex, true);
                     return true;
