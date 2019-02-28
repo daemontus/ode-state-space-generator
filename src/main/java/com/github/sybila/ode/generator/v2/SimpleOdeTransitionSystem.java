@@ -34,6 +34,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private Integer NegativeIn = 2;
     private Integer NegativeOut = 3;
 
+    private Boolean createSelfLoops;
+
     public SimpleOdeTransitionSystem(OdeModel model) {
         this.model = model;
         this.encoder = new NodeEncoder(model);
@@ -49,6 +51,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             this.equations.add(var.getEquation());
             this.thresholds.add(var.getThresholds());
         }
+
+        createSelfLoops = true;
     }
 
     private Integer getStateCount() {
@@ -74,6 +78,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     private List<Integer> getStep(Integer from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
+        Boolean selfloop = true;
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
             Boolean positiveIn = getFacetColors(from, dim, PositiveIn);
@@ -82,17 +87,36 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             Boolean negativeOut = getFacetColors(from, dim, NegativeOut);
 
             Integer higherNode = encoder.higherNode(from, dim);
-            Boolean colors = successors ? positiveOut : positiveIn;
-            if (higherNode != null && colors) {
-                result.add(higherNode);
+            if (higherNode != null) {
+                Boolean colors = successors ? positiveOut : positiveIn;
+                if (colors) {
+                    result.add(higherNode);
+                }
+
+                if (createSelfLoops) {
+                    Boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
+                    selfloop = !positiveFlow;
+                }
             }
 
             Integer lowerNode = encoder.lowerNode(from, dim);
-            colors = successors ? negativeOut : negativeIn;
-            if (lowerNode != null && colors) {
-                result.add(lowerNode);
+            if (lowerNode != null) {
+                Boolean colors = successors ? negativeOut : negativeIn;
+                if (colors) {
+                    result.add(lowerNode);
+                }
+
+                if (createSelfLoops) {
+                    Boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
+                    selfloop = !negativeFlow;
+                }
             }
         }
+
+        if (selfloop) {
+            result.add(from);
+        }
+
         return result;
     }
 
