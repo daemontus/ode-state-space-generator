@@ -7,6 +7,7 @@ import com.github.sybila.ode.model.OdeModel;
 import com.github.sybila.ode.model.OdeModel.Variable;
 import com.github.sybila.ode.model.Parser;
 import com.github.sybila.ode.model.Summand;
+import com.sun.org.apache.xpath.internal.operations.Neg;
 import kotlin.collections.CollectionsKt;
 import kotlin.collections.IntIterator;
 import kotlin.ranges.RangesKt;
@@ -127,19 +128,18 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     private Boolean getFacetColors(Integer from, Integer dimension, Integer orientation) {
         Integer facetIndex = facetIndex(from, dimension, orientation);
-        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0;
-        Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
         Boolean facetColor = facetColors.get(facetIndex);
 
+        /*
         if (facetColor != null) {
             return facetColor;
         } else {
             for (int i = 0; i < Math.pow(2, dimension); i++) {
-                /*
-                if ((i >> dimension) & 1) != positiveFacet) {
+
+                if (((i >> dimension) & 1) != positiveFacet) {
                     continue;
                 }
-                */
+
                 Integer vertex = encoder.nodeVertex(from, i);
                 Boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
                 if (vertexColor != null && vertexColor) {
@@ -151,6 +151,48 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             facetColors.set(facetIndex, false);
             return false;
         }
+        */
+
+        if (facetColor != null) {
+            return facetColor;
+        }
+
+        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0;
+        Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
+        Boolean colors = false;
+
+        for (int i = 0; i < Math.pow(2, dimension); i++) {
+            Integer helper = (i >> dimension) & 1;
+            if (!helper.equals(positiveFacet)) {
+                continue;
+            }
+            Integer vertex = encoder.nodeVertex(from, i);
+            Boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
+            if (vertexColor != null && vertexColor) {
+                colors = true;
+            }
+        }
+
+        facetColors.set(facetIndex, colors);
+
+        if (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) {
+            Integer higherNode = encoder.higherNode(from, dimension);
+            if (higherNode != null) {
+                Integer dual = orientation.equals(PositiveIn) ? NegativeOut : NegativeIn;
+                facetColors.set(facetIndex(higherNode,dimension, dual), colors);
+            }
+
+        } else {
+            Integer lowerNode = encoder.lowerNode(from, dimension);
+            if (lowerNode != null) {
+                Integer dual = orientation.equals(NegativeIn) ? PositiveOut : PositiveIn;
+                facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
+            }
+        }
+
+        return facetColors.get(facetIndex);
+
+
     }
 
     private Boolean getVertexColor(Integer vertex, Integer dimension, Boolean positive) {
