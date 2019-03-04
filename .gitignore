@@ -22,3 +22,5 @@ build
 *.a
 
 out/
+
+.DS_Store

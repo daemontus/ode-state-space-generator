@@ -2,22 +2,13 @@ package com.github.sybila.ode.generator.v2;
 
 import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.model.Evaluable;
-import com.github.sybila.ode.model.ModelApproximationKt;
 import com.github.sybila.ode.model.OdeModel;
 import com.github.sybila.ode.model.OdeModel.Variable;
 import com.github.sybila.ode.model.Parser;
 import com.github.sybila.ode.model.Summand;
-import com.sun.org.apache.xpath.internal.operations.Neg;
-import kotlin.collections.CollectionsKt;
-import kotlin.collections.IntIterator;
-import kotlin.ranges.RangesKt;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
@@ -57,7 +48,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
     private Integer getStateCount() {
-        Integer result = 1;
+        int result = 1;
         for (Variable var: model.getVariables()) {
             result = result * (var.getThresholds().size() - 1);
         }
@@ -77,44 +68,44 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
 
-    private List<Integer> getStep(Integer from, Boolean successors) {
+    private List<Integer> getStep(int from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
-        Boolean selfloop = true;
+        boolean selfLoop = true;
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
-            Boolean positiveIn = getFacetColors(from, dim, PositiveIn);
-            Boolean negativeIn = getFacetColors(from, dim, NegativeIn);
-            Boolean positiveOut = getFacetColors(from, dim, PositiveOut);
-            Boolean negativeOut = getFacetColors(from, dim, NegativeOut);
+            boolean positiveIn = getFacetColors(from, dim, PositiveIn);
+            boolean negativeIn = getFacetColors(from, dim, NegativeIn);
+            boolean positiveOut = getFacetColors(from, dim, PositiveOut);
+            boolean negativeOut = getFacetColors(from, dim, NegativeOut);
 
             Integer higherNode = encoder.higherNode(from, dim);
             if (higherNode != null) {
-                Boolean colors = successors ? positiveOut : positiveIn;
+                boolean colors = successors ? positiveOut : positiveIn;
                 if (colors) {
                     result.add(higherNode);
                 }
 
                 if (createSelfLoops) {
-                    Boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
-                    selfloop = !positiveFlow;
+                    boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
+                    selfLoop = selfLoop && !positiveFlow;
                 }
             }
 
             Integer lowerNode = encoder.lowerNode(from, dim);
             if (lowerNode != null) {
-                Boolean colors = successors ? negativeOut : negativeIn;
+                boolean colors = successors ? negativeOut : negativeIn;
                 if (colors) {
                     result.add(lowerNode);
                 }
 
                 if (createSelfLoops) {
-                    Boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
-                    selfloop = !negativeFlow;
+                    boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
+                    selfLoop = selfLoop && !negativeFlow;
                 }
             }
         }
 
-        if (selfloop) {
+        if (selfLoop) {
             result.add(from);
         }
 
@@ -122,13 +113,13 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
 
-    private Integer facetIndex(Integer from, Integer dimension, Integer orientation) {
+    private int facetIndex(int from, int dimension, int orientation) {
         return from + (stateCount * dimension) + (stateCount * dimensions * orientation);
     }
 
-    private Boolean getFacetColors(Integer from, Integer dimension, Integer orientation) {
-        Integer facetIndex = facetIndex(from, dimension, orientation);
-        Boolean facetColor = facetColors.get(facetIndex);
+    private boolean getFacetColors(int from, int dimension, int orientation) {
+        int facetIndex = facetIndex(from, dimension, orientation);
+        Boolean currentValue = facetColors.get(facetIndex);
 
         /*
         if (facetColor != null) {
@@ -153,50 +144,58 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         }
         */
 
-        if (facetColor != null) {
-            return facetColor;
+        if (currentValue != null) {
+            return currentValue;
         }
 
-        Integer positiveFacet = (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) ? 1 : 0;
-        Boolean positiveDerivation = orientation.equals(PositiveOut) || orientation.equals(NegativeIn);
-        Boolean colors = false;
+        // Indicates that we want to compute colors for the facet where the dimension threshold
+        // is set to the "upper" value of this state.
+        int positiveFacet = (orientation == PositiveIn || orientation == PositiveOut) ? 1 : 0;
 
-        for (int i = 0; i < Math.pow(2, dimension); i++) {
-            Integer helper = (i >> dimension) & 1;
-            if (!helper.equals(positiveFacet)) {
+        // Indicates that the derivative should be positive - entering from the bottom or exiting on the top.
+        // Otherwise, the derivative has to be negative.
+        boolean positiveDerivation = orientation == PositiveOut || orientation == NegativeIn;
+
+        // Compute value
+        boolean colors = false;
+
+        /*
+         * Iterate over all vertex masks. Vertex mask is a binary number which encodes a vertex of a state.
+         * Specifically, every bit in the mask describes whether the vertex contains the lower/upper
+         * threshold of the specified state. The smallest dimension corresponds to the least significant
+         * bit of the mask.
+         * So for a simple 3D cube [[1,2], [3, 5], [-1, 1]], we have 8 masks:
+         * 000 - [1,3,-1]
+         * 001 - [2,3,-1]
+         * 010 - [1,5,-1]
+         * 011 - [2,5,-1]
+         * 100 - [1,3,1]
+         * 101 - [2,3,1]
+         * 110 - [1,5,1]
+         * 111 - [2,5,1]
+         */
+        for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
+            /*
+                We want to evaluate half of the vertices. Which half is indicated by the positiveFacet variable.
+                If positiveFacet is true, we want to evaluate vertices where the dimension bit is set to 1,
+                if positiveFacet is false, the we want the dimension bit to be set to false.
+             */
+            if (((mask >> dimension) & 1) != positiveFacet) {
                 continue;
             }
-            Integer vertex = encoder.nodeVertex(from, i);
-            Boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
-            if (vertexColor != null && vertexColor) {
-                colors = true;
-            }
+            int vertex = encoder.nodeVertex(from, mask);
+            boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
+            colors = colors | vertexColor;
         }
 
         facetColors.set(facetIndex, colors);
-
-        if (orientation.equals(PositiveIn) || orientation.equals(PositiveOut)) {
-            Integer higherNode = encoder.higherNode(from, dimension);
-            if (higherNode != null) {
-                Integer dual = orientation.equals(PositiveIn) ? NegativeOut : NegativeIn;
-                facetColors.set(facetIndex(higherNode,dimension, dual), colors);
-            }
-
-        } else {
-            Integer lowerNode = encoder.lowerNode(from, dimension);
-            if (lowerNode != null) {
-                Integer dual = orientation.equals(NegativeIn) ? PositiveOut : PositiveIn;
-                facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
-            }
-        }
-
-        return facetColors.get(facetIndex);
+        return colors;
 
 
     }
 
-    private Boolean getVertexColor(Integer vertex, Integer dimension, Boolean positive) {
-        Double derivationValue = 0.0;
+    private boolean getVertexColor(int vertex, int dimension, boolean positive) {
+        double derivationValue = 0.0;
 
         for (Summand summand : equations.get(dimension)) {
             double partialSum = summand.getConstant();
@@ -206,14 +205,14 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
             if (partialSum != 0.0) {
                 for (Evaluable function : summand.getEvaluable()) {
-                    Integer index = function.getVarIndex();
+                    int index = function.getVarIndex();
                     partialSum *= function.invoke(thresholds.get(index).get(encoder.vertexCoordinate(vertex, index)));
                 }
             }
             derivationValue += partialSum;
         }
 
-        return derivationValue == 0.0 ? null : derivationValue > 0 == positive;
+        return positive ? derivationValue > 0 : derivationValue < 0;
     }
 
 
