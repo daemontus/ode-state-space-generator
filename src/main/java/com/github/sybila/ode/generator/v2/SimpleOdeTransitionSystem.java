@@ -72,7 +72,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         result.set(0, model.getVariables().size());
 
         for (Integer index: dependentOn) {
-            result.clear(index);
+            result.clear(model.getVariables().size() - 1 - index);
         }
 
         int integerResult = 0;
@@ -245,7 +245,6 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         //OdeModel model = modelParser.parse(new File("model.txt"));
         //OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
         //SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
-
     }
 
 }
