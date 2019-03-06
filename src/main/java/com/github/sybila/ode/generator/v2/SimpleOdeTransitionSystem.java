@@ -8,10 +8,7 @@ import com.github.sybila.ode.model.Parser;
 import com.github.sybila.ode.model.Summand;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
 
@@ -62,7 +59,16 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
     private Integer getDependenceCheckMask(Variable var) {
+        Set<Integer> dependentOn = new HashSet<>();
+        for (Summand summand: var.getEquation()) {
+            dependentOn.addAll(summand.getVariableIndices());
 
+            for (Evaluable e: summand.getEvaluable()) {
+                dependentOn.add(e.getVarIndex());
+            }
+        }
+
+        return 0;
     }
 
     private boolean checkMask(Variable var, int mask) {
@@ -227,6 +233,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         //OdeModel model = modelParser.parse(new File("model.txt"));
         //OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
         //SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
+
     }
 
 }
