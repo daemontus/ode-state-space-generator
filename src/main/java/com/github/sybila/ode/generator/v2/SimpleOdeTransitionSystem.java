@@ -68,7 +68,19 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             }
         }
 
-        return 0;
+        BitSet result = new BitSet(model.getVariables().size());
+        result.set(0, model.getVariables().size());
+
+        for (Integer index: dependentOn) {
+            result.clear(index);
+        }
+
+        int integerResult = 0;
+        for(int i = 0 ; i < 32; i++)
+            if (result.get(i)) {
+                integerResult |= (1 << i);
+            }
+        return integerResult;
     }
 
     private boolean checkMask(Variable var, int mask) {
