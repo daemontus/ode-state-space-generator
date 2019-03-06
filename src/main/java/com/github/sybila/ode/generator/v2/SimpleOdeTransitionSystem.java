@@ -9,7 +9,9 @@ import com.github.sybila.ode.model.Summand;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
 
@@ -20,6 +22,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private List<Boolean> facetColors;
     private List<List<Summand>> equations = new ArrayList<>();
     private List<List<Double>> thresholds = new ArrayList<>();
+    private Map<Variable, List<Integer>> masks = new HashMap<>();
+    private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -42,9 +46,27 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         for (Variable var: model.getVariables()) {
             this.equations.add(var.getEquation());
             this.thresholds.add(var.getThresholds());
+            this.masks.put(var, new ArrayList<>());
+            this.dependenceCheckMasks.put(var, getDependenceCheckMask(var));
         }
 
         createSelfLoops = true;
+
+        for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
+            for (Variable var: model.getVariables()) {
+                if (checkMask(var, mask)) {
+                    masks.get(var).add(mask);
+                }
+            }
+        }
+    }
+
+    private Integer getDependenceCheckMask(Variable var) {
+
+    }
+
+    private boolean checkMask(Variable var, int mask) {
+        return (dependenceCheckMasks.get(var) & mask) == 0;
     }
 
     private Integer getStateCount() {
@@ -201,7 +223,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     }
 
     public static void main(String[] args) {
-        Parser modelParser = new Parser();
+        //Parser modelParser = new Parser();
         //OdeModel model = modelParser.parse(new File("model.txt"));
         //OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
         //SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
