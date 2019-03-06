@@ -190,13 +190,13 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
          * 101 - [2,3,1]
          * 110 - [1,5,1]
          * 111 - [2,5,1]
-         */
+
         for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
             /*
                 We want to evaluate half of the vertices. Which half is indicated by the positiveFacet variable.
                 If positiveFacet is true, we want to evaluate vertices where the dimension bit is set to 1,
                 if positiveFacet is false, the we want the dimension bit to be set to false.
-             */
+
             if (((mask >> dimension) & 1) != positiveFacet) {
                 continue;
             }
@@ -204,11 +204,20 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
             boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
             colors = colors | vertexColor;
         }
+        */
+
+        for (Integer mask: masks.get(model.getVariables().get(dimension))) {
+            if (((mask >> dimension) & 1) != positiveFacet) {
+                continue;
+            }
+
+            int vertex = encoder.nodeVertex(from, mask);
+            boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
+            colors = colors | vertexColor;
+        }
 
         facetColors.set(facetIndex, colors);
         return colors;
-
-
     }
 
     private boolean getVertexColor(int vertex, int dimension, boolean positive) {
