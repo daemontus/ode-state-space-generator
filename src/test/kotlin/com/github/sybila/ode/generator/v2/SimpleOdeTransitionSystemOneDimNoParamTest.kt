@@ -6,7 +6,7 @@ import com.github.sybila.ode.model.Summand
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class SimpleOdeTransitionSystemTest {
+class SimpleOdeTransitionSystemOneDimNoParamTest {
     private val variable = OdeModel.Variable(
             name = "v1", range = Pair(0.0, 3.0), varPoints = null,
             thresholds = listOf(0.0, 1.0, 2.0, 3.0),
