@@ -72,7 +72,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         result.set(0, model.getVariables().size());
 
         for (Integer index: dependentOn) {
-            result.clear(model.getVariables().size() - 1 - index);
+            result.clear(model.getVariables().size() - index - 1);
         }
 
         int integerResult = 0;
