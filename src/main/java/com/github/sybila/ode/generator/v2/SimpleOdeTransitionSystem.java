@@ -54,6 +54,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
         createSelfLoops = true;
 
+
+        //Iterates through all possible masks and all variables, filters out masks which are valid and saves them.
         for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
             for (Variable var: model.getVariables()) {
                 if (checkMask(var, mask)) {
@@ -63,6 +65,15 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         }
     }
 
+    /**
+     * Calculates a set of variable indices which represents variables dependent on the input variable.
+     * Then constructs a binary number, where 1 represents independent variable and 0 represents dependent variable,
+     * indexed from the left, e.g. 100 means var on index 0 is independent from the input var, whereas
+     * vars on indices 1 and 2 are dependent on the input var. Finally, returns this number as integer.
+     *
+     * @param var Variable
+     * @return dependence-check mask as integer
+     */
     private Integer getDependenceCheckMask(Variable var) {
         Set<Integer> dependentOn = new HashSet<>();
         for (Summand summand: var.getEquation()) {
@@ -88,6 +99,16 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         return integerResult;
     }
 
+
+    /**
+     * Checks if the mask is valid for the given var, in other words, checks if the mask has zeroes on indices
+     * corresponding to variables which are independent on the given var.
+     * Mask is valid <=> dependence-check mask (for the given var) & mask == 0.
+     *
+     * @param var variable to be checked
+     * @param mask mask to be checked
+     * @return true if mask is valid for the var, false otherwise
+     */
     private boolean checkMask(Variable var, int mask) {
         return (dependenceCheckMasks.get(var) & mask) == 0;
     }
