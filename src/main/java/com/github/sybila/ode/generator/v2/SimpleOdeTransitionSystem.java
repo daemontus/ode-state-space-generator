@@ -101,8 +101,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
 
     /**
-     * Checks if the mask is valid for the given var, in other words, checks if the mask has zeroes on indices
-     * corresponding to variables which are independent on the given var.
+     * Checks if the mask is valid for the given var, in other words, checks if the mask has zeroes on indices/bits
+     * corresponding to variables which are independent from the given var.
      * Mask is valid <=> dependence-check mask (for the given var) & mask == 0.
      *
      * @param var variable to be checked
