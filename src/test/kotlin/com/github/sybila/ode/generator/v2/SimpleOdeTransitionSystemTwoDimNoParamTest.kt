@@ -99,7 +99,15 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
     @Test
     fun case2() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
-
+            checkSuccessors(0, setOf(1))
+            checkSuccessors(1, setOf(2))
+            checkSuccessors(2, setOf(2))
+            checkSuccessors(3, setOf(4, 0))
+            checkSuccessors(4, setOf(1, 5))
+            checkSuccessors(5, setOf(2))
+            checkSuccessors(6, setOf(3, 7))
+            checkSuccessors(7, setOf(4, 8))
+            checkSuccessors(8, setOf(5))
         }
     }
 }
