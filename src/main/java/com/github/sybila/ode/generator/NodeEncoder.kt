@@ -65,6 +65,12 @@ class NodeEncoder(
         }
     }
 
+    fun decodeVertex(vertex: Int): IntArray {
+        return IntArray(thresholdMultipliers.size) { i ->
+            (vertex / thresholdMultipliers[i]) % thresholdMultipliers[i]
+        }
+    }
+
     fun vertexCoordinate(vertex: Int, dim: Int): Int {
         return (vertex / thresholdMultipliers[dim]) % thresholdCounts[dim]
     }

@@ -20,6 +20,9 @@ data class OdeModel(
     ) {
         constructor(name: String, range: Pair<Double, Double>, thresholds: List<Double>, varPoints: Pair<Int, Int>?,
                     vararg summands: Summand) : this(name, range, thresholds, varPoints, summands.toList())
+
+        constructor(name: String, range: Pair<Double, Double>, thresholds: List<Double>, varPoints: Pair<Int, Int>?,
+                    summand: Summand) : this(name, range, thresholds, varPoints, listOf(summand))
     }
 
     data class Parameter(

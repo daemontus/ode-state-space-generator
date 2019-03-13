@@ -7,13 +7,7 @@ import com.github.sybila.ode.model.OdeModel.Variable;
 import com.github.sybila.ode.model.Summand;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
 
@@ -88,7 +82,7 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         result.set(0, model.getVariables().size());
 
         for (Integer index: dependentOn) {
-            result.clear(model.getVariables().size() - index - 1);
+            result.clear(index);
         }
 
         int integerResult = 0;
@@ -232,8 +226,12 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         }
         */
 
+        int dependencyMask = dependenceCheckMasks.get(model.getVariables().get(dimension));
+        // if self dependent, dependency mask has 0 at "dimension" position
+        boolean selfDependent = ((dependencyMask >> dimension) & 1) == 0;
+
         for (Integer mask: masks.get(model.getVariables().get(dimension))) {
-            if (((mask >> dimension) & 1) != positiveFacet) {
+            if (selfDependent && ((mask >> dimension) & 1) != positiveFacet) {
                 continue;
             }
 

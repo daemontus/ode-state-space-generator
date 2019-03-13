@@ -14,6 +14,13 @@ data class Summand(
             vararg evaluables: Evaluable
     ) : this(constant, paramIndex, variableIndices, evaluables.toList())
 
+    constructor(
+            constant: Double = 1.0,
+            paramIndex: Int = -1,
+            variableIndices: List<Int> = listOf(),
+            evaluable: Evaluable
+    ) : this(constant, paramIndex, variableIndices, listOf(evaluable))
+
     fun hasParam(): Boolean = paramIndex >= 0
 
     operator fun times(other: Summand): Summand {
