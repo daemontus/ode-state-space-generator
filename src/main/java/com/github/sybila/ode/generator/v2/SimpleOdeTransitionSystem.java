@@ -62,8 +62,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
     /**
      * Calculates a set of variable indices which represents variables dependent on the input variable.
      * Then constructs a binary number, where 1 represents independent variable and 0 represents dependent variable,
-     * indexed from the left, e.g. 100 means var on index 0 is independent from the input var, whereas
-     * vars on indices 1 and 2 are dependent on the input var. Finally, returns this number as integer.
+     * indexed from the right, e.g., 100 means vars on indices 0 and 1 are dependent on the input var, whereas
+     * var on index 2 is independent from the input var. Finally, returns this number as integer.
      *
      * @param var Variable
      * @return dependence-check mask as integer
