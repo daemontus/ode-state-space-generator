@@ -93,71 +93,27 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
             checkSuccessors(6, setOf(3))
             checkSuccessors(7, setOf(4, 6))
             checkSuccessors(8, setOf(7))
+
+            checkPredecessors(0, setOf(3))
+            checkPredecessors(1, setOf(0, 4))
+            checkPredecessors(2, setOf(1))
+            checkPredecessors(3, setOf(4, 6))
+            checkPredecessors(4, setOf(1, 3, 4, 5, 7))
+            checkPredecessors(5, setOf(2, 4))
+            checkPredecessors(6, setOf(7))
+            checkPredecessors(7, setOf(4, 8))
+            checkPredecessors(8, setOf(5))
         }
     }
 
+    /*
+         ->
+        ^  |
+        |  v
+         <-
+    */
     @Test
     fun case2() {
-        createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
-            checkSuccessors(0, setOf(1))
-            checkSuccessors(1, setOf(2))
-            checkSuccessors(2, setOf(2))
-            checkSuccessors(3, setOf(4, 0))
-            checkSuccessors(4, setOf(1, 5))
-            checkSuccessors(5, setOf(2))
-            checkSuccessors(6, setOf(3, 7))
-            checkSuccessors(7, setOf(4, 8))
-            checkSuccessors(8, setOf(5))
-        }
-    }
-
-    @Test
-    fun case3() {
-        createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
-            checkSuccessors(0, setOf(3))
-            checkSuccessors(1, setOf(0, 4))
-            checkSuccessors(2, setOf(1, 5))
-            checkSuccessors(3, setOf(6))
-            checkSuccessors(4, setOf(3, 7))
-            checkSuccessors(5, setOf(4, 8))
-            checkSuccessors(6, setOf(6))
-            checkSuccessors(7, setOf(6))
-            checkSuccessors(8, setOf(7))
-        }
-    }
-
-    @Test
-    fun case4() {
-        createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
-            checkSuccessors(0, setOf(1, 3))
-            checkSuccessors(1, setOf(2, 4))
-            checkSuccessors(2, setOf(5))
-            checkSuccessors(3, setOf(4, 6))
-            checkSuccessors(4, setOf(5, 7))
-            checkSuccessors(5, setOf(8))
-            checkSuccessors(6, setOf(7))
-            checkSuccessors(7, setOf(8))
-            checkSuccessors(8, setOf(8))
-        }
-    }
-
-    @Test
-    fun case5() {
-        createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
-            checkSuccessors(0, setOf(0))
-            checkSuccessors(1, setOf(0))
-            checkSuccessors(2, setOf(1))
-            checkSuccessors(3, setOf(0))
-            checkSuccessors(4, setOf(1, 3))
-            checkSuccessors(5, setOf(2, 4))
-            checkSuccessors(6, setOf(3))
-            checkSuccessors(7, setOf(4, 6))
-            checkSuccessors(8, setOf(5, 7))
-        }
-    }
-
-    @Test
-    fun case6() {
         createFragment(listOf(-1.0, -1.0, 1.0, 1.0), listOf(1.0, 1.0, -1.0, -1.0)).run {
             checkSuccessors(0, setOf(3))
             checkSuccessors(1, setOf(0, 4))
@@ -168,6 +124,147 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
             checkSuccessors(6, setOf(7))
             checkSuccessors(7, setOf(4, 8))
             checkSuccessors(8, setOf(5))
+
+            checkPredecessors(0, setOf(1))
+            checkPredecessors(1, setOf(2, 4))
+            checkPredecessors(2, setOf(5))
+            checkPredecessors(3, setOf(0, 4))
+            checkPredecessors(4, setOf(1, 3, 4, 5, 7))
+            checkPredecessors(5, setOf(4, 8))
+            checkPredecessors(6, setOf(3))
+            checkPredecessors(7, setOf(4, 6))
+            checkPredecessors(8, setOf(7))
+        }
+    }
+
+    @Test
+    fun case3() {
+        createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
+            checkSuccessors(0, setOf(1))
+            checkSuccessors(1, setOf(2))
+            checkSuccessors(2, setOf(2))
+            checkSuccessors(3, setOf(4, 0))
+            checkSuccessors(4, setOf(1, 5))
+            checkSuccessors(5, setOf(2))
+            checkSuccessors(6, setOf(3, 7))
+            checkSuccessors(7, setOf(4, 8))
+            checkSuccessors(8, setOf(5))
+
+            checkPredecessors(0, setOf(3))
+            checkPredecessors(1, setOf(0, 4))
+            checkPredecessors(2, setOf(1, 2, 5))
+            checkPredecessors(3, setOf(6))
+            checkPredecessors(4, setOf(3, 7))
+            checkPredecessors(5, setOf(4, 8))
+            checkPredecessors(6, setOf())
+            checkPredecessors(7, setOf(6))
+            checkPredecessors(8, setOf(7))
+        }
+    }
+
+    @Test
+    fun case4() {
+        createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
+            checkSuccessors(0, setOf(3))
+            checkSuccessors(1, setOf(0, 4))
+            checkSuccessors(2, setOf(1, 5))
+            checkSuccessors(3, setOf(6))
+            checkSuccessors(4, setOf(3, 7))
+            checkSuccessors(5, setOf(4, 8))
+            checkSuccessors(6, setOf(6))
+            checkSuccessors(7, setOf(6))
+            checkSuccessors(8, setOf(7))
+
+            checkPredecessors(0, setOf(1))
+            checkPredecessors(1, setOf(2))
+            checkPredecessors(2, setOf())
+            checkPredecessors(3, setOf(0, 4))
+            checkPredecessors(4, setOf(1, 5))
+            checkPredecessors(5, setOf(2))
+            checkPredecessors(6, setOf(3, 6, 7))
+            checkPredecessors(7, setOf(4, 8))
+            checkPredecessors(8, setOf(5))
+        }
+    }
+
+    @Test
+    fun case5() {
+        createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
+            checkSuccessors(0, setOf(1, 3))
+            checkSuccessors(1, setOf(2, 4))
+            checkSuccessors(2, setOf(5))
+            checkSuccessors(3, setOf(4, 6))
+            checkSuccessors(4, setOf(5, 7))
+            checkSuccessors(5, setOf(8))
+            checkSuccessors(6, setOf(7))
+            checkSuccessors(7, setOf(8))
+            checkSuccessors(8, setOf(8))
+
+            checkPredecessors(0, setOf())
+            checkPredecessors(1, setOf(0))
+            checkPredecessors(2, setOf(1))
+            checkPredecessors(3, setOf(0))
+            checkPredecessors(4, setOf(1, 3))
+            checkPredecessors(5, setOf(2, 4))
+            checkPredecessors(6, setOf(3))
+            checkPredecessors(7, setOf(4, 6))
+            checkPredecessors(8, setOf(5, 7, 8))
+        }
+    }
+
+    @Test
+    fun case6() {
+        createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
+            checkSuccessors(0, setOf(0))
+            checkSuccessors(1, setOf(0))
+            checkSuccessors(2, setOf(1))
+            checkSuccessors(3, setOf(0))
+            checkSuccessors(4, setOf(1, 3))
+            checkSuccessors(5, setOf(2, 4))
+            checkSuccessors(6, setOf(3))
+            checkSuccessors(7, setOf(4, 6))
+            checkSuccessors(8, setOf(5, 7))
+
+            checkPredecessors(0, setOf(0, 1, 3))
+            checkPredecessors(1, setOf(2, 4))
+            checkPredecessors(2, setOf(5))
+            checkPredecessors(3, setOf(4, 6))
+            checkPredecessors(4, setOf(5, 7))
+            checkPredecessors(5, setOf(8))
+            checkPredecessors(6, setOf(7))
+            checkPredecessors(7, setOf(8))
+            checkPredecessors(8, setOf())
+        }
+    }
+
+    /*
+        ->
+       ^  |
+       |  v
+        <-
+    */
+    @Test
+    fun case7() {
+        createFragment(listOf(-1.0, -1.0, 1.0, 1.0), listOf(1.0, 1.0, -1.0, -1.0)).run {
+            checkSuccessors(0, setOf(3))
+            checkSuccessors(1, setOf(0, 4))
+            checkSuccessors(2, setOf(1))
+            checkSuccessors(3, setOf(4, 6))
+            checkSuccessors(4, setOf(1, 3, 4, 5, 7))
+            checkSuccessors(5, setOf(4, 2))
+            checkSuccessors(6, setOf(7))
+            checkSuccessors(7, setOf(4, 8))
+            checkSuccessors(8, setOf(5))
+
+            checkPredecessors(0, setOf(1))
+            checkPredecessors(1, setOf(2, 4))
+            checkPredecessors(2, setOf(5))
+            checkPredecessors(3, setOf(0, 4))
+            checkPredecessors(4, setOf(1, 3, 4, 5, 7))
+            checkPredecessors(5, setOf(4, 8))
+            checkPredecessors(6, setOf(3))
+            checkPredecessors(7, setOf(4, 6))
+            checkPredecessors(8, setOf(7))
         }
     }
 }
