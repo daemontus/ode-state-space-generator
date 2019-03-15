@@ -286,4 +286,29 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
             checkPredecessors(8, setOf(5, 7, 8))
         }
     }
+
+    @Test
+    fun case9() {
+        createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, 1.0, 1.0, 1.0)).run {
+            checkSuccessors(0, setOf(1, 3))
+            checkSuccessors(1, setOf(2, 4))
+            checkSuccessors(2, setOf(5))
+            checkSuccessors(3, setOf(0, 4, 6)) //why 0?
+            checkSuccessors(4, setOf(5, 7))
+            checkSuccessors(5, setOf(8))
+            checkSuccessors(6, setOf(3, 7)) //why 3?
+            checkSuccessors(7, setOf(8))
+            checkSuccessors(8, setOf(8))
+
+            checkPredecessors(0, setOf(3))
+            checkPredecessors(1, setOf(0))
+            checkPredecessors(2, setOf(1))
+            checkPredecessors(3, setOf(0, 6))
+            checkPredecessors(4, setOf(1, 3))
+            checkPredecessors(5, setOf(2, 4))
+            checkPredecessors(6, setOf(3))
+            checkPredecessors(7, setOf(4, 6))
+            checkPredecessors(8, setOf(5, 7, 8))
+        }
+    }
 }
