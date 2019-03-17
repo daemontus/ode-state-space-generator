@@ -140,8 +140,8 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
             boolean positiveIn = getFacetColors(from, dim, PositiveIn);
-            boolean negativeIn = getFacetColors(from, dim, NegativeIn);
             boolean positiveOut = getFacetColors(from, dim, PositiveOut);
+            boolean negativeIn = getFacetColors(from, dim, NegativeIn);
             boolean negativeOut = getFacetColors(from, dim, NegativeOut);
 
             Integer higherNode = encoder.higherNode(from, dim);
