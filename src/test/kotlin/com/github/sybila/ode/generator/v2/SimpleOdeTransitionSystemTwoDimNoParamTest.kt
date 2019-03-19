@@ -137,6 +137,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+        ->
+       |   |
+       v   v
+        ->
+
+     */
     @Test
     fun case3() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
@@ -162,6 +170,13 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+    /*
+         <-
+       ^   ^
+       |   |
+         <-
+
+     */
     @Test
     fun case4() {
         createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
@@ -187,6 +202,13 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+    /*
+        ->
+       ^   ^
+       |   |
+        ->
+
+     */
     @Test
     fun case5() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
@@ -212,6 +234,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+         <-
+       |   |
+       v   v
+         <-
+
+     */
     @Test
     fun case6() {
         createFragment(listOf(-1.0, -1.0, -1.0, -1.0), listOf(-1.0, -1.0, -1.0, -1.0)).run {
@@ -237,6 +267,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+    /*
+            <-
+        ^   -> ^
+        | |    | |
+          v <-   v
+            ->
+
+     */
     @Test
     fun case7() {
         createFragment(listOf(1.0, -1.0, 1.0, -1.0), listOf(1.0, -1.0, 1.0, -1.0)).run {
@@ -262,6 +300,15 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+        ->
+      ^ <-   ^
+    | |    | |
+    v   -> v
+        <-
+
+    */
     @Test
     fun case8() {
         createFragment(listOf(-1.0, 1.0, -1.0, 1.0), listOf(-1.0, 1.0, -1.0, 1.0)).run {
@@ -287,16 +334,24 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+        ->
+       ^   ^
+     | |   |
+     v
+        ->
+     */
     @Test
     fun case9() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(-1.0, 1.0, 1.0, 1.0)).run {
             checkSuccessors(0, setOf(1, 3))
             checkSuccessors(1, setOf(2, 4))
             checkSuccessors(2, setOf(5))
-            checkSuccessors(3, setOf(0, 4, 6)) //why 0?
+            checkSuccessors(3, setOf(0, 4, 6))
             checkSuccessors(4, setOf(5, 7))
             checkSuccessors(5, setOf(8))
-            checkSuccessors(6, setOf(3, 7)) //why 3?
+            checkSuccessors(6, setOf(3, 7))
             checkSuccessors(7, setOf(8))
             checkSuccessors(8, setOf(8))
 
@@ -312,6 +367,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+    /*
+          ->
+       ^     ^
+       | |   |
+         v
+          ->
+
+     */
     @Test
     fun case10() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, -1.0, 1.0, 1.0)).run {
@@ -337,6 +400,13 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+    /*
+        ->
+      ^     ^
+      |   | |
+          v
+        ->
+     */
     @Test
     fun case11() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, -1.0, 1.0)).run {
@@ -362,6 +432,15 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+        ->
+      ^    ^
+      |    | |
+             v
+        ->
+
+     */
     @Test
     fun case12() {
         createFragment(listOf(1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, -1.0)).run {
@@ -387,6 +466,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+          ->
+        ^    ^
+        |    |
+          ->
+          <-
+     */
     @Test
     fun case13() {
         createFragment(listOf(-1.0, 1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
@@ -414,6 +501,14 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
 
 
 
+    /*
+
+         ->
+       ^    ^
+       |    |
+         <-
+         ->
+     */
     @Test
     fun case14() {
         createFragment(listOf(1.0, -1.0, 1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
@@ -439,6 +534,17 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+
+    /*
+
+        ->
+        <-
+      ^    ^
+      |    |
+        ->
+
+     */
     @Test
     fun case15() {
         createFragment(listOf(1.0, 1.0, -1.0, 1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
@@ -464,6 +570,16 @@ class SimpleOdeTransitionSystemTwoDimNoParamTest {
         }
     }
 
+
+    /*
+
+         <-
+         ->
+       ^    ^
+       |    |
+         ->
+
+     */
     @Test
     fun case16() {
         createFragment(listOf(1.0, 1.0, 1.0, -1.0), listOf(1.0, 1.0, 1.0, 1.0)).run {
