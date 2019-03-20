@@ -20,18 +20,20 @@ import java.util.Set;
 
 
 
+@SuppressWarnings("Duplicates")
 public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<Rectangle>> {
 
     private final OdeModel model;
     private final NodeEncoder encoder;
     private final Integer dimensions;
     private Integer stateCount;
-    private List<Boolean> facetColors;
+    private List<Set<Rectangle>> facetColors;
     private List<List<Summand>> equations = new ArrayList<>();
     private List<List<Double>> thresholds = new ArrayList<>();
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
-    private List<Double> boundsRect = new ArrayList<>();
+    //private List<Double> boundsRect = new ArrayList<>();
+    private double[] boundsRect;
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -70,10 +72,18 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             }
         }
 
+        boundsRect = new double[2 * model.getParameters().size()];
+        for (int i = 0; i < model.getParameters().size(); i++) {
+            boundsRect[2 * i] = model.getParameters().get(i).getRange().getFirst();
+            boundsRect[2 * i + 1] = model.getParameters().get(i).getRange().getSecond();
+        }
+
+        /*
         for (Parameter param: model.getParameters()) {
             boundsRect.add(param.getRange().getFirst());
             boundsRect.add(param.getRange().getSecond());
         }
+        */
     }
 
     /**
@@ -89,7 +99,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         Set<Integer> dependentOn = new HashSet<>();
         for (Summand summand: var.getEquation()) {
             dependentOn.addAll(summand.getVariableIndices());
-
             for (Evaluable e: summand.getEvaluable()) {
                 dependentOn.add(e.getVarIndex());
             }
@@ -97,7 +106,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
         BitSet result = new BitSet(model.getVariables().size());
         result.set(0, model.getVariables().size());
-
         for (Integer index: dependentOn) {
             result.clear(index);
         }
@@ -150,34 +158,34 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         boolean selfLoop = true;
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
-            boolean positiveIn = getFacetColors(from, dim, PositiveIn);
-            boolean positiveOut = getFacetColors(from, dim, PositiveOut);
-            boolean negativeIn = getFacetColors(from, dim, NegativeIn);
-            boolean negativeOut = getFacetColors(from, dim, NegativeOut);
+            Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
+            Set<Rectangle> positiveOut = getFacetColors(from, dim, PositiveOut);
+            Set<Rectangle> negativeIn = getFacetColors(from, dim, NegativeIn);
+            Set<Rectangle> negativeOut = getFacetColors(from, dim, NegativeOut);
 
             Integer higherNode = encoder.higherNode(from, dim);
             if (higherNode != null) {
-                boolean colors = successors ? positiveOut : positiveIn;
-                if (colors) {
+                Set<Rectangle> colors = successors ? positiveOut : positiveIn;
+                if (!colors.isEmpty()) {
                     result.add(higherNode);
                 }
 
                 if (createSelfLoops) {
-                    boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
-                    selfLoop = selfLoop && !positiveFlow;
+                    //boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
+                    //selfLoop = selfLoop && !positiveFlow;
                 }
             }
 
             Integer lowerNode = encoder.lowerNode(from, dim);
             if (lowerNode != null) {
-                boolean colors = successors ? negativeOut : negativeIn;
-                if (colors) {
+                Set<Rectangle> colors = successors ? negativeOut : negativeIn;
+                if (!colors.isEmpty()) {
                     result.add(lowerNode);
                 }
 
                 if (createSelfLoops) {
-                    boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
-                    selfLoop = selfLoop && !negativeFlow;
+                    //boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
+                    //selfLoop = selfLoop && !negativeFlow;
                 }
             }
         }
@@ -194,9 +202,9 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return from + (stateCount * dimension) + (stateCount * dimensions * orientation);
     }
 
-    private boolean getFacetColors(int from, int dimension, int orientation) {
+    private Set<Rectangle> getFacetColors(int from, int dimension, int orientation) {
         int facetIndex = facetIndex(from, dimension, orientation);
-        Boolean currentValue = facetColors.get(facetIndex);
+        Set<Rectangle> currentValue = facetColors.get(facetIndex);
 
         if (currentValue != null) {
             return currentValue;
@@ -211,37 +219,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         boolean positiveDerivation = orientation == PositiveOut || orientation == NegativeIn;
 
         // Compute value
-        boolean colors = false;
-
-        /*
-         * Iterate over all vertex masks. Vertex mask is a binary number which encodes a vertex of a state.
-         * Specifically, every bit in the mask describes whether the vertex contains the lower/upper
-         * threshold of the specified state. The smallest dimension corresponds to the least significant
-         * bit of the mask.
-         * So for a simple 3D cube [[1,2], [3, 5], [-1, 1]], we have 8 masks:
-         * 000 - [1,3,-1]
-         * 001 - [2,3,-1]
-         * 010 - [1,5,-1]
-         * 011 - [2,5,-1]
-         * 100 - [1,3,1]
-         * 101 - [2,3,1]
-         * 110 - [1,5,1]
-         * 111 - [2,5,1]
-
-        for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
-            /*
-                We want to evaluate half of the vertices. Which half is indicated by the positiveFacet variable.
-                If positiveFacet is true, we want to evaluate vertices where the dimension bit is set to 1,
-                if positiveFacet is false, the we want the dimension bit to be set to false.
-
-            if (((mask >> dimension) & 1) != positiveFacet) {
-                continue;
-            }
-            int vertex = encoder.nodeVertex(from, mask);
-            boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
-            colors = colors | vertexColor;
-        }
-        */
+        Set<Rectangle> colors = new HashSet<>();
 
         int dependencyMask = dependenceCheckMasks.get(model.getVariables().get(dimension));
         // if self dependent, dependency mask has 0 at "dimension" position
@@ -253,8 +231,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             }
 
             int vertex = encoder.nodeVertex(from, mask);
-            boolean vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
-            colors = colors | vertexColor;
+            Set<Rectangle> vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
+            //colors = colors | vertexColor;
         }
 
         facetColors.set(facetIndex, colors);
@@ -305,13 +283,13 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             if (newLow >= newHigh) {
                 return null;
             } else {
-                // should rather use array
-                List<Double> r = (List<Double>) ((ArrayList<Double>) boundsRect).clone(); // need to test if shallow copy is enough
-                r.set(2 * parameterIndex, newLow);
-                r.set(2 * parameterIndex + 1, newHigh);
-                result.add(new Rectangle(r.toArray()));
+                double[] r = boundsRect.clone();
+                r[2 * parameterIndex] = newLow;
+                r[2 * parameterIndex + 1] = newHigh;
+                result.add(new Rectangle(r));
             }
         }
+        return result;
     }
 
 
