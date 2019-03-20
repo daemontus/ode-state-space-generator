@@ -4,13 +4,23 @@ import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.generator.rect.Rectangle;
 import com.github.sybila.ode.model.Evaluable;
 import com.github.sybila.ode.model.OdeModel;
+import com.github.sybila.ode.model.OdeModel.Parameter;
 import com.github.sybila.ode.model.OdeModel.Variable;
 import com.github.sybila.ode.model.Summand;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
+
+
+public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<Rectangle>> {
 
     private final OdeModel model;
     private final NodeEncoder encoder;
@@ -21,6 +31,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Bool
     private List<List<Double>> thresholds = new ArrayList<>();
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
+    private List<Double> boundsRect = new ArrayList<>();
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -57,6 +68,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Bool
                     masks.get(var).add(mask);
                 }
             }
+        }
+
+        for (Parameter param: model.getParameters()) {
+            boundsRect.add(param.getRange().getFirst());
+            boundsRect.add(param.getRange().getSecond());
         }
     }
 
@@ -251,8 +267,50 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Bool
         double denominator = 0.0;
         int parameterIndex = -1;
 
-        for (int i = 0; i < dimensions; i++) {
+        for (Summand summand: model.getVariables().get(dimension).getEquation()) {
+            double partialSum = summand.getConstant();
+            for (Integer v: summand.getVariableIndices()) {
+                partialSum *= model.getVariables().get(v).getThresholds().get(encoder.vertexCoordinate(vertex, v));
+            }
+            if (partialSum != 0.0) {
+                for (Evaluable function: summand.getEvaluable()) {
+                    int index = function.getVarIndex();
+                    partialSum *= function.invoke(model.getVariables().get(index).getThresholds()
+                            .get(encoder.vertexCoordinate(vertex, index)));
+                }
+            }
 
+            if (summand.hasParam()) {
+                parameterIndex = summand.getParamIndex();
+                denominator += partialSum;
+            } else {
+                derivationValue += partialSum;
+            }
+        }
+
+        if (parameterIndex == -1 || denominator == 0.0) {
+            if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) {
+                //tt
+            } else {
+                //ff
+            }
+        } else {
+            // division by negative number flips the condition
+            boolean newPositive = (denominator > 0) == positive;
+            Pair<Double, Double> range = model.getParameters().get(parameterIndex).getRange();
+            double split = Math.min(range.getSecond(), Math.max(range.getFirst(), -derivationValue / denominator));
+            double newLow = newPositive ? split : range.getFirst();
+            double newHigh = newPositive ? range.getSecond() : split;
+
+            if (newLow >= newHigh) {
+                return null;
+            } else {
+                // should rather use array
+                List<Double> r = (List<Double>) ((ArrayList<Double>) boundsRect).clone(); // need to test if shallow copy is enough
+                r.set(2 * parameterIndex, newLow);
+                r.set(2 * parameterIndex + 1, newHigh);
+                result.add(new Rectangle(r.toArray()));
+            }
         }
     }
 
@@ -260,15 +318,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     @NotNull
     @Override
-    public Boolean transitionParameters(@NotNull Integer source, @NotNull Integer target) {
+    public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
         return null;
     }
 
     public static void main(String[] args) {
-        //Parser modelParser = new Parser();
-        //OdeModel model = modelParser.parse(new File("model.txt"));
-        //OdeModel modelWithThresholds = ModelApproximationKt.computeApproximation(model, false, true);
-        //SimpleOdeTransitionSystem simpleOdeTransitionSystem = new SimpleOdeTransitionSystem(modelWithThresholds);
     }
 
 }
