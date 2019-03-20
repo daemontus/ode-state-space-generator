@@ -1,6 +1,9 @@
 package com.github.sybila.ode.generator.v2;
 
+import com.github.sybila.checker.UtilsKt;
 import com.github.sybila.checker.Solver;
+import com.github.sybila.checker.Transition;
+import com.github.sybila.huctl.DirectionFormula;
 import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.generator.rect.Rectangle;
 import com.github.sybila.ode.generator.rect.RectangleSolver;
@@ -22,7 +25,7 @@ import java.util.Set;
 
 
 @SuppressWarnings("Duplicates")
-public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<Rectangle>> {
+public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Set<Rectangle>>, Set<Rectangle>> {
 
     private final OdeModel model;
     private final NodeEncoder encoder;
@@ -146,22 +149,23 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
     @NotNull
     @Override
-    public List<Integer> successors(@NotNull Integer from) {
+    public List<Transition<Set<Rectangle>>> successors(int from) {
         return getStep(from, true);
     }
 
     @NotNull
     @Override
-    public List<Integer> predecessors(@NotNull Integer from) {
+    public List<Transition<Set<Rectangle>>> predecessors(int from) {
        return getStep(from, false);
     }
 
 
-    private List<Integer> getStep(int from, Boolean successors) {
-        List<Integer> result = new ArrayList<>();
+    private List<Transition<Set<Rectangle>>> getStep(int from, Boolean successors) {
+        List<Transition<Set<Rectangle>>> result = new ArrayList<>();
         Set<Rectangle> selfLoop = solver.getTt();
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
+            String dimName = model.getVariables().get(dim).getName();
             Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
             Set<Rectangle> positiveOut = getFacetColors(from, dim, PositiveOut);
             Set<Rectangle> negativeIn = getFacetColors(from, dim, NegativeIn);
@@ -171,7 +175,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             if (higherNode != null) {
                 Set<Rectangle> colors = successors ? positiveOut : positiveIn;
                 if (solver.isSat(colors)) {
-                    result.add(higherNode);
+                    result.add(new Transition<>(
+                            higherNode,
+                            successors ? UtilsKt.increaseProp(dimName) : UtilsKt.decreaseProp(dimName),
+                            colors
+                    ));
                 }
 
                 if (createSelfLoops) {
@@ -188,7 +196,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             if (lowerNode != null) {
                 Set<Rectangle> colors = successors ? negativeOut : negativeIn;
                 if (solver.isSat(colors)) {
-                    result.add(lowerNode);
+                    result.add(new Transition<>(
+                            lowerNode,
+                            successors ? UtilsKt.decreaseProp(dimName) : UtilsKt.increaseProp(dimName),
+                            colors
+                    ));
                 }
 
                 if (createSelfLoops) {
@@ -203,7 +215,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         }
 
         if (solver.isSat(selfLoop)) {
-            result.add(from);
+            result.add(new Transition<>(
+                    from,
+                    DirectionFormula.Atom.Loop.INSTANCE,
+                    selfLoop
+            ));
         }
 
         return result;
@@ -308,15 +324,13 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return result;
     }
 
-
-
     @NotNull
     @Override
-    public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
+    public Set<Rectangle> transitionParameters(@NotNull Transition<Set<Rectangle>> source, @NotNull Transition<Set<Rectangle>> target) {
         return null;
     }
 
     public static void main(String[] args) {
-    }
 
+    }
 }
