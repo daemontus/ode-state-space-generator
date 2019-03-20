@@ -47,7 +47,7 @@ class ParamsOdeTransitionSystemOneDimTest {
     val down = "v1".decreaseProp()
     val loop = DirectionFormula.Atom.Loop
 
-    @Test
+    /*@Test
     fun parameterTestOne() {
         fragmentOne.run {
             assertTransitionEquals(0.successors(),
@@ -119,5 +119,5 @@ class ParamsOdeTransitionSystemOneDimTest {
                     Transition(2, loop, rectangleOf(1.0, 2.0).asParams())
             )
         }
-    }
+    }*/
 }
