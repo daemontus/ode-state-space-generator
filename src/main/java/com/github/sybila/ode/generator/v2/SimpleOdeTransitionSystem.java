@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("Duplicates")
 public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Boolean> {
 
     private final OdeModel model;
