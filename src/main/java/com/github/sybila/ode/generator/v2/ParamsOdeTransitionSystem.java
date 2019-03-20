@@ -1,10 +1,11 @@
 package com.github.sybila.ode.generator.v2;
 
+import com.github.sybila.checker.Solver;
 import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.generator.rect.Rectangle;
+import com.github.sybila.ode.generator.rect.RectangleSolver;
 import com.github.sybila.ode.model.Evaluable;
 import com.github.sybila.ode.model.OdeModel;
-import com.github.sybila.ode.model.OdeModel.Parameter;
 import com.github.sybila.ode.model.OdeModel.Variable;
 import com.github.sybila.ode.model.Summand;
 import kotlin.Pair;
@@ -32,6 +33,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private List<List<Double>> thresholds = new ArrayList<>();
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
+    private Solver<Set<Rectangle>> solver;
     //private List<Double> boundsRect = new ArrayList<>();
     private double[] boundsRect;
 
@@ -77,6 +79,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             boundsRect[2 * i] = model.getParameters().get(i).getRange().getFirst();
             boundsRect[2 * i + 1] = model.getParameters().get(i).getRange().getSecond();
         }
+
+        solver = new RectangleSolver(new Rectangle(boundsRect));
 
         /*
         for (Parameter param: model.getParameters()) {
@@ -155,7 +159,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
     private List<Integer> getStep(int from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
-        boolean selfLoop = true;
+        Set<Rectangle> selfLoop = solver.getTt();
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
             Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
@@ -166,11 +170,15 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             Integer higherNode = encoder.higherNode(from, dim);
             if (higherNode != null) {
                 Set<Rectangle> colors = successors ? positiveOut : positiveIn;
-                if (!colors.isEmpty()) {
+                if (solver.isSat(colors)) {
                     result.add(higherNode);
                 }
 
                 if (createSelfLoops) {
+                    Set<Rectangle> positiveFlow = solver.and(solver.and(negativeIn, positiveOut),
+                            solver.not(solver.or(negativeOut, positiveIn)));
+                    selfLoop = solver.and(selfLoop, solver.not(positiveFlow));
+
                     //boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
                     //selfLoop = selfLoop && !positiveFlow;
                 }
@@ -179,18 +187,22 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             Integer lowerNode = encoder.lowerNode(from, dim);
             if (lowerNode != null) {
                 Set<Rectangle> colors = successors ? negativeOut : negativeIn;
-                if (!colors.isEmpty()) {
+                if (solver.isSat(colors)) {
                     result.add(lowerNode);
                 }
 
                 if (createSelfLoops) {
+                    Set<Rectangle> negativeFlow = solver.and(solver.and(negativeOut, positiveIn),
+                            solver.not(solver.or(negativeIn, positiveOut)));
+                    selfLoop = solver.and(selfLoop, solver.not(negativeFlow));
+
                     //boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
                     //selfLoop = selfLoop && !negativeFlow;
                 }
             }
         }
 
-        if (selfLoop) {
+        if (solver.isSat(selfLoop)) {
             result.add(from);
         }
 
@@ -219,7 +231,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         boolean positiveDerivation = orientation == PositiveOut || orientation == NegativeIn;
 
         // Compute value
-        Set<Rectangle> colors = new HashSet<>();
+        Set<Rectangle> colors = solver.getFf();
 
         int dependencyMask = dependenceCheckMasks.get(model.getVariables().get(dimension));
         // if self dependent, dependency mask has 0 at "dimension" position
@@ -232,6 +244,10 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
             int vertex = encoder.nodeVertex(from, mask);
             Set<Rectangle> vertexColor = getVertexColor(vertex, dimension, positiveDerivation);
+            if (vertexColor != null) {
+                colors = solver.or(colors, vertexColor);
+            }
+
             //colors = colors | vertexColor;
         }
 
@@ -268,9 +284,9 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
         if (parameterIndex == -1 || denominator == 0.0) {
             if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) {
-                //tt
+                return solver.getTt();
             } else {
-                //ff
+                return solver.getFf();
             }
         } else {
             // division by negative number flips the condition
