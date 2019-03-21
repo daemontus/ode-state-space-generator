@@ -5,7 +5,6 @@ import com.github.sybila.checker.decreaseProp
 import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.ode.assertTransitionEquals
-import com.github.sybila.ode.generator.rect.RectangleOdeModel
 import com.github.sybila.ode.generator.rect.rectangleOf
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
@@ -47,42 +46,35 @@ class ParamsOdeTransitionSystemOneDimTest {
     val down = "v1".decreaseProp()
     val loop = DirectionFormula.Atom.Loop
 
-    /*@Test
+    @Test
     fun parameterTestOne() {
         fragmentOne.run {
-            assertTransitionEquals(0.successors(),
+            solver.assertTransitionEquals(0.successors().iterator(),
                     Transition(0, loop, rectangleOf(0.0, 1.0).asParams()),
                     Transition(1, up, rectangleOf(1.0 / 2.0, 2.0).asParams())
             )
-            assertTransitionEquals(1.successors(),
+            solver.assertTransitionEquals(1.successors().iterator(),
                     Transition(0, down, rectangleOf(0.0, 1.0 / 2.0).asParams()),
                     Transition(1, loop, rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams()),
                     Transition(2, up, rectangleOf(1.0 / 3.0, 2.0).asParams())
             )
-            assertTransitionEquals(2.successors(),
+            solver.assertTransitionEquals(2.successors().iterator(),
                     Transition(1, down, rectangleOf(0.0, 1.0 / 3.0).asParams()),
                     Transition(2, loop, rectangleOf(1.0 / 4.0, 2.0).asParams())
             )
-            assertTransitionEquals(0.predecessors(),
+            solver.assertTransitionEquals(0.predecessors().iterator(),
                     Transition(0, loop, rectangleOf(0.0, 1.0).asParams()),
                     Transition(1, down, rectangleOf(0.0, 1.0 / 2.0).asParams())
             )
-            assertTransitionEquals(1.predecessors(),
+            solver.assertTransitionEquals(1.predecessors().iterator(),
                     Transition(0, up, rectangleOf(1.0 / 2.0, 2.0).asParams()),
                     Transition(1, loop, rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams()),
                     Transition(2, down, rectangleOf(0.0, 1.0 / 3.0).asParams())
             )
-            assertTransitionEquals(2.predecessors(),
+            solver.assertTransitionEquals(2.predecessors().iterator(),
                     Transition(1, up, rectangleOf(1.0 / 3.0, 2.0).asParams()),
                     Transition(2, loop, rectangleOf(1.0 / 4.0, 2.0).asParams())
             )
-        }
-    }
-
-    @Test
-    fun parameterTestThree() {
-        fragmentOne.run {
-            successors()
         }
     }
 
@@ -94,30 +86,30 @@ class ParamsOdeTransitionSystemOneDimTest {
         //(2) dv2 = p(0) - 1 // -1
         //(3) dv2 = p(1) - 1  p<1 => - // p > 1 => +
         fragmentTwo.run {
-            assertTransitionEquals(0.successors(),
+            solver.assertTransitionEquals(0.successors().iterator(),
                     Transition(0, loop, rectangleOf(-1.0, 2.0).asParams()),
                     Transition(1, up, rectangleOf(-2.0, -1.0).asParams())
             )
-            assertTransitionEquals(1.successors(),
+            solver.assertTransitionEquals(1.successors().iterator(),
                     Transition(0, down, rectangleOf(-1.0, 2.0).asParams()),
                     Transition(1, loop, rectangleOf(-2.0, -1.0).asParams())
             )
-            assertTransitionEquals(2.successors(),
+            solver.assertTransitionEquals(2.successors().iterator(),
                     Transition(1, down, rectangleOf(-2.0, 2.0).asParams()),
                     Transition(2, loop, rectangleOf(1.0, 2.0).asParams())
             )
-            assertTransitionEquals(0.predecessors(),
+            solver.assertTransitionEquals(0.predecessors().iterator(),
                     Transition(0, loop, rectangleOf(-1.0, 2.0).asParams()),
                     Transition(1, down, rectangleOf(-1.0, 2.0).asParams())
             )
-            assertTransitionEquals(1.predecessors(),
+            solver.assertTransitionEquals(1.predecessors().iterator(),
                     Transition(0, up, rectangleOf(-2.0, -1.0).asParams()),
                     Transition(1, loop, rectangleOf(-2.0, -1.0).asParams()),
                     Transition(2, down, rectangleOf(-2.0, 2.0).asParams())
             )
-            assertTransitionEquals(2.predecessors(),
+            solver.assertTransitionEquals(2.predecessors().iterator(),
                     Transition(2, loop, rectangleOf(1.0, 2.0).asParams())
             )
         }
-    }*/
+    }
 }

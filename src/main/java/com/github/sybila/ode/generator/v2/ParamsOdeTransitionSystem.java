@@ -36,7 +36,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Se
     private List<List<Double>> thresholds = new ArrayList<>();
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
-    private Solver<Set<Rectangle>> solver;
+    public Solver<Set<Rectangle>> solver;
     //private List<Double> boundsRect = new ArrayList<>();
     private double[] boundsRect;
 
