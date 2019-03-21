@@ -30,7 +30,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Se
     private final OdeModel model;
     private final NodeEncoder encoder;
     private final Integer dimensions;
-    private Integer stateCount;
+    public Integer stateCount;
     private List<Set<Rectangle>> facetColors;
     private List<List<Summand>> equations = new ArrayList<>();
     private List<List<Double>> thresholds = new ArrayList<>();
