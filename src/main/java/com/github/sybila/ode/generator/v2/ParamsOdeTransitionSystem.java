@@ -1,9 +1,6 @@
 package com.github.sybila.ode.generator.v2;
 
-import com.github.sybila.checker.UtilsKt;
 import com.github.sybila.checker.Solver;
-import com.github.sybila.checker.Transition;
-import com.github.sybila.huctl.DirectionFormula;
 import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.generator.rect.Rectangle;
 import com.github.sybila.ode.generator.rect.RectangleSolver;
@@ -21,7 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 
 
 @SuppressWarnings("Duplicates")
