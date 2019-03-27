@@ -146,6 +146,14 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Se
         }
         return result;
     }
+    
+    /*
+    private List<List<Integer>> successors;
+    private Map<Int, List<Integer>> successors;
+    private List<List<Integer>> predecessors;
+    
+    private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours;
+    */
 
     @NotNull
     @Override
