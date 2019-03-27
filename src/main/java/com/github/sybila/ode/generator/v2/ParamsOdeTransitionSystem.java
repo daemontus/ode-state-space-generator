@@ -37,7 +37,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
     public Solver<Set<Rectangle>> solver;
-    //private List<Double> boundsRect = new ArrayList<>();
     private double[] boundsRect;
 
     private Integer PositiveIn = 0;
@@ -84,13 +83,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         }
 
         solver = new RectangleSolver(new Rectangle(boundsRect));
-
-        /*
-        for (Parameter param: model.getParameters()) {
-            boundsRect.add(param.getRange().getFirst());
-            boundsRect.add(param.getRange().getSecond());
-        }
-        */
     }
 
     /**
@@ -147,33 +139,31 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return result;
     }
     
-    /*
-    private List<List<Integer>> successors;
-    private Map<Int, List<Integer>> successors;
-    private List<List<Integer>> predecessors;
-    
-    private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours;
-    */
+
+    private Map<Integer, List<Integer>> successors = new HashMap<>();
+    private Map<Integer, List<Integer>> predecessors= new HashMap<>();
+
+    private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours = new HashMap<>();
 
     @NotNull
     @Override
-    public List<Transition<Set<Rectangle>>> successors(int from) {
-        return getStep(from, true);
+    public List<Integer> successors(@NotNull Integer from) {
+        return successors.computeIfAbsent(from, f -> getStep(f, true));
     }
 
     @NotNull
     @Override
-    public List<Transition<Set<Rectangle>>> predecessors(int from) {
-       return getStep(from, false);
+    public List<Integer> predecessors(@NotNull Integer from) {
+       return predecessors.computeIfAbsent(from, f -> getStep(f, false));
     }
 
 
-    private List<Transition<Set<Rectangle>>> getStep(int from, Boolean successors) {
-        List<Transition<Set<Rectangle>>> result = new ArrayList<>();
+    private List<Integer> getStep(int from, Boolean successors) {
+        List<Integer> result = new ArrayList<>();
         Set<Rectangle> selfLoop = solver.getTt();
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
-            String dimName = model.getVariables().get(dim).getName();
+            //String dimName = model.getVariables().get(dim).getName();
             Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
             Set<Rectangle> positiveOut = getFacetColors(from, dim, PositiveOut);
             Set<Rectangle> negativeIn = getFacetColors(from, dim, NegativeIn);
@@ -183,11 +173,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             if (higherNode != null) {
                 Set<Rectangle> colors = successors ? positiveOut : positiveIn;
                 if (solver.isSat(colors)) {
-                    result.add(new Transition<>(
-                            higherNode,
-                            successors ? UtilsKt.increaseProp(dimName) : UtilsKt.decreaseProp(dimName),
-                            colors
-                    ));
+                    result.add(higherNode);
+                    edgeColours.put(new Pair<>(from, higherNode), colors);
                 }
 
                 if (createSelfLoops) {
@@ -204,11 +191,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             if (lowerNode != null) {
                 Set<Rectangle> colors = successors ? negativeOut : negativeIn;
                 if (solver.isSat(colors)) {
-                    result.add(new Transition<>(
-                            lowerNode,
-                            successors ? UtilsKt.decreaseProp(dimName) : UtilsKt.increaseProp(dimName),
-                            colors
-                    ));
+                    result.add(lowerNode);
+                    edgeColours.put(new Pair<>(from, lowerNode), colors);
                 }
 
                 if (createSelfLoops) {
@@ -223,11 +207,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         }
 
         if (solver.isSat(selfLoop)) {
-            result.add(new Transition<>(
-                    from,
-                    DirectionFormula.Atom.Loop.INSTANCE,
-                    selfLoop
-            ));
+            result.add(from);
+            edgeColours.put(new Pair<>(from, from), selfLoop); // colors?
         }
 
         return result;
@@ -335,7 +316,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     @NotNull
     @Override
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
-        return null;
+        return edgeColours.get(new Pair<>(source, target)); // what if it's null
     }
 
     public static void main(String[] args) {

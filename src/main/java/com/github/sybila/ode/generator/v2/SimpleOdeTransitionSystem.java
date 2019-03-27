@@ -124,13 +124,13 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
 
     @NotNull
     @Override
-    public List<Integer> successors(int from) {
+    public List<Integer> successors(@NotNull Integer from) {
         return getStep(from, true);
     }
 
     @NotNull
     @Override
-    public List<Integer> predecessors(int from) {
+    public List<Integer> predecessors(@NotNull Integer from) {
        return getStep(from, false);
     }
 
