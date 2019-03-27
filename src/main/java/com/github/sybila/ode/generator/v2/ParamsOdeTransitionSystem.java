@@ -314,8 +314,4 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
         return edgeColours.get(new Pair<>(source, target)); // what if it's null
     }
-
-    public static void main(String[] args) {
-
-    }
 }
