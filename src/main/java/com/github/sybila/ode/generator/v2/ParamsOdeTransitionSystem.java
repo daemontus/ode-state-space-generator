@@ -25,7 +25,7 @@ import java.util.Set;
 
 
 @SuppressWarnings("Duplicates")
-public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Set<Rectangle>>, Set<Rectangle>> {
+public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<Rectangle>> {
 
     private final OdeModel model;
     private final NodeEncoder encoder;
@@ -334,7 +334,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Transition<Se
 
     @NotNull
     @Override
-    public Set<Rectangle> transitionParameters(@NotNull Transition<Set<Rectangle>> source, @NotNull Transition<Set<Rectangle>> target) {
+    public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
         return null;
     }
 
