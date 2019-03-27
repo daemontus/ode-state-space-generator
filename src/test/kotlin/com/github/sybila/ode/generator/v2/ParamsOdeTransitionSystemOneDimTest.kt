@@ -9,6 +9,7 @@ import com.github.sybila.ode.generator.rect.rectangleOf
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
 import org.junit.Test
+import kotlin.test.assertEquals
 
 class ParamsOdeTransitionSystemOneDimTest {
     //dv1 = p(v1/2 + 1) - 1
@@ -46,6 +47,34 @@ class ParamsOdeTransitionSystemOneDimTest {
     val down = "v1".decreaseProp()
     val loop = DirectionFormula.Atom.Loop
 
+    private fun ParamsOdeTransitionSystem.checkSuccessors(from: Int, to: List<Int>) {
+        this.run {
+            val s = from.successors().asSequence().toSet()
+            assertEquals(to.toSet(), s)
+        }
+    }
+
+    private fun ParamsOdeTransitionSystem.checkPredecessors(from: Int, to: List<Int>) {
+        this.run {
+            val s = from.predecessors().asSequence().toSet()
+            assertEquals(to.toSet(), s)
+        }
+    }
+
+    @Test
+    fun parameterTestOne() {
+        fragmentOne.run {
+            checkSuccessors(0, listOf(0, 1))
+            checkSuccessors(1, listOf(0, 1, 2))
+            checkSuccessors(2, listOf(1, 2))
+
+            checkPredecessors(0, listOf(0, 1))
+            checkPredecessors(1, listOf(0, 1, 2))
+            checkPredecessors(2, listOf(1, 2))
+        }
+    }
+
+    /*
     @Test
     fun parameterTestOne() {
         fragmentOne.run {
@@ -77,7 +106,22 @@ class ParamsOdeTransitionSystemOneDimTest {
             )
         }
     }
+    */
 
+    @Test
+    fun parameterTestTwo() {
+        fragmentTwo.run {
+            checkSuccessors(0, listOf(0, 1))
+            checkSuccessors(1, listOf(0, 1))
+            checkSuccessors(2, listOf(1, 2))
+
+            checkPredecessors(0, listOf(0, 1))
+            checkPredecessors(1, listOf(0, 1, 2))
+            checkPredecessors(2, listOf(2))
+        }
+    }
+
+    /*
     @Test
     fun parameterTestTwo() {
         //dv2 = p(v1 - 2) - 1
@@ -112,4 +156,5 @@ class ParamsOdeTransitionSystemOneDimTest {
             )
         }
     }
+    */
 }

@@ -83,7 +83,7 @@ class ParamsOdeTransitionSystemTwoDimTest {
     private fun singleRectangle(vararg values: Double): MutableSet<Rectangle>
             = mutableSetOf(rectangleOf(*values))
 
-    @Test
+    /*@Test
     fun fragmentOneTest() {
         //Note that these edges can be quite easily "derived" from one dimensional model.
         //It's basically a cartesian product or two transition relations of one dimensional model.
@@ -177,5 +177,5 @@ class ParamsOdeTransitionSystemTwoDimTest {
                 )
             }
         }
-    }
+    }*/
 }
