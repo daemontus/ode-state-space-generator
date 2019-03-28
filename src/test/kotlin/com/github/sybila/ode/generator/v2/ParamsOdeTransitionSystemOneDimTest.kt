@@ -4,7 +4,9 @@ import com.github.sybila.checker.Transition
 import com.github.sybila.checker.decreaseProp
 import com.github.sybila.checker.increaseProp
 import com.github.sybila.huctl.DirectionFormula
+import com.github.sybila.ode.assertDeepEquals
 import com.github.sybila.ode.assertTransitionEquals
+import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.rectangleOf
 import com.github.sybila.ode.model.OdeModel
 import com.github.sybila.ode.model.Summand
@@ -61,16 +63,36 @@ class ParamsOdeTransitionSystemOneDimTest {
         }
     }
 
+    private fun ParamsOdeTransitionSystem.checkTransitions(from: Int, bounds: Map<Int, MutableSet<Rectangle>>) {
+        val states = from.successors()
+        assert(states.size == bounds.size)
+
+        for (state in states) {
+            assert(bounds.containsKey(state))
+            assert(bounds[state] == transitionParameters(from, state))
+
+        }
+
+    }
+
     @Test
     fun parameterTestOne() {
         fragmentOne.run {
-            checkSuccessors(0, listOf(0, 1))
-            checkSuccessors(1, listOf(0, 1, 2))
-            checkSuccessors(2, listOf(1, 2))
+            checkTransitions(0, mapOf(
+                    0 to rectangleOf(0.0, 1.0).asParams(),
+                    1 to rectangleOf(1.0 / 2.0, 2.0).asParams()
+            ))
 
-            checkPredecessors(0, listOf(0, 1))
-            checkPredecessors(1, listOf(0, 1, 2))
-            checkPredecessors(2, listOf(1, 2))
+            checkTransitions(1, mapOf(
+                    0 to rectangleOf(0.0, 1.0 / 2.0).asParams(),
+                    1 to rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams(),
+                    2 to rectangleOf(1.0 / 3.0, 2.0).asParams()
+            ))
+
+            checkTransitions(2, mapOf(
+                    1 to rectangleOf(0.0, 1.0 / 3.0).asParams(),
+                    2 to rectangleOf(1.0 / 4.0, 2.0).asParams()
+            ))
         }
     }
 
@@ -111,13 +133,20 @@ class ParamsOdeTransitionSystemOneDimTest {
     @Test
     fun parameterTestTwo() {
         fragmentTwo.run {
-            checkSuccessors(0, listOf(0, 1))
-            checkSuccessors(1, listOf(0, 1))
-            checkSuccessors(2, listOf(1, 2))
+            checkTransitions(0, mapOf(
+                    0 to rectangleOf(-1.0, 2.0).asParams(),
+                    1 to rectangleOf(-2.0, -1.0).asParams()
+            ))
 
-            checkPredecessors(0, listOf(0, 1))
-            checkPredecessors(1, listOf(0, 1, 2))
-            checkPredecessors(2, listOf(2))
+            checkTransitions(1, mapOf(
+                    0 to rectangleOf(-1.0, 2.0).asParams(),
+                    1 to rectangleOf(-2.0, -1.0).asParams()
+            ))
+
+            checkTransitions(2, mapOf(
+                    1 to rectangleOf(-2.0, 2.0).asParams(),
+                    2 to rectangleOf(1.0, 2.0).asParams()
+            ))
         }
     }
 
