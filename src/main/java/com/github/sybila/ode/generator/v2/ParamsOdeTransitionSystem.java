@@ -27,41 +27,34 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private final NodeEncoder encoder;
     private final Integer dimensions;
     public Integer stateCount;
+    private Boolean createSelfLoops;
     private List<Set<Rectangle>> facetColors;
-    private List<List<Summand>> equations = new ArrayList<>();
-    private List<List<Double>> thresholds = new ArrayList<>();
     private Map<Variable, List<Integer>> masks = new HashMap<>();
     private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
-    public Solver<Set<Rectangle>> solver;
     private double[] boundsRect;
+    public Solver<Set<Rectangle>> solver;
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
     private Integer NegativeIn = 2;
     private Integer NegativeOut = 3;
 
-    private Boolean createSelfLoops;
-
     public ParamsOdeTransitionSystem(OdeModel model) {
         this.model = model;
-        this.encoder = new NodeEncoder(model);
-        this.dimensions = model.getVariables().size();
-        this.stateCount = getStateCount();
-        this.facetColors = new ArrayList<>();
+        encoder = new NodeEncoder(model);
+        dimensions = model.getVariables().size();
+        stateCount = getStateCount();
+        createSelfLoops = true;
 
+        facetColors = new ArrayList<>();
         for (int i = 0; i < stateCount * dimensions * 4; i++) {
-            this.facetColors.add(null);
+            facetColors.add(null);
         }
 
         for (Variable var: model.getVariables()) {
-            this.equations.add(var.getEquation());
-            this.thresholds.add(var.getThresholds());
-            this.masks.put(var, new ArrayList<>());
-            this.dependenceCheckMasks.put(var, getDependenceCheckMask(var));
+            masks.put(var, new ArrayList<>());
+            dependenceCheckMasks.put(var, getDependenceCheckMask(var));
         }
-
-        createSelfLoops = true;
-
 
         //Iterates through all possible masks and all variables, filters out masks which are valid and saves them.
         for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
@@ -170,7 +163,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                 Set<Rectangle> colors = successors ? positiveOut : positiveIn;
                 if (solver.isSat(colors)) {
                     result.add(higherNode);
-                    edgeColours.put(new Pair<>(from, higherNode), colors);
+                    if (successors) {
+                        edgeColours.putIfAbsent(new Pair<>(from, higherNode), colors); // putIfAbsent?
+                    } else {
+                        edgeColours.putIfAbsent(new Pair<>(higherNode, from), colors);
+                    }
                 }
 
                 if (createSelfLoops) {
@@ -188,7 +185,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                 Set<Rectangle> colors = successors ? negativeOut : negativeIn;
                 if (solver.isSat(colors)) {
                     result.add(lowerNode);
-                    edgeColours.put(new Pair<>(from, lowerNode), colors);
+                    if (successors) {
+                        edgeColours.putIfAbsent(new Pair<>(from, lowerNode), colors); // putIfAbsent?
+                    } else {
+                        edgeColours.putIfAbsent(new Pair<>(lowerNode, from), colors);
+                    }
                 }
 
                 if (createSelfLoops) {
@@ -204,7 +205,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
         if (solver.isSat(selfLoop)) {
             result.add(from);
-            edgeColours.put(new Pair<>(from, from), selfLoop); // colors?
+            solver.minimize(selfLoop);
+            edgeColours.putIfAbsent(new Pair<>(from, from), selfLoop);
         }
 
         return result;
@@ -252,6 +254,7 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             //colors = colors | vertexColor;
         }
 
+        solver.minimize(colors);
         facetColors.set(facetIndex, colors);
         return colors;
     }
