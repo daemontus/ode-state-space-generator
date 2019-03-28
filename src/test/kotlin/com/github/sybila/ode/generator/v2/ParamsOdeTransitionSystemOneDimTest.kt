@@ -49,21 +49,7 @@ class ParamsOdeTransitionSystemOneDimTest {
     val down = "v1".decreaseProp()
     val loop = DirectionFormula.Atom.Loop
 
-    private fun ParamsOdeTransitionSystem.checkSuccessors(from: Int, to: List<Int>) {
-        this.run {
-            val s = from.successors().asSequence().toSet()
-            assertEquals(to.toSet(), s)
-        }
-    }
-
-    private fun ParamsOdeTransitionSystem.checkPredecessors(from: Int, to: List<Int>) {
-        this.run {
-            val s = from.predecessors().asSequence().toSet()
-            assertEquals(to.toSet(), s)
-        }
-    }
-
-    private fun ParamsOdeTransitionSystem.checkTransitions(from: Int, bounds: Map<Int, MutableSet<Rectangle>>) {
+    private fun ParamsOdeTransitionSystem.checkSuccessors(from: Int, bounds: Map<Int, MutableSet<Rectangle>>) {
         val states = from.successors()
         assert(states.size == bounds.size)
 
@@ -75,24 +61,55 @@ class ParamsOdeTransitionSystemOneDimTest {
 
     }
 
+    private fun ParamsOdeTransitionSystem.checkPredecessors(from: Int, bounds: Map<Int, MutableSet<Rectangle>>) {
+        val states = from.predecessors()
+        assert(states.size == bounds.size)
+
+        for (state in states) {
+            assert(bounds.containsKey(state))
+            assert(bounds[state] == transitionParameters(state, from))
+
+        }
+
+    }
+
+
     @Test
     fun parameterTestOne() {
         fragmentOne.run {
-            checkTransitions(0, mapOf(
+            checkSuccessors(0, mapOf(
                     0 to rectangleOf(0.0, 1.0).asParams(),
                     1 to rectangleOf(1.0 / 2.0, 2.0).asParams()
             ))
 
-            checkTransitions(1, mapOf(
+            checkSuccessors(1, mapOf(
                     0 to rectangleOf(0.0, 1.0 / 2.0).asParams(),
                     1 to rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams(),
                     2 to rectangleOf(1.0 / 3.0, 2.0).asParams()
             ))
 
-            checkTransitions(2, mapOf(
+            checkSuccessors(2, mapOf(
                     1 to rectangleOf(0.0, 1.0 / 3.0).asParams(),
                     2 to rectangleOf(1.0 / 4.0, 2.0).asParams()
             ))
+
+            checkPredecessors(0, mapOf(
+                    0 to rectangleOf(0.0, 1.0).asParams(),
+                    1 to rectangleOf(0.0, 1.0 / 2.0).asParams()
+            ))
+
+            checkPredecessors(1, mapOf(
+                    0 to rectangleOf(1.0 / 2.0, 2.0).asParams(),
+                    1 to rectangleOf(1.0 / 3.0, 1.0 / 2.0).asParams(),
+                    2 to rectangleOf(0.0, 1.0 / 3.0).asParams()
+            ))
+
+            checkPredecessors(2, mapOf(
+                    1 to rectangleOf(1.0 / 3.0, 2.0).asParams(),
+                    2 to rectangleOf(1.0 / 4.0, 2.0).asParams()
+            ))
+
+
         }
     }
 
@@ -133,18 +150,33 @@ class ParamsOdeTransitionSystemOneDimTest {
     @Test
     fun parameterTestTwo() {
         fragmentTwo.run {
-            checkTransitions(0, mapOf(
+            checkSuccessors(0, mapOf(
                     0 to rectangleOf(-1.0, 2.0).asParams(),
                     1 to rectangleOf(-2.0, -1.0).asParams()
             ))
 
-            checkTransitions(1, mapOf(
+            checkSuccessors(1, mapOf(
                     0 to rectangleOf(-1.0, 2.0).asParams(),
                     1 to rectangleOf(-2.0, -1.0).asParams()
             ))
 
-            checkTransitions(2, mapOf(
+            checkSuccessors(2, mapOf(
                     1 to rectangleOf(-2.0, 2.0).asParams(),
+                    2 to rectangleOf(1.0, 2.0).asParams()
+            ))
+
+            checkPredecessors(0, mapOf(
+                    0 to rectangleOf(-1.0, 2.0).asParams(),
+                    1 to rectangleOf(-1.0, 2.0).asParams()
+            ))
+
+            checkPredecessors(1, mapOf(
+                    0 to rectangleOf(-2.0, -1.0).asParams(),
+                    1 to rectangleOf(-2.0, -1.0).asParams(),
+                    2 to rectangleOf(-2.0, 2.0).asParams()
+            ))
+
+            checkPredecessors(2, mapOf(
                     2 to rectangleOf(1.0, 2.0).asParams()
             ))
         }
