@@ -315,6 +315,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     @NotNull
     @Override
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
-        return edgeColours.get(new Pair<>(source, target)); // what if it's null
+        return edgeColours.getOrDefault(new Pair<>(source, target), solver.getFf());
     }
 }
