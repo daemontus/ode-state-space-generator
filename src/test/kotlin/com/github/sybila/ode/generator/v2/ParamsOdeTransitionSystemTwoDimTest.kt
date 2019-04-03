@@ -83,18 +83,23 @@ class ParamsOdeTransitionSystemTwoDimTest {
     private fun singleRectangle(vararg values: Double): MutableSet<Rectangle>
             = mutableSetOf(rectangleOf(*values))
 
-    private fun checkPredecessors(transitions: Map<Pair<Int, Int>, MutableSet<Rectangle>>) {
-        TODO("not implemented")
-    }
+    private fun checkTransitions(model: ParamsOdeTransitionSystem, expectedTransitions: Map<Pair<Int, Int>, MutableSet<Rectangle>>) {
+        model.run {
+            for (node in 0 until model.stateCount) {
+                for (successor in node.successors()) {
+                    assert(expectedTransitions[Pair(node, successor)] == transitionParameters(node, successor))
+                }
 
-    private fun checkSuccessors(transitions: Map<Pair<Int, Int>, MutableSet<Rectangle>>) {
-        TODO("not implemented")
+                for (predecessor in node.predecessors()) {
+                    assert(expectedTransitions[Pair(predecessor, node)] == transitionParameters(predecessor, node))
+                }
+            }
+        }
     }
-
 
     @Test
     fun fragmentOneTest() {
-        val transitions: Map<Pair<Int, Int>, MutableSet<Rectangle>> = mapOf(
+        val expectedTransitions: Map<Pair<Int, Int>, MutableSet<Rectangle>> = mapOf(
                 n00 to n00 to singleRectangle(0.0, 1.0, 0.0, 1.0),
                 n01 to n01 to singleRectangle(1.0 / 3.0, 1.0 / 2.0, 0.0, 1.0),
                 n02 to n02 to singleRectangle(1.0 / 4.0, 2.0, 0.0, 1.0),
@@ -129,8 +134,7 @@ class ParamsOdeTransitionSystemTwoDimTest {
                 n21 to n11 to singleRectangle(0.0, 2.0, 0.0, 1.0 / 3.0),
                 n22 to n12 to singleRectangle(0.0, 2.0, 0.0, 1.0 / 3.0)
         )
-        checkSuccessors(transitions)
-        checkPredecessors(transitions)
+        checkTransitions(fragmentOne, expectedTransitions)
     }
 
 
@@ -177,9 +181,45 @@ class ParamsOdeTransitionSystemTwoDimTest {
     }
     */
 
+    @Test
     fun fragmentTwoTest() {
-        checkSuccessors()
-        checkPredecessors()
+        val expectedTransitions: Map<Pair<Int, Int>, MutableSet<Rectangle>> = mapOf(
+                n00 to n00 to singleRectangle(0.0, 2.0, 0.0, 2.0),
+                n01 to n01 to singleRectangle(2.5 / 4.0, 1.25, 0.0, 2.0),
+                n02 to n02 to singleRectangle(0.5, 2.0, 0.0, 2.0),
+                n10 to n10 to singleRectangle(0.0, 1.25, 2.5 / 3.0, 2.0),
+                n11 to n11 to singleRectangle(0.5, 2.5 / 3.0, 1.25, 2.0),
+                //n12 to n12 to singleRectangle(1.0/4.0,2.0, 1.0/3.0,1.0/2.0)), disabled
+                n20 to n20 to singleRectangle(0.0, 2.5 / 3.0, 0.625, 2.0),
+                n21 to n21 to singleRectangle(2.5 / 6.0, 0.625, 2.5 / 3.0, 2.0),
+                n22 to n22 to singleRectangle(2.5 / 7.0, 2.0, 1.25, 2.0),
+                n00 to n01 to singleRectangle(2.5 / 3.0, 2.0, 0.0, 2.0),
+                n00 to n10 to singleRectangle(0.0, 2.0, 5.0 / 4.0, 2.0),
+                n10 to n11 to singleRectangle(0.625, 2.0, 0.0, 2.0),
+                n20 to n21 to singleRectangle(1.0 / 2.0, 2.0, 0.0, 2.0),
+                //n01 to n11 to singleRectangle(0.0,2.0, 1.0/2.0, 2.0)), disabled
+                //n02 to n12 to singleRectangle(0.0,2.0, 1.0/2.0, 2.0)), disabled
+                n10 to n00 to singleRectangle(0.0, 2.0, 0.0, 2.0),
+                n11 to n01 to singleRectangle(0.0, 2.0, 0.0, 2.0),
+                n12 to n02 to singleRectangle(0.0, 2.0, 0.0, 2.0),
+                n01 to n00 to singleRectangle(0.0, 5.0 / 4.0, 0.0, 2.0),
+                n11 to n10 to singleRectangle(0.0, 2.5 / 3.0, 0.0, 2.0),
+                n21 to n20 to singleRectangle(0.0, 0.625, 0.0, 2.0),
+                n01 to n02 to singleRectangle(2.5 / 4.0, 2.0, 0.0, 2.0),
+                n11 to n12 to singleRectangle(0.5, 2.0, 0.0, 2.0),
+                n21 to n22 to singleRectangle(2.5 / 6.0, 2.0, 0.0, 2.0),
+                n10 to n20 to singleRectangle(0.0, 2.0, 2.5 / 3.0, 2.0),
+                n11 to n21 to singleRectangle(0.0, 2.0, 1.25, 2.0),
+                // n12 to n22 to singleRectangle(0.0,2.0, 1.0/3.0,2.0)), disabled
+                n02 to n01 to singleRectangle(0.0, 2.5 / 3.0, 0.0, 2.0),
+                n12 to n11 to singleRectangle(0.0, 0.625, 0.0, 2.0),
+                n22 to n21 to singleRectangle(0.0, 0.5, 0.0, 2.0),
+                n20 to n10 to singleRectangle(0.0, 2.0, 0.0, 1.25),
+                n21 to n11 to singleRectangle(0.0, 2.0, 0.0, 2.0),
+                n22 to n12 to singleRectangle(0.0, 2.0, 0.0, 2.0)
+        )
+
+        checkTransitions(fragmentTwo, expectedTransitions)
     }
 
     /*
