@@ -248,6 +248,21 @@ public class SimpleOdeTransitionSystem implements TransitionSystem<Integer, Bool
         }
 
         facetColors.set(facetIndex, colors);
+
+        if (orientation == PositiveIn || orientation == PositiveOut) {
+            Integer higherNode = encoder.higherNode(from, dimension);
+            if (higherNode != null) {
+                int dual = orientation == PositiveIn ? NegativeOut : NegativeIn;
+                facetColors.set(facetIndex(higherNode, dimension, dual), colors);
+            }
+        } else {
+            Integer lowerNode = encoder.lowerNode(from, dimension);
+            if (lowerNode != null) {
+                int dual = orientation == NegativeIn ? PositiveOut : PositiveIn;
+                facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
+            }
+        }
+
         return colors;
     }
 
