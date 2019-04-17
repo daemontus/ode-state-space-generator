@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.v2;
+package com.github.sybila.ode.generator.v2.dynamic;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
