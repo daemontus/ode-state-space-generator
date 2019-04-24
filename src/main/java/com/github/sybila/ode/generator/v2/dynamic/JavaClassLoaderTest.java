@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class JavaClassLoaderTest /*extends JavaClassLoader*/ {
+public class JavaClassLoaderTest {
 
-    private static final String FULL_CLASS_PATH = "/Users/daemontus/Projects/code/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
+    private static final String FULL_CLASS_PATH = "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
 
     private static final String CLASS_CODE = "import com.github.sybila.checker.Solver;\n" +
             "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
@@ -47,12 +47,12 @@ public class JavaClassLoaderTest /*extends JavaClassLoader*/ {
             "}";
 
     public static void main(String[] args) {
-        try {
+        /*try {
             Path project = Files.createTempDirectory("on-the-fly");
 
             Path sourceCodePath = project.resolve("TestClass.java");
             BufferedWriter writer = Files.newBufferedWriter(sourceCodePath);
-            writer.write(CLASS_CODE);
+            writer.write(CLASS_CODE_2);
             writer.close();
 
             System.out.println("Temp file created: "+sourceCodePath);
@@ -86,7 +86,10 @@ public class JavaClassLoaderTest /*extends JavaClassLoader*/ {
             e.printStackTrace();
         } finally {
             // delete .class file afterwards!
-        }
+        }*/
+
+        DynamicParamsOdeTransitionSystem transitionSystem = new DynamicParamsOdeTransitionSystem(new Parser().parse(new File("models/tcbb.bio")), FULL_CLASS_PATH);
+
     }
 
     private static String prepareSummands(List<Summand> equation) {
