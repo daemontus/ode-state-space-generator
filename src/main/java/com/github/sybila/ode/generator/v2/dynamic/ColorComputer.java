@@ -9,6 +9,7 @@ import com.github.sybila.ode.model.Summand;
 import kotlin.Pair;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("Duplicates")
@@ -27,14 +28,15 @@ public class ColorComputer {
 
     public Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
         Set<Rectangle> result = new HashSet<>();
+        List<Summand> equation = model.getVariables().get(dimension).getEquation();
         double derivationValue = 0.0;
         double denominator = 0.0;
         int parameterIndex = -1;
 
-        for (Summand summand: model.getVariables().get(dimension).getEquation()) {
+        for (Summand summand: equation) {
             double partialSum = summand.getConstant();
             for (Integer v: summand.getVariableIndices()) {
-                partialSum *= model.getVariables().get(v).getThresholds().get(encoder.vertexCoordinate(vertex, v));
+                partialSum *= varValue(vertex, v);
             }
             if (partialSum != 0.0) {
                 for (Evaluable function: summand.getEvaluable()) {
@@ -76,6 +78,10 @@ public class ColorComputer {
             }
         }
         return result;
+    }
+
+    private double varValue(int vertex, int var) {
+        return model.getVariables().get(var).getThresholds().get(encoder.vertexCoordinate(vertex, var));
     }
 
 

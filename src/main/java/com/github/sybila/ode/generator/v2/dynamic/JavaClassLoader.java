@@ -6,12 +6,14 @@ import java.lang.reflect.Method;
 // https://examples.javacodegeeks.com/core-java/dynamic-class-loading-example/
 public class JavaClassLoader extends ClassLoader {
 
+
+
     public void invokeClassMethod(String classBinName, String methodName){
 
         try {
 
             // Create a new JavaClassLoader
-            ClassLoader classLoader = this.getClass().getClassLoader();
+            ClassLoader classLoader = this;
 
             // Load the target class using its binary name
             Class loadedMyClass = classLoader.loadClass(classBinName);

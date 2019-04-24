@@ -47,7 +47,9 @@ data class Summand(
         }
     }
 
-
+    fun getEvaluable(index: Int): Evaluable {
+        return evaluable[index]
+    }
 
     override fun toString(): String {
         val root = "$constant*Param($paramIndex)"
