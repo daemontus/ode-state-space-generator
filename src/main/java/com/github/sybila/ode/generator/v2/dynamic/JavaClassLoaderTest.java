@@ -20,9 +20,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+@SuppressWarnings("Duplicates")
 public class JavaClassLoaderTest {
 
-    private static final String FULL_CLASS_PATH = "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
+    private static final String FULL_CLASS_PATH = "/home/jakub/Desktop/SBAPR/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
 
     private static final String CLASS_CODE = "import com.github.sybila.checker.Solver;\n" +
             "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
@@ -88,18 +89,19 @@ public class JavaClassLoaderTest {
             // delete .class file afterwards!
         }*/
 
-        DynamicParamsOdeTransitionSystem transitionSystem = new DynamicParamsOdeTransitionSystem(new Parser().parse(new File("models/tcbb.bio")), FULL_CLASS_PATH);
+        DynamicParamsOdeTransitionSystem transitionSystem = new DynamicParamsOdeTransitionSystem(new Parser()
+                .parse(new File("models/tcbb.bio")), FULL_CLASS_PATH);
 
     }
 
     private static String prepareSummands(List<Summand> equation) {
         StringBuilder result = new StringBuilder();
         for (int i=0; i<equation.size(); i++) {
-            result.append("Summand summand");
-            result.append(i);
-            result.append(" = equation.get(");
-            result.append(i);
-            result.append(");\n");
+            result.append("Summand summand")
+            .append(i)
+            .append(" = equation.get(")
+            .append(i)
+            .append(");\n");
         }
         return result.toString();
     }
@@ -107,26 +109,24 @@ public class JavaClassLoaderTest {
     private static String compileSummand(Summand summand, int summandIndex) {
         StringBuilder result = new StringBuilder();
         for (int v : summand.getVariableIndices()) {
-            result.append("varValue(vertex, ");
-            result.append(v);
-            result.append(") * ");
+            result.append("varValue(vertex, ")
+            .append(v)
+            .append(") * ");
         }
 
         List<Evaluable> evaluable = summand.getEvaluable();
         for (int i = 0; i < evaluable.size(); i++) {
             Evaluable eval = evaluable.get(i);
-            result.append("summand");
-            result.append(summandIndex);
-            result.append(".getEvaluable(");
-            result.append(i);
-            result.append(").invoke(getValue(vertex, ");
-            result.append(eval.getVarIndex());
-            result.append(")) * ");
+            result.append("summand")
+            .append(summandIndex)
+            .append(".getEvaluable(")
+            .append(i)
+            .append(").invoke(getValue(vertex, ")
+            .append(eval.getVarIndex())
+            .append(")) * ");
         }
 
         result.append(summand.getConstant());
-
         return result.toString();
     }
-
 }

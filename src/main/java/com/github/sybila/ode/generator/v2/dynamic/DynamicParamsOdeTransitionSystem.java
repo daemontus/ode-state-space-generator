@@ -14,6 +14,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -161,7 +162,8 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
             Class<?> dynamicClass = loader.loadClass("TestClass");
 
-            colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.newInstance();
+            colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.getConstructor().newInstance();
+            //colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.newInstance();
             colorComputer.initialize(model, solver);
 
             /*OdeModel model = new Parser().parse(new File("models/tcbb.bio"));
@@ -172,7 +174,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                 System.out.println("Summand "+i+": "+compileSummand(equation.get(i), i));
             }*/
 
-        } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException e) {
+        } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException | NoSuchMethodException | InvocationTargetException e) {
             e.printStackTrace();
         } finally {
             // delete .class file afterwards!
@@ -384,5 +386,41 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
     @Override
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
         return edgeColours.getOrDefault(new Pair<>(source, target), solver.getFf());
+    }
+
+    private static String prepareSummands(List<Summand> equation) {
+        StringBuilder result = new StringBuilder();
+        for (int i=0; i<equation.size(); i++) {
+            result.append("Summand summand")
+                    .append(i)
+                    .append(" = equation.get(")
+                    .append(i)
+                    .append(");\n");
+        }
+        return result.toString();
+    }
+
+    private static String compileSummand(Summand summand, int summandIndex) {
+        StringBuilder result = new StringBuilder();
+        for (int v : summand.getVariableIndices()) {
+            result.append("varValue(vertex, ")
+                    .append(v)
+                    .append(") * ");
+        }
+
+        List<Evaluable> evaluable = summand.getEvaluable();
+        for (int i = 0; i < evaluable.size(); i++) {
+            Evaluable eval = evaluable.get(i);
+            result.append("summand")
+                    .append(summandIndex)
+                    .append(".getEvaluable(")
+                    .append(i)
+                    .append(").invoke(getValue(vertex, ")
+                    .append(eval.getVarIndex())
+                    .append(")) * ");
+        }
+
+        result.append(summand.getConstant());
+        return result.toString();
     }
 }
