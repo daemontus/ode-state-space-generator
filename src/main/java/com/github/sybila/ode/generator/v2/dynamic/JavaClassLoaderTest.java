@@ -19,12 +19,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
 public class JavaClassLoaderTest {
 
-    private static final String FULL_CLASS_PATH = "/home/jakub/Desktop/SBAPR/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
-
+    private static final String FULL_CLASS_PATH = "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar";
     private static final String CLASS_CODE = "import com.github.sybila.checker.Solver;\n" +
             "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
             "import com.github.sybila.ode.model.OdeModel;\n" +
@@ -48,12 +48,12 @@ public class JavaClassLoaderTest {
             "}";
 
     public static void main(String[] args) {
-        /*try {
+        try {
             Path project = Files.createTempDirectory("on-the-fly");
 
             Path sourceCodePath = project.resolve("TestClass.java");
             BufferedWriter writer = Files.newBufferedWriter(sourceCodePath);
-            writer.write(CLASS_CODE_2);
+            writer.write(CLASS_CODE);
             writer.close();
 
             System.out.println("Temp file created: "+sourceCodePath);
@@ -75,23 +75,28 @@ public class JavaClassLoaderTest {
             computer.initialize(null, null);
             computer.getVertexColor(0 ,0, true);
 
-            OdeModel model = new Parser().parse(new File("models/tcbb.bio"));
+            OdeModel model = new Parser().parse(new File("models/model_31_reduced.bio"));
 
             List<Summand> equation = model.getVariables().get(0).getEquation();
             System.out.println(prepareSummands(equation));
+            System.out.println(compileDerivationValueAndDenominator(equation));
+
+
+            /*
+            System.out.println(prepareSummands(equation));
             for (int i=0; i < equation.size(); i++) {
                 System.out.println("Summand "+i+": "+compileSummand(equation.get(i), i));
-            }
+            }*/
 
         } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         } finally {
             // delete .class file afterwards!
-        }*/
+        }
 
-        DynamicParamsOdeTransitionSystem transitionSystem = new DynamicParamsOdeTransitionSystem(new Parser()
+        /*DynamicParamsOdeTransitionSystem transitionSystem = new DynamicParamsOdeTransitionSystem(new Parser()
                 .parse(new File("models/tcbb.bio")), FULL_CLASS_PATH);
-
+        */
     }
 
     private static String prepareSummands(List<Summand> equation) {
@@ -127,6 +132,46 @@ public class JavaClassLoaderTest {
         }
 
         result.append(summand.getConstant());
+        return result.toString();
+    }
+
+    private static String compileDerivationValueAndDenominator(List<Summand> equation) {
+        StringBuilder result = new StringBuilder();
+        StringBuilder derivationValue = new StringBuilder();
+        StringBuilder denominator = new StringBuilder();
+
+        int paramIndex = -1;
+
+        for (int i = 0; i < equation.size(); i++) {
+            if (equation.get(i).hasParam()) {
+                paramIndex = equation.get(i).getParamIndex();
+                denominator.append(compileSummand(equation.get(i), i))
+                        .append(" + ");
+            } else {
+                derivationValue.append(compileSummand(equation.get(i), i))
+                        .append(" + ");
+            }
+        }
+
+        if (derivationValue.length() > 0) {
+            // getting rid of " + " at the end
+            derivationValue.setLength(derivationValue.length() - 3);
+            result.append("derivationValue = ")
+                    .append(derivationValue)
+                    .append(";\n");
+        }
+
+        if (denominator.length() > 0) {
+            // getting rid of " + " at the end
+            denominator.setLength(denominator.length() - 3);
+            result.append("denominator = ")
+                    .append(denominator)
+                    .append(";\n")
+                    .append("paramIndex = ")
+                    .append(paramIndex)
+                    .append(";\n");
+        }
+
         return result.toString();
     }
 }

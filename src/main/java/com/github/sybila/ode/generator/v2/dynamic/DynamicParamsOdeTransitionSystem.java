@@ -423,4 +423,44 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         result.append(summand.getConstant());
         return result.toString();
     }
+
+    private static String compileDerivationValueAndDenominator(List<Summand> equation) {
+        StringBuilder result = new StringBuilder();
+        StringBuilder derivationValue = new StringBuilder();
+        StringBuilder denominator = new StringBuilder();
+
+        int paramIndex = -1;
+
+        for (int i = 0; i < equation.size(); i++) {
+            if (equation.get(i).hasParam()) {
+                paramIndex = equation.get(i).getParamIndex();
+                denominator.append(compileSummand(equation.get(i), i))
+                        .append(" + ");
+            } else {
+                derivationValue.append(compileSummand(equation.get(i), i))
+                        .append(" + ");
+            }
+        }
+
+        if (derivationValue.length() > 0) {
+            // getting rid of " + " at the end
+            derivationValue.setLength(derivationValue.length() - 3);
+            result.append("derivationValue = ")
+                    .append(derivationValue)
+                    .append(";\n");
+        }
+
+        if (denominator.length() > 0) {
+            // getting rid of " + " at the end
+            denominator.setLength(denominator.length() - 3);
+            result.append("denominator = ")
+                    .append(denominator)
+                    .append(";\n")
+                    .append("paramIndex = ")
+                    .append(paramIndex)
+                    .append(";\n");
+        }
+
+        return result.toString();
+    }
 }
