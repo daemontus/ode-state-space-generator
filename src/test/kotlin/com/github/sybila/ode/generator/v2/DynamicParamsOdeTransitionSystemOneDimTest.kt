@@ -33,11 +33,11 @@ class DynamicParamsOdeTransitionSystemOneDimTest {
 
     private val fragmentOne = DynamicParamsOdeTransitionSystem(OdeModel(listOf(v1), listOf(
             OdeModel.Parameter("p1", Pair(0.0, 2.0))
-    )))
+    )), "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar")
 
     private val fragmentTwo = DynamicParamsOdeTransitionSystem(OdeModel(listOf(v2), listOf(
             OdeModel.Parameter("p2", Pair(-2.0, 2.0))
-    )))
+    )), "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar")
 
     private fun DynamicParamsOdeTransitionSystem.checkSuccessors(from: Int, bounds: Map<Int, MutableSet<Rectangle>>) {
         val states = from.successors()
