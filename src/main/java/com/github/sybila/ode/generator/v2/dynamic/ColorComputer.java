@@ -1,4 +1,4 @@
-package com.github.sybila.ode.generator.v2.dynamic;
+/*package com.github.sybila.ode.generator.v2.dynamic;
 
 import com.github.sybila.checker.Solver;
 import com.github.sybila.ode.generator.NodeEncoder;
@@ -86,3 +86,4 @@ public class ColorComputer {
 
 
 }
+*/

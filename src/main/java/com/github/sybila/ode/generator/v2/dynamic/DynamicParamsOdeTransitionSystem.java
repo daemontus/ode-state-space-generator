@@ -4,6 +4,7 @@ import com.github.sybila.checker.Solver;
 import com.github.sybila.ode.generator.NodeEncoder;
 import com.github.sybila.ode.generator.rect.Rectangle;
 import com.github.sybila.ode.generator.rect.RectangleSolver;
+import com.github.sybila.ode.generator.v2.ParamsOdeTransitionSystem;
 import com.github.sybila.ode.generator.v2.TransitionSystem;
 import com.github.sybila.ode.model.Evaluable;
 import com.github.sybila.ode.model.OdeModel;
@@ -37,6 +38,8 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
     private double[] boundsRect;
     public Solver<Set<Rectangle>> solver;
     private OnTheFlyColorComputer<Set<Rectangle>> colorComputer;
+    private Path sourceCodePath;
+    private Path project;
 
     private Integer PositiveIn = 0;
     private Integer PositiveOut = 1;
@@ -45,6 +48,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
     private final String FULL_CLASS_PATH;
 
+    /*
     private static final String CLASS_CODE = "import com.github.sybila.checker.Solver;\n" +
             "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
             "import com.github.sybila.ode.model.OdeModel;\n" +
@@ -104,7 +108,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             "        return result;\n" +
             "    }\n" +
             "    \n" +
-            "}";
+            "}";*/
 
     public DynamicParamsOdeTransitionSystem(OdeModel model, String fullClassPath) {
         this.model = model;
@@ -141,40 +145,12 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
         solver = new RectangleSolver(new Rectangle(boundsRect));
 
+
+
         try {
-            Path project = Files.createTempDirectory("on-the-fly");
-
-            Path sourceCodePath = project.resolve("TestClass.java");
-            BufferedWriter writer = Files.newBufferedWriter(sourceCodePath);
-            writer.write(CLASS_CODE);
-            writer.close();
-
-            System.out.println("Temp file created: " + sourceCodePath);
-            Process compiler = Runtime.getRuntime().exec(new String[]{ "javac", "-cp", FULL_CLASS_PATH, sourceCodePath.toAbsolutePath().toString() });
-            BufferedReader errorReader = new BufferedReader(new InputStreamReader(compiler.getErrorStream()));
-            errorReader.lines().forEach(s -> System.err.println("CP: " + s));
-            int resultCode = compiler.waitFor();
-            System.out.println("Temp file compiled: " + resultCode);
-
-            URL classUrl = project.toUri().toURL();
-            System.out.println("Load dynamic from: " + classUrl);
-            ClassLoader loader = new URLClassLoader(new URL[]{ classUrl });
-
-            Class<?> dynamicClass = loader.loadClass("TestClass");
-
-            colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.getConstructor().newInstance();
-            //colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.newInstance();
-            colorComputer.initialize(model, solver);
-
-            /*OdeModel model = new Parser().parse(new File("models/tcbb.bio"));
-
-            List<Summand> equation = model.getVariables().get(0).getEquation();
-            System.out.println(prepareSummands(equation));
-            for (int i=0; i < equation.size(); i++) {
-                System.out.println("Summand "+i+": "+compileSummand(equation.get(i), i));
-            }*/
-
-        } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException | NoSuchMethodException | InvocationTargetException e) {
+            project = Files.createTempDirectory("on-the-fly");
+            sourceCodePath = project.resolve("ColorComputer.java");
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             // delete .class file afterwards!
@@ -354,6 +330,45 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             }
 
             int vertex = encoder.nodeVertex(from, mask);
+
+            try {
+                BufferedWriter writer = Files.newBufferedWriter(sourceCodePath);
+                writer.write(generateFullClassCode(model.getVariables().get(dimension).getEquation()));
+                writer.close();
+
+                System.out.println("Temp file created: " + sourceCodePath);
+                Process compiler = Runtime.getRuntime().exec(new String[]{ "javac", "-cp", FULL_CLASS_PATH, sourceCodePath.toAbsolutePath().toString() });
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(compiler.getErrorStream()));
+                errorReader.lines().forEach(s -> System.err.println("CP: " + s));
+                int resultCode = compiler.waitFor();
+                System.out.println("Temp file compiled: " + resultCode);
+
+                URL classUrl = project.toUri().toURL();
+                System.out.println("Load dynamic from: " + classUrl);
+                ClassLoader loader = new URLClassLoader(new URL[]{ classUrl });
+
+                Class<?> dynamicClass = loader.loadClass("ColorComputer");
+
+                colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.getConstructor().newInstance();
+                //colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.newInstance();
+                colorComputer.initialize(model, solver);
+
+            /*OdeModel model = new Parser().parse(new File("models/tcbb.bio"));
+
+            List<Summand> equation = model.getVariables().get(0).getEquation();
+            System.out.println(prepareSummands(equation));
+            for (int i=0; i < equation.size(); i++) {
+                System.out.println("Summand "+i+": "+compileSummand(equation.get(i), i));
+            }*/
+
+            } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException | NoSuchMethodException | InvocationTargetException e) {
+                e.printStackTrace();
+            } finally {
+                // delete .class file afterwards!
+            }
+
+
+
             Set<Rectangle> vertexColor = colorComputer.getVertexColor(vertex, dimension, positiveDerivation);
             if (vertexColor != null) {
                 colors = solver.or(colors, vertexColor);
@@ -388,9 +403,83 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return edgeColours.getOrDefault(new Pair<>(source, target), solver.getFf());
     }
 
+    private static String generateFullClassCode(List<Summand> equation) {
+        return "import com.github.sybila.checker.Solver;\n" +
+                "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
+                "import com.github.sybila.ode.generator.NodeEncoder;\n" +
+                "import com.github.sybila.ode.generator.v2.dynamic.OnTheFlyColorComputer;\n" +
+                "import com.github.sybila.ode.model.OdeModel;\n" +
+                "import com.github.sybila.ode.model.Summand;\n" +
+                "import kotlin.Pair;\n" +
+                "\n" +
+                "import java.util.HashSet;\n" +
+                "import java.util.Set;\n" +
+                "import java.util.List;\n" +
+                "\n" +
+                "public class ColorComputer implements OnTheFlyColorComputer<Set<Rectangle>> {\n" +
+                "    private OdeModel model;\n" +
+                "    private Solver<Set<Rectangle>> solver;\n" +
+                "    private double[] boundsRect;\n" +
+                "    private NodeEncoder encoder;\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public void initialize(OdeModel model, Solver<Set<Rectangle>> solver) {\n" +
+                "        System.out.println(\"Initializing...\");\n" +
+                "        this.model = model;\n" +
+                "        this.solver = solver;\n" +
+                "        this.encoder = new NodeEncoder(model);\n" +
+                "        boundsRect = new double[2 * model.getParameters().size()];\n" +
+                "        for (int i = 0; i < model.getParameters().size(); i++) {\n" +
+                "            boundsRect[2 * i] = model.getParameters().get(i).getRange().getFirst();\n" +
+                "            boundsRect[2 * i + 1] = model.getParameters().get(i).getRange().getSecond();\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "    @Override\n" +
+                "    public Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {\n" +
+                "        System.out.println(\"Compute vertex color!\");\n" +
+                "        Set<Rectangle> result = new HashSet<>();\n" +
+                "        List<Summand> equation = model.getVariables().get(dimension).getEquation();\n" +
+                "        double derivationValue = 0.0;\n" +
+                "        double denominator = 0.0;\n" +
+                "        int parameterIndex = -1;\n" +
+                prepareSummands(equation) +
+                compileDerivationValueAndDenominator(equation) +
+                "        if (parameterIndex == -1 || denominator == 0.0) {\n" +
+                "            if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) {\n" +
+                "                return solver.getTt();\n" +
+                "            } else {\n" +
+                "                return solver.getFf();\n" +
+                "            }\n" +
+                "        } else {\n" +
+                "            // division by negative number flips the condition\n" +
+                "            boolean newPositive = (denominator > 0) == positive;\n" +
+                "            Pair<Double, Double> range = model.getParameters().get(parameterIndex).getRange();\n" +
+                "            double split = Math.min(range.getSecond(), Math.max(range.getFirst(), -derivationValue / denominator));\n" +
+                "            double newLow = newPositive ? split : range.getFirst();\n" +
+                "            double newHigh = newPositive ? range.getSecond() : split;\n" +
+                "\n" +
+                "            if (newLow >= newHigh) {\n" +
+                "                return null;\n" +
+                "            } else {\n" +
+                "                double[] r = boundsRect.clone();\n" +
+                "                r[2 * parameterIndex] = newLow;\n" +
+                "                r[2 * parameterIndex + 1] = newHigh;\n" +
+                "                result.add(new Rectangle(r));\n" +
+                "            }\n" +
+                "        }\n" +
+                "        return result;\n" +
+                "    }\n" +
+                "    \n" +
+                "   private double varValue(int vertex, int var) {\n" +
+                "       return model.getVariables().get(var).getThresholds().get(encoder.vertexCoordinate(vertex, var));\n" +
+                "   }\n" +
+                "}";
+    }
+
     private static String prepareSummands(List<Summand> equation) {
         StringBuilder result = new StringBuilder();
-        for (int i=0; i<equation.size(); i++) {
+        for (int i = 0; i<equation.size(); i++) {
             result.append("Summand summand")
                     .append(i)
                     .append(" = equation.get(")
@@ -429,11 +518,11 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         StringBuilder derivationValue = new StringBuilder();
         StringBuilder denominator = new StringBuilder();
 
-        int paramIndex = -1;
+        int parameterIndex = -1;
 
         for (int i = 0; i < equation.size(); i++) {
             if (equation.get(i).hasParam()) {
-                paramIndex = equation.get(i).getParamIndex();
+                parameterIndex = equation.get(i).getParamIndex();
                 denominator.append(compileSummand(equation.get(i), i))
                         .append(" + ");
             } else {
@@ -456,11 +545,18 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             result.append("denominator = ")
                     .append(denominator)
                     .append(";\n")
-                    .append("paramIndex = ")
-                    .append(paramIndex)
+                    .append("parameterIndex = ")
+                    .append(parameterIndex)
                     .append(";\n");
         }
 
         return result.toString();
+    }
+
+    public static void main(String[] args) {
+        /*ParamsOdeTransitionSystem transitionSystem = new ParamsOdeTransitionSystem(new Parser()
+                .parse(new File("models/tcbb.bio")));
+        System.out.println(generateFullClassCode(transitionSystem.model.getVariables().get(0).getEquation()));
+        */
     }
 }
