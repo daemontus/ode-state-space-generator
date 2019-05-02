@@ -27,6 +27,17 @@ public class ColorComputer {
     }
 
     public Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
+        // generated...
+        if (dimension == 0) {
+            return getVertexColor0(vertex, positive)
+        } else if (dimension == 1) {
+            return getVertexColor1(vertex, positive)
+        } else {
+
+        }
+    }
+
+    private Set<Rectangle> getVertexColor0(int vertex, boolean positive) {
         Set<Rectangle> result = new HashSet<>();
         List<Summand> equation = model.getVariables().get(dimension).getEquation();
         double derivationValue = 0.0;
