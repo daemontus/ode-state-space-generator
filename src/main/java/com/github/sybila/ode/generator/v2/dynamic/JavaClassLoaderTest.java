@@ -126,7 +126,7 @@ public class JavaClassLoaderTest {
             .append(summandIndex)
             .append(".getEvaluable(")
             .append(i)
-            .append(").invoke(getValue(vertex, ")
+            .append(").invoke(varValue(vertex, ")
             .append(eval.getVarIndex())
             .append(")) * ");
         }
