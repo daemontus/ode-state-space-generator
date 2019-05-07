@@ -171,12 +171,21 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
     private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours = new HashMap<>();
 
+    /**
+     * Returns a list of successors for a given source node. If the resulting list is already cached in
+     * the successors map, it just retrieves it and returns it. Otherwise, getStep method is called
+     * with corresponding parameters, result is stored in the successors cache and then returned.
+     *
+     * @param from source node
+     * @return list of successors represented as List<Integer>
+     */
     @NotNull
     @Override
     public List<Integer> successors(@NotNull Integer from) {
         return successors.computeIfAbsent(from, f -> getStep(f, true));
     }
 
+    
     @NotNull
     @Override
     public List<Integer> predecessors(@NotNull Integer from) {
@@ -250,6 +259,14 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
     }
 
 
+    /**
+     * Calculates index of the facet corresponding to input node, dimension and orientation and returns it.
+     *
+     * @param from node
+     * @param dimension dimension
+     * @param orientation orientation
+     * @return index of the corresponding facet represented as int
+     */
     private int facetIndex(int from, int dimension, int orientation) {
         return from + (stateCount * dimension) + (stateCount * dimensions * orientation);
     }
@@ -311,6 +328,12 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return colors;
     }
 
+    /**
+     * Returns parameters for which transition from source to target is possible.
+     * @param source source node
+     * @param target target node
+     * @return parameters represented as Set<Rectangle>
+     */
     @NotNull
     @Override
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
