@@ -44,6 +44,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
     private Integer NegativeIn = 2;
     private Integer NegativeOut = 3;
 
+    private final String FULL_CLASS_PATH;
 
     public DynamicParamsOdeTransitionSystem(OdeModel model, String fullClassPath) {
         this.model = model;
@@ -51,12 +52,14 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         dimensions = model.getVariables().size();
         stateCount = getStateCount();
         createSelfLoops = true;
+        FULL_CLASS_PATH = fullClassPath;
 
         facetColors = new ArrayList<>();
         for (int i = 0; i < stateCount * dimensions * 4; i++) {
             facetColors.add(null);
         }
 
+        //Initializes masks with empty lists and stores dependence-check masks for every variable.
         for (Variable var: model.getVariables()) {
             masks.put(var, new ArrayList<>());
             dependenceCheckMasks.put(var, getDependenceCheckMask(var));
@@ -79,16 +82,27 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
         solver = new RectangleSolver(new Rectangle(boundsRect));
 
+        compileAndLoadClass(generateFullClassCode());
+    }
 
+    /**
+     * Writes the input code into a ColorComputer.java file in a created temp dir,
+     * tries to compile it and load the corresponding class. Then, creates an instance
+     * of the newly loaded class with the use of reflection, stores it into the colorComputer
+     * attribute and initializes it. Finally, deletes the created files.
+     *
+     * @param fullClassCode class code
+     */
+    private void compileAndLoadClass(String fullClassCode) {
         try {
             Path project = Files.createTempDirectory("on-the-fly");
             Path sourceCodePath = project.resolve("ColorComputer.java");
             BufferedWriter writer = Files.newBufferedWriter(sourceCodePath);
-            writer.write(generateFullClassCode());
+            writer.write(fullClassCode);
             writer.close();
 
             System.out.println("Temp file created: " + sourceCodePath);
-            Process compiler = Runtime.getRuntime().exec(new String[]{ "javac", "-cp", fullClassPath, sourceCodePath.toAbsolutePath().toString() });
+            Process compiler = Runtime.getRuntime().exec(new String[]{ "javac", "-cp", FULL_CLASS_PATH, sourceCodePath.toAbsolutePath().toString() });
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(compiler.getErrorStream()));
             errorReader.lines().forEach(s -> System.err.println("CP: " + s));
             int resultCode = compiler.waitFor();
@@ -108,7 +122,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         } finally {
             // delete .class file afterwards!
         }
-
     }
 
     /**
@@ -143,7 +156,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return integerResult;
     }
 
-
     /**
      * Checks if the mask is valid for the given var, in other words, checks if the mask has zeroes on indices/bits
      * corresponding to variables which are independent from the given var.
@@ -164,41 +176,28 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         }
         return result;
     }
-    
 
     private Map<Integer, List<Integer>> successors = new HashMap<>();
     private Map<Integer, List<Integer>> predecessors= new HashMap<>();
-
     private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours = new HashMap<>();
 
-    /**
-     * Returns a list of successors for a given source node. If the resulting list is already cached in
-     * the successors map, it just retrieves it and returns it. Otherwise, getStep method is called
-     * with corresponding parameters, result is stored in the successors cache and then returned.
-     *
-     * @param from source node
-     * @return list of successors represented as List<Integer>
-     */
     @NotNull
     @Override
     public List<Integer> successors(@NotNull Integer from) {
         return successors.computeIfAbsent(from, f -> getStep(f, true));
     }
 
-    
     @NotNull
     @Override
     public List<Integer> predecessors(@NotNull Integer from) {
        return predecessors.computeIfAbsent(from, f -> getStep(f, false));
     }
 
-
     private List<Integer> getStep(int from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
         Set<Rectangle> selfLoop = solver.getTt();
-        for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
-            //String dimName = model.getVariables().get(dim).getName();
+        for (int dim = 0; dim < model.getVariables().size(); dim++) {
             Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
             Set<Rectangle> positiveOut = getFacetColors(from, dim, PositiveOut);
             Set<Rectangle> negativeIn = getFacetColors(from, dim, NegativeIn);
@@ -210,7 +209,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                 if (solver.isSat(colors)) {
                     result.add(higherNode);
                     if (successors) {
-                        edgeColours.putIfAbsent(new Pair<>(from, higherNode), colors); // putIfAbsent?
+                        edgeColours.putIfAbsent(new Pair<>(from, higherNode), colors);
                     } else {
                         edgeColours.putIfAbsent(new Pair<>(higherNode, from), colors);
                     }
@@ -220,9 +219,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                     Set<Rectangle> positiveFlow = solver.and(solver.and(negativeIn, positiveOut),
                             solver.not(solver.or(negativeOut, positiveIn)));
                     selfLoop = solver.and(selfLoop, solver.not(positiveFlow));
-
-                    //boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
-                    //selfLoop = selfLoop && !positiveFlow;
                 }
             }
 
@@ -232,7 +228,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                 if (solver.isSat(colors)) {
                     result.add(lowerNode);
                     if (successors) {
-                        edgeColours.putIfAbsent(new Pair<>(from, lowerNode), colors); // putIfAbsent?
+                        edgeColours.putIfAbsent(new Pair<>(from, lowerNode), colors);
                     } else {
                         edgeColours.putIfAbsent(new Pair<>(lowerNode, from), colors);
                     }
@@ -242,9 +238,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                     Set<Rectangle> negativeFlow = solver.and(solver.and(negativeOut, positiveIn),
                             solver.not(solver.or(negativeIn, positiveOut)));
                     selfLoop = solver.and(selfLoop, solver.not(negativeFlow));
-
-                    //boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
-                    //selfLoop = selfLoop && !negativeFlow;
                 }
             }
         }
@@ -257,7 +250,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
         return result;
     }
-
 
     /**
      * Calculates index of the facet corresponding to input node, dimension and orientation and returns it.
@@ -328,12 +320,6 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return colors;
     }
 
-    /**
-     * Returns parameters for which transition from source to target is possible.
-     * @param source source node
-     * @param target target node
-     * @return parameters represented as Set<Rectangle>
-     */
     @NotNull
     @Override
     public Set<Rectangle> transitionParameters(@NotNull Integer source, @NotNull Integer target) {
