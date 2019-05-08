@@ -19,8 +19,8 @@ public interface OnTheFlyColorComputer<T> {
     void initialize(OdeModel model, Solver<T> solver);
 
     /**
-     * Computes and returns parameters for a vertex in the given dimension
-     * and positive/negative derivation value.
+     * Computes and returns parameters for which derivation in the given dimension is positive/negative
+     * at the given vertex.
      *
      * @param vertex int representation of vertex
      * @param dimension dimension

@@ -52,12 +52,12 @@ class DynamicParamsOdeTransitionSystemTwoDimTest {
     private val fragmentOne = DynamicParamsOdeTransitionSystem(OdeModel(listOf(v1, v2), listOf(
             OdeModel.Parameter(name = "p1", range = Pair(0.0, 2.0)),
             OdeModel.Parameter(name = "p2", range = Pair(0.0, 2.0))
-    )), "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar")
+    )), "/home/jakub/Desktop/SBAPR/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar")
 
     private val fragmentTwo = DynamicParamsOdeTransitionSystem(OdeModel(listOf(v3, v4), listOf(
             OdeModel.Parameter(name = "p1", range = Pair(0.0, 2.0)),
             OdeModel.Parameter(name = "p2", range = Pair(0.0, 2.0))
-    )), "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar")
+    )), "/home/jakub/Desktop/SBAPR/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar")
 
     val n00 = 0
     val n01 = 1
