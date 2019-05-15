@@ -28,9 +28,12 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private final Integer dimensions;
     public Integer stateCount;
     private Boolean createSelfLoops;
-    private List<Set<Rectangle>> facetColors;
-    private Map<Variable, List<Integer>> masks = new HashMap<>();
-    private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
+    private Map<Integer, Set<Rectangle>> facetColors;
+    //private List<Set<Rectangle>> facetColors;
+    private Map<Variable, List<Integer>> masks;
+    private Map<Variable, Integer> dependenceCheckMasks;
+    private Map<Integer, List<Integer>> successors;
+    private Map<Integer, List<Integer>> predecessors;
     private double[] boundsRect;
     public Solver<Set<Rectangle>> solver;
 
@@ -46,10 +49,18 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         stateCount = getStateCount();
         createSelfLoops = true;
 
-        facetColors = new ArrayList<>();
+
+        facetColors = new HashMap<>(stateCount);
+        /*facetColors = new ArrayList<>();
         for (int i = 0; i < stateCount * dimensions * 4; i++) {
             facetColors.add(null);
-        }
+        }*/
+
+        masks = new HashMap<>(dimensions);
+        dependenceCheckMasks = new HashMap<>(dimensions);
+
+        successors = new HashMap<>(stateCount);
+        predecessors = new HashMap<>(stateCount);
 
         for (Variable var: model.getVariables()) {
             masks.put(var, new ArrayList<>());
@@ -129,8 +140,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     }
     
 
-    private Map<Integer, List<Integer>> successors = new HashMap<>();
-    private Map<Integer, List<Integer>> predecessors= new HashMap<>();
 
     private Map<Pair<Integer, Integer>, Set<Rectangle>> edgeColours = new HashMap<>();
 
@@ -150,9 +159,9 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private List<Integer> getStep(int from, Boolean successors) {
         List<Integer> result = new ArrayList<>();
         Set<Rectangle> selfLoop = solver.getTt();
+
         for (int dim = 0; dim < model.getVariables().size(); dim++) {
 
-            //String dimName = model.getVariables().get(dim).getName();
             Set<Rectangle> positiveIn = getFacetColors(from, dim, PositiveIn);
             Set<Rectangle> positiveOut = getFacetColors(from, dim, PositiveOut);
             Set<Rectangle> negativeIn = getFacetColors(from, dim, NegativeIn);
@@ -174,9 +183,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                     Set<Rectangle> positiveFlow = solver.and(solver.and(negativeIn, positiveOut),
                             solver.not(solver.or(negativeOut, positiveIn)));
                     selfLoop = solver.and(selfLoop, solver.not(positiveFlow));
-
-                    //boolean positiveFlow = negativeIn && positiveOut && !(negativeOut || positiveIn);
-                    //selfLoop = selfLoop && !positiveFlow;
                 }
             }
 
@@ -197,8 +203,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                             solver.not(solver.or(negativeIn, positiveOut)));
                     selfLoop = solver.and(selfLoop, solver.not(negativeFlow));
 
-                    //boolean negativeFlow = negativeOut && positiveIn && !(negativeIn || positiveOut);
-                    //selfLoop = selfLoop && !negativeFlow;
                 }
             }
         }
@@ -255,19 +259,22 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         }
 
         solver.minimize(colors);
-        facetColors.set(facetIndex, colors);
+        facetColors.putIfAbsent(facetIndex, colors);
+        //facetColors.set(facetIndex, colors);
 
         if (orientation == PositiveIn || orientation == PositiveOut) {
             Integer higherNode = encoder.higherNode(from, dimension);
             if (higherNode != null) {
                 int dual = orientation == PositiveIn ? NegativeOut : NegativeIn;
-                facetColors.set(facetIndex(higherNode, dimension, dual), colors);
+                //facetColors.set(facetIndex(higherNode, dimension, dual), colors);
+                facetColors.putIfAbsent(facetIndex(higherNode, dimension, dual), colors);
             }
         } else {
             Integer lowerNode = encoder.lowerNode(from, dimension);
             if (lowerNode != null) {
                 int dual = orientation == NegativeIn ? PositiveOut : PositiveIn;
-                facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
+                //facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
+                facetColors.putIfAbsent(facetIndex(lowerNode, dimension, dual), colors);
             }
         }
 
