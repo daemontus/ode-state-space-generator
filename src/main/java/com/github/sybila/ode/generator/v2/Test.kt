@@ -1,23 +1,28 @@
 package com.github.sybila.ode.generator.v2
 
 import com.github.sybila.checker.Solver
+import com.github.sybila.checker.Transition
+import com.github.sybila.checker.decreaseProp
+import com.github.sybila.checker.increaseProp
+import com.github.sybila.huctl.DirectionFormula
 import com.github.sybila.ode.generator.NodeEncoder
 import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.RectangleSolver
 import com.github.sybila.ode.model.OdeModel
+import java.util.ArrayList
 import java.util.HashMap
+import kotlin.math.pow
 
 
 class Test(
-        model: OdeModel
-) : TransitionSystem<Int, MutableSet<Rectangle>> {
+        protected val model: OdeModel,
+        private val createSelfLoops: Boolean
+) : TransitionSystem<Int, MutableSet<Rectangle>>,
+        Solver<MutableSet<Rectangle>> by RectangleSolver(Rectangle(model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray())) {
 
     protected val encoder = NodeEncoder(model)
     protected val dimensions = model.variables.size
     private val boundsRect = model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray()
-
-    private val solver = RectangleSolver(Rectangle(boundsRect))
-
 
     private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
     private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
@@ -26,24 +31,15 @@ class Test(
         a * (v.thresholds.size - 1)
     }
 
-    override fun Int.successors(): List<Int> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun Int.predecessors(): List<Int> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun transitionParameters(source: Int, target: Int): MutableSet<Rectangle> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    private val facetColors = arrayOfNulls<Any>(stateCount * dimensions * 4)//HashMap<FacetId, Params>(stateCount * dimensions * 4)
+    private val facetColors = arrayOfNulls<Any>(stateCount * dimensions * 4)
 
     private val PositiveIn = 0
     private val PositiveOut = 1
     private val NegativeIn = 2
     private val NegativeOut = 3
+
+
+    private val vertexMasks = IntArray(2.toDouble().pow(dimensions).toInt()) { i -> i }
 
     private fun facetIndex(from: Int, dimension: Int, orientation: Int)
             = from + (stateCount * dimension) + (stateCount * dimensions * orientation)
@@ -90,13 +86,13 @@ class Test(
             colors
         }
 
-        return value
+        return value as MutableSet<Rectangle>
     }
 
 
     fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): MutableSet<Rectangle>? {
         return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
-            val p: List<MutableSet<com.github.sybila.ode.generator.rect.Rectangle>?> = (0 until dimensions).map { dim ->
+            val p: List<MutableSet<Rectangle>?> = (0 until dimensions).map { dim ->
                 var derivationValue = 0.0
                 var denominator = 0.0
                 var parameterIndex = -1
@@ -121,7 +117,7 @@ class Test(
                     }
                 }
 
-                val bounds: MutableSet<com.github.sybila.ode.generator.rect.Rectangle>? = if (parameterIndex == -1 || denominator == 0.0) {
+                val bounds: MutableSet<Rectangle>? = if (parameterIndex == -1 || denominator == 0.0) {
                     //there is no parameter in this equation
                     if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) tt else ff
                 } else {
@@ -137,7 +133,7 @@ class Test(
                         val r = boundsRect.clone()
                         r[2*parameterIndex] = newLow
                         r[2*parameterIndex+1] = newHigh
-                        mutableSetOf(com.github.sybila.ode.generator.rect.Rectangle(r))
+                        mutableSetOf(Rectangle(r))
                     }
                 }
                 bounds
@@ -146,5 +142,73 @@ class Test(
             //(if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
             p
         }[dimension]
+    }
+
+    private val successorCache = HashMap<Int, List<Int>>(stateCount)
+    private val predecessorCache = HashMap<Int, List<Int>>(stateCount)
+
+    override fun Int.predecessors(): List<Int>
+            = getStep(this, false)
+
+    override fun Int.successors(): List<Int>
+            = getStep(this, true)
+
+    private fun getStep(from: Int, successors: Boolean): List<Int> {
+        return (when {
+            successors -> successorCache
+            else -> predecessorCache
+        }).computeIfAbsent(from) {
+            val result = ArrayList<Int>()
+            //selfLoop <=> !positiveFlow && !negativeFlow <=> !(positiveFlow || negativeFlow)
+            //positiveFlow = (-in && +out) && !(-out || +In) <=> -in && +out && !-out && !+In
+            var selfloop = tt
+            for (dim in model.variables.indices) {
+
+                val positiveOut = getFacetColors(from, dim, PositiveOut)
+                val positiveIn = getFacetColors(from, dim, PositiveIn)
+                val negativeOut = getFacetColors(from, dim, NegativeOut)
+                val negativeIn = getFacetColors(from, dim, NegativeIn)
+
+                encoder.higherNode(from, dim)?.let { higher ->
+                    val colors = (if (successors) positiveOut else positiveIn)
+                    if (colors.isSat()) {
+                        result.add(higher)
+                    }
+
+                    if (createSelfLoops) {
+                        val positiveFlow = negativeIn and positiveOut and (negativeOut or positiveIn).not()
+                        selfloop = selfloop and positiveFlow.not()
+                    }
+                }
+
+                encoder.lowerNode(from, dim)?.let { lower ->
+                    val colors = (if (successors) negativeOut else negativeIn)
+                    if (colors.isSat()) {
+                        result.add(lower)
+                    }
+
+                    if (createSelfLoops) {
+                        val negativeFlow = negativeOut and positiveIn and (negativeIn or positiveOut).not()
+                        selfloop = selfloop and negativeFlow.not()
+                    }
+                }
+
+            }
+
+            if (selfloop.isSat()) {
+                selfloop.minimize()
+                result.add(from)
+            }
+            result
+        }
+    }
+
+    override fun transitionParameters(source: Int, target: Int): MutableSet<Rectangle> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    private fun main(args: Array<String>) {
+        val vertexMasks = IntArray(2.toDouble().pow(3).toInt()) { i -> i}
+        println(vertexMasks)
     }
 }

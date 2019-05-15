@@ -2,6 +2,7 @@ package com.github.sybila.ode.generator.v2.benchmark;
 
 import com.github.sybila.ode.generator.rect.RectangleOdeModel;
 import com.github.sybila.ode.generator.v2.ParamsOdeTransitionSystem;
+import com.github.sybila.ode.generator.v2.Test;
 import com.github.sybila.ode.generator.v2.dynamic.DynamicParamsOdeTransitionSystem;
 import com.github.sybila.ode.model.OdeModel;
 import com.github.sybila.ode.model.Parser;
@@ -14,9 +15,10 @@ public class Benchmark {
     public static void main(String[] args) {
         Parser modelParser = new Parser();
         OdeModel model = modelParser.parse(new File("models/tcbb.bio"));
-        originalBenchmark(model);
+        //originalBenchmark(model);
         //improvedBenchmark(model);
         //dynamicBenchmark(model);
+        testBenchmark(model);
     }
 
     public static void originalBenchmark(OdeModel model) {
@@ -29,6 +31,7 @@ public class Benchmark {
         long elapsedTime = System.nanoTime() - startTime;
 
         double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+        System.out.println("Original benchmark");
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 
@@ -42,6 +45,7 @@ public class Benchmark {
         long elapsedTime = System.nanoTime() - startTime;
 
         double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+        System.out.println("Improved benchmark");
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 
@@ -55,6 +59,20 @@ public class Benchmark {
         long elapsedTime = System.nanoTime() - startTime;
 
         double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+        System.out.println("Dynamic benchmark");
+        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+    }
+
+    public static void testBenchmark(OdeModel model) {
+        Test testModel = new Test(model, true);
+        long startTime = System.nanoTime();
+        for (int state = 0; state < testModel.getStateCount(); state++) {
+            testModel.successors(state);
+        }
+        long elapsedTime = System.nanoTime() - startTime;
+
+        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+        System.out.println("Test benchmark");
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 }
