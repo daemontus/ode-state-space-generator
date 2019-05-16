@@ -9,12 +9,15 @@ import com.github.sybila.ode.generator.NodeEncoder
 import com.github.sybila.ode.generator.rect.Rectangle
 import com.github.sybila.ode.generator.rect.RectangleSolver
 import com.github.sybila.ode.model.OdeModel
-import java.util.ArrayList
-import java.util.HashMap
+import com.github.sybila.ode.model.OdeModel.*
+import com.sun.org.apache.xpath.internal.operations.Bool
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.math.pow
 
 
-class Test(
+class TestClass(
         protected val model: OdeModel,
         private val createSelfLoops: Boolean
 ) : TransitionSystem<Int, MutableSet<Rectangle>>,
@@ -27,8 +30,55 @@ class Test(
     private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
     private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
 
+    private val masks = HashMap<Variable, MutableList<Int>>()
+    private val dependenceCheckMasks = HashMap<Variable, Int>()
+
     val stateCount: Int = model.variables.fold(1) { a, v ->
         a * (v.thresholds.size - 1)
+    }
+
+    init {
+        for (v in model.variables) {
+            masks[v] = mutableListOf()
+            dependenceCheckMasks[v] = getDependenceCheckMask(v)
+        }
+
+        for (mask in 0 until 2.toDouble().pow(dimensions).toInt()) {
+            for (v in model.variables) {
+                if (checkMask(v, mask)) {
+                    masks[v]?.add(mask)
+                }
+            }
+        }
+    }
+
+    private fun getDependenceCheckMask(v: Variable) : Int {
+        val dependentOn = mutableSetOf<Int>()
+        for (summand in v.equation) {
+            dependentOn.addAll(summand.variableIndices)
+            for (evaluable in summand.evaluable) {
+                dependentOn.add(evaluable.varIndex)
+            }
+        }
+
+        val result = BitSet(model.variables.size)
+        result.set(0, model.variables.size)
+        for (index in dependentOn) {
+            result.clear(index)
+        }
+
+
+        var intResult = 0
+        for (i in 0 until 32) {
+            if (result.get(i)) {
+                intResult = intResult or (1 shl i)
+            }
+        }
+        return intResult
+    }
+
+    private fun checkMask(v: Variable, mask: Int) : Boolean {
+        return (dependenceCheckMasks[v]?.and(mask)) == 0
     }
 
     private val facetColors = arrayOfNulls<Any>(stateCount * dimensions * 4)
@@ -51,14 +101,22 @@ class Test(
             val positiveFacet = if (orientation == PositiveIn || orientation == PositiveOut) 1 else 0
             val positiveDerivation = orientation == PositiveOut || orientation == NegativeIn
 
+            var colors = ff
 
-            val colors = vertexMasks
-                    .filter { it.shr(dimension).and(1) == positiveFacet }
-                    .fold(ff) { a, mask ->
-                        val vertex = encoder.nodeVertex(from, mask)
-                        getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
-                    }
-            //val colors = tt
+            val dependencyMask = dependenceCheckMasks[model.variables[dimension]]
+            val selfDependent = ((dependencyMask?.shr(dimension))?.and(1)) == 0
+
+            for (mask in masks[model.variables[dimension]]!!) {
+                if (selfDependent && ((mask.shr(dimension)).and(1)) != positiveFacet) {
+                    continue
+                }
+
+                val vertex = encoder.nodeVertex(from, mask)
+                getVertexColor(vertex, dimension, positiveDerivation)?.let {
+                    colors = colors or it
+                }
+
+            }
 
             colors.minimize()
 
@@ -173,6 +231,8 @@ class Test(
                     val colors = (if (successors) positiveOut else positiveIn)
                     if (colors.isSat()) {
                         result.add(higher)
+                        if (successors) edgeColours.putIfAbsent(Pair(from, higher), colors)
+                        else edgeColours.putIfAbsent(Pair(higher, from), colors)
                     }
 
                     if (createSelfLoops) {
@@ -185,6 +245,8 @@ class Test(
                     val colors = (if (successors) negativeOut else negativeIn)
                     if (colors.isSat()) {
                         result.add(lower)
+                        if (successors) edgeColours.putIfAbsent(Pair(from, lower), colors)
+                        else edgeColours.putIfAbsent(Pair(lower, from), colors)
                     }
 
                     if (createSelfLoops) {
@@ -198,17 +260,16 @@ class Test(
             if (selfloop.isSat()) {
                 selfloop.minimize()
                 result.add(from)
+                edgeColours.putIfAbsent(Pair(from, from), selfloop)
             }
             result
         }
     }
 
+    private val edgeColours: HashMap<Pair<Int, Int>, MutableSet<Rectangle>> = hashMapOf()
+
     override fun transitionParameters(source: Int, target: Int): MutableSet<Rectangle> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return edgeColours.getOrDefault(Pair(source, target), ff)
     }
 
-    private fun main(args: Array<String>) {
-        val vertexMasks = IntArray(2.toDouble().pow(3).toInt()) { i -> i}
-        println(vertexMasks)
-    }
 }
