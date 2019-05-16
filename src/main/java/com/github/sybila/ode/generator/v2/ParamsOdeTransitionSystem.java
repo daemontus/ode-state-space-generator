@@ -29,13 +29,10 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     public Integer stateCount;
     private Boolean createSelfLoops;
     private Map<Integer, Set<Rectangle>> facetColors;
-    //private List<Set<Rectangle>> facetColors;
     private Map<Variable, List<Integer>> masks;
     private Map<Variable, Integer> dependenceCheckMasks;
     private Map<Integer, List<Integer>> successors;
     private Map<Integer, List<Integer>> predecessors;
-    private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>(); // nullable?
-    private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
 
     private double[] boundsRect;
     public Solver<Set<Rectangle>> solver;
@@ -54,10 +51,6 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
 
 
         facetColors = new HashMap<>(stateCount);
-        /*facetColors = new ArrayList<>();
-        for (int i = 0; i < stateCount * dimensions * 4; i++) {
-            facetColors.add(null);
-        }*/
 
         masks = new HashMap<>(dimensions);
         dependenceCheckMasks = new HashMap<>(dimensions);
@@ -285,60 +278,70 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return colors;
     }
 
+    private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>();
+    private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
+
+
     //TODO: finish caching
     private Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
         return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
-            Set<Rectangle> result = new HashSet<>();
-            double derivationValue = 0.0;
-            double denominator = 0.0;
-            int parameterIndex = -1;
+            List<Set<Rectangle>> p = new ArrayList<>();
+            for (int dim = 0 ; dim < dimensions; dim++) {
+                Set<Rectangle> result = new HashSet<>();
+                double derivationValue = 0.0;
+                double denominator = 0.0;
+                int parameterIndex = -1;
 
-            for (Summand summand: model.getVariables().get(dimension).getEquation()) {
-                double partialSum = summand.getConstant();
-                for (Integer varIndex: summand.getVariableIndices()) {
-                    partialSum *= model.getVariables().get(varIndex).getThresholds().get(encoder.vertexCoordinate(vertex, varIndex));
-                }
-                if (partialSum != 0.0) {
-                    for (Evaluable function: summand.getEvaluable()) {
-                        int index = function.getVarIndex();
-                        partialSum *= function.invoke(model.getVariables().get(index).getThresholds()
-                                .get(encoder.vertexCoordinate(vertex, index)));
+                for (Summand summand: model.getVariables().get(dim).getEquation()) {
+                    double partialSum = summand.getConstant();
+                    for (Integer varIndex: summand.getVariableIndices()) {
+                        partialSum *= model.getVariables().get(varIndex).getThresholds().get(encoder.vertexCoordinate(vertex, varIndex));
+                    }
+                    if (partialSum != 0.0) {
+                        for (Evaluable function: summand.getEvaluable()) {
+                            int index = function.getVarIndex();
+                            partialSum *= function.invoke(model.getVariables().get(index).getThresholds()
+                                    .get(encoder.vertexCoordinate(vertex, index)));
+                        }
+                    }
+
+                    if (summand.hasParam()) {
+                        parameterIndex = summand.getParamIndex();
+                        denominator += partialSum;
+                    } else {
+                        derivationValue += partialSum;
                     }
                 }
 
-                if (summand.hasParam()) {
-                    parameterIndex = summand.getParamIndex();
-                    denominator += partialSum;
+                if (parameterIndex == -1 || denominator == 0.0) {
+                    if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) {
+                        result = solver.getTt();
+                    } else {
+                        result = solver.getFf();
+                    }
                 } else {
-                    derivationValue += partialSum;
+                    // division by negative number flips the condition
+                    boolean newPositive = (denominator > 0) == positive;
+                    Pair<Double, Double> range = model.getParameters().get(parameterIndex).getRange();
+                    double split = Math.min(range.getSecond(), Math.max(range.getFirst(), -derivationValue / denominator));
+                    double newLow = newPositive ? split : range.getFirst();
+                    double newHigh = newPositive ? range.getSecond() : split;
+
+                    if (newLow >= newHigh) {
+                        result = null;
+                    } else {
+                        double[] r = boundsRect.clone();
+                        r[2 * parameterIndex] = newLow;
+                        r[2 * parameterIndex + 1] = newHigh;
+                        result.add(new Rectangle(r));
+                    }
                 }
+                p.add(result);
             }
 
-            if (parameterIndex == -1 || denominator == 0.0) {
-                if ((positive && derivationValue > 0) || (!positive && derivationValue < 0)) {
-                    return solver.getTt();
-                } else {
-                    return solver.getFf();
-                }
-            } else {
-                // division by negative number flips the condition
-                boolean newPositive = (denominator > 0) == positive;
-                Pair<Double, Double> range = model.getParameters().get(parameterIndex).getRange();
-                double split = Math.min(range.getSecond(), Math.max(range.getFirst(), -derivationValue / denominator));
-                double newLow = newPositive ? split : range.getFirst();
-                double newHigh = newPositive ? range.getSecond() : split;
+            return p;
 
-                if (newLow >= newHigh) {
-                    return null;
-                } else {
-                    double[] r = boundsRect.clone();
-                    r[2 * parameterIndex] = newLow;
-                    r[2 * parameterIndex + 1] = newHigh;
-                    result.add(new Rectangle(r));
-                }
-            }
-            return result;
-        } );
+        } ).get(dimension);
     }
 
     @NotNull
