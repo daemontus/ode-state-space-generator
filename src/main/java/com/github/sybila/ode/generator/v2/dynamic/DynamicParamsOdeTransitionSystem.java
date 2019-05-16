@@ -117,10 +117,12 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.getConstructor().newInstance();
             colorComputer.initialize(model, solver);
 
+
+
         } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException | NoSuchMethodException | InvocationTargetException e) {
             e.printStackTrace();
         } finally {
-            // delete .class file afterwards!
+
         }
     }
 

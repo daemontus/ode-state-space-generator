@@ -17,7 +17,7 @@ import kotlin.collections.HashMap
 import kotlin.math.pow
 
 
-class TestClass(
+class KotlinParamsOdeTransitionSystem(
         protected val model: OdeModel,
         private val createSelfLoops: Boolean
 ) : TransitionSystem<Int, MutableSet<Rectangle>>,
@@ -89,8 +89,6 @@ class TestClass(
     private val NegativeOut = 3
 
 
-    private val vertexMasks = IntArray(2.toDouble().pow(dimensions).toInt()) { i -> i }
-
     private fun facetIndex(from: Int, dimension: Int, orientation: Int)
             = from + (stateCount * dimension) + (stateCount * dimensions * orientation)
 
@@ -101,24 +99,21 @@ class TestClass(
             val positiveFacet = if (orientation == PositiveIn || orientation == PositiveOut) 1 else 0
             val positiveDerivation = orientation == PositiveOut || orientation == NegativeIn
 
-            var colors = ff
-
             val dependencyMask = dependenceCheckMasks[model.variables[dimension]]
             val selfDependent = ((dependencyMask?.shr(dimension))?.and(1)) == 0
 
-            for (mask in masks[model.variables[dimension]]!!) {
-                if (selfDependent && ((mask.shr(dimension)).and(1)) != positiveFacet) {
-                    continue
-                }
+            val vertexMasks = masks[model.variables[dimension]]
 
+
+            val colors = vertexMasks
+                    ?.filter { !selfDependent || it.shr(dimension).and(1) == positiveFacet }
+                    ?.fold(ff) { a, mask ->
                 val vertex = encoder.nodeVertex(from, mask)
-                getVertexColor(vertex, dimension, positiveDerivation)?.let {
-                    colors = colors or it
-                }
-
+                getVertexColor(vertex, dimension, positiveDerivation)?.let { a or it } ?: a
             }
 
-            colors.minimize()
+
+            colors?.minimize()
 
             facetColors[index] = colors
 

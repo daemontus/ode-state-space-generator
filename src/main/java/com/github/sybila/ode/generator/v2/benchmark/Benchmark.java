@@ -1,9 +1,10 @@
 package com.github.sybila.ode.generator.v2.benchmark;
 
 import com.github.sybila.ode.generator.rect.RectangleOdeModel;
+import com.github.sybila.ode.generator.v2.KotlinParamsOdeTransitionSystem;
 import com.github.sybila.ode.generator.v2.ParamsOdeTransitionSystem;
-import com.github.sybila.ode.generator.v2.Test;
 import com.github.sybila.ode.generator.v2.dynamic.DynamicParamsOdeTransitionSystem;
+import com.github.sybila.ode.generator.v2.dynamic.KotlinDynamicParamsOdeTransitionSystem;
 import com.github.sybila.ode.model.OdeModel;
 import com.github.sybila.ode.model.Parser;
 
@@ -14,17 +15,18 @@ import java.util.concurrent.TimeUnit;
 public class Benchmark {
     public static void main(String[] args) {
         Parser modelParser = new Parser();
-        OdeModel model = modelParser.parse(new File("models/tcbb.bio"));
-        //originalBenchmark(model);
-        //improvedBenchmark(model);
-        //dynamicBenchmark(model);
-        testBenchmark(model);
+        OdeModel model = modelParser.parse(new File("models/model_31_reduced.bio"));
+        originalBenchmark(model);
+        //paramsOdeBenchmark(model);
+        //kotlinParamsOdeBenchmark(model);
+        //dynamicParamsOdeBenchmark(model);
+        //kotlinDynamicParamsOdeBenchmark(model);
     }
 
-    public static void originalBenchmark(OdeModel model) {
-        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
 
+    private static void originalBenchmark(OdeModel model) {
         long startTime = System.nanoTime();
+        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
         for (int state = 0; state < rectangleModel.getStateCount(); state++) {
             rectangleModel.successors(state, true);
         }
@@ -35,10 +37,9 @@ public class Benchmark {
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 
-    public static void improvedBenchmark(OdeModel model) {
-        ParamsOdeTransitionSystem rectangleModel = new ParamsOdeTransitionSystem(model);
-
+    private static void paramsOdeBenchmark(OdeModel model) {
         long startTime = System.nanoTime();
+        ParamsOdeTransitionSystem rectangleModel = new ParamsOdeTransitionSystem(model);
         for (int state = 0; state < rectangleModel.stateCount; state++) {
             rectangleModel.successors(state);
         }
@@ -49,13 +50,28 @@ public class Benchmark {
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 
-    public static void dynamicBenchmark(OdeModel model) {
-        DynamicParamsOdeTransitionSystem rectangleModel = new DynamicParamsOdeTransitionSystem(model, "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar");
-
+    private static void kotlinParamsOdeBenchmark(OdeModel model) {
         long startTime = System.nanoTime();
-        for (int state = 0; state < rectangleModel.stateCount; state++) {
+        KotlinParamsOdeTransitionSystem rectangleModel = new KotlinParamsOdeTransitionSystem(model, true);
+
+        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
             rectangleModel.successors(state);
         }
+
+        long elapsedTime = System.nanoTime() - startTime;
+
+        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+        System.out.println("Test benchmark");
+        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+    }
+
+    private static void dynamicParamsOdeBenchmark(OdeModel model) {
+        long startTime = System.nanoTime();
+        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
+        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
+            rectangleModel.successors(state, true);
+        }
+
         long elapsedTime = System.nanoTime() - startTime;
 
         double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
@@ -63,16 +79,19 @@ public class Benchmark {
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
 
-    public static void testBenchmark(OdeModel model) {
-        Test testModel = new Test(model, true);
+    private static void kotlinDynamicParamsOdeBenchmark(OdeModel model) {
         long startTime = System.nanoTime();
-        for (int state = 0; state < testModel.getStateCount(); state++) {
-            testModel.successors(state);
+
+        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
+        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
+            rectangleModel.successors(state, true);
         }
+
         long elapsedTime = System.nanoTime() - startTime;
 
         double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
         System.out.println("Test benchmark");
         System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
     }
+
 }
