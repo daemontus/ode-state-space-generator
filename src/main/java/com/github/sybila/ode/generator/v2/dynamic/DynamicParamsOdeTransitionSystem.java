@@ -101,22 +101,17 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             writer.write(fullClassCode);
             writer.close();
 
-            System.out.println("Temp file created: " + sourceCodePath);
             Process compiler = Runtime.getRuntime().exec(new String[]{ "javac", "-cp", FULL_CLASS_PATH, sourceCodePath.toAbsolutePath().toString() });
-            BufferedReader errorReader = new BufferedReader(new InputStreamReader(compiler.getErrorStream()));
-            errorReader.lines().forEach(s -> System.err.println("CP: " + s));
-            int resultCode = compiler.waitFor();
-            System.out.println("Temp file compiled: " + resultCode);
+            compiler.waitFor();
+
 
             URL classUrl = project.toUri().toURL();
-            System.out.println("Load dynamic from: " + classUrl);
             ClassLoader loader = new URLClassLoader(new URL[]{ classUrl });
 
             Class<?> dynamicClass = loader.loadClass("ColorComputer");
 
             colorComputer = (OnTheFlyColorComputer<Set<Rectangle>>) dynamicClass.getConstructor().newInstance();
             colorComputer.initialize(model, solver);
-
 
 
         } catch (IOException | IllegalAccessException | InstantiationException | ClassNotFoundException | InterruptedException | NoSuchMethodException | InvocationTargetException e) {
