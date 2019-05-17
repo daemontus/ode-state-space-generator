@@ -16,82 +16,128 @@ public class Benchmark {
     public static void main(String[] args) {
         Parser modelParser = new Parser();
         OdeModel model = modelParser.parse(new File("models/model_31_reduced.bio"));
-        originalBenchmark(model);
-        //paramsOdeBenchmark(model);
-        //kotlinParamsOdeBenchmark(model);
-        //dynamicParamsOdeBenchmark(model);
-        //kotlinDynamicParamsOdeBenchmark(model);
+        //originalBenchmark(model, 10);
+        //paramsOdeBenchmark(model, 1000);
+        //kotlinParamsOdeBenchmark(model, 10);
+        //dynamicParamsOdeBenchmark(model, 10);
+        kotlinDynamicParamsOdeBenchmark(model, 10);
     }
 
 
-    private static void originalBenchmark(OdeModel model) {
-        long startTime = System.nanoTime();
-        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
-        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
-            rectangleModel.successors(state, true);
-        }
-        long elapsedTime = System.nanoTime() - startTime;
+    private static void originalBenchmark(OdeModel model, int numOfRuns) {
 
-        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
-        System.out.println("Original benchmark");
-        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+        double[] times = new double[numOfRuns];
+
+        for (int i = 0; i < numOfRuns; i++) {
+
+            long startTime = System.nanoTime();
+            RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
+            for (int state = 0; state < rectangleModel.getStateCount(); state++) {
+                rectangleModel.successors(state, true);
+            }
+
+            long elapsedTime = System.nanoTime() - startTime;
+            double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+            times[i] = elapsedTimeMs;
+
+        }
+
+        System.out.println("Original Benchmark");
+        System.out.println("Average time: " + getAverage(times) + "ms");
+
     }
 
-    private static void paramsOdeBenchmark(OdeModel model) {
-        long startTime = System.nanoTime();
-        ParamsOdeTransitionSystem rectangleModel = new ParamsOdeTransitionSystem(model);
-        for (int state = 0; state < rectangleModel.stateCount; state++) {
-            rectangleModel.successors(state);
-        }
-        long elapsedTime = System.nanoTime() - startTime;
 
-        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+    private static void paramsOdeBenchmark(OdeModel model, int numOfRuns) {
+
+        double[] times = new double[numOfRuns];
+
+        for (int i = 0; i < numOfRuns; i++) {
+
+            long startTime = System.nanoTime();
+            ParamsOdeTransitionSystem rectangleModel = new ParamsOdeTransitionSystem(model);
+            for (int state = 0; state < rectangleModel.stateCount; state++) {
+                rectangleModel.successors(state);
+            }
+
+            long elapsedTime = System.nanoTime() - startTime;
+            double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+            times[i] = elapsedTimeMs;
+        }
+
+
         System.out.println("Improved benchmark");
-        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+        System.out.println("Average time: " + getAverage(times) + "ms");
     }
 
-    private static void kotlinParamsOdeBenchmark(OdeModel model) {
-        long startTime = System.nanoTime();
-        KotlinParamsOdeTransitionSystem rectangleModel = new KotlinParamsOdeTransitionSystem(model, true);
+    private static void kotlinParamsOdeBenchmark(OdeModel model, int numOfRuns) {
 
-        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
-            rectangleModel.successors(state);
+        double[] times = new double[numOfRuns];
+
+        for (int i = 0; i < numOfRuns; i++) {
+            long startTime = System.nanoTime();
+            KotlinParamsOdeTransitionSystem rectangleModel = new KotlinParamsOdeTransitionSystem(model, true);
+
+            for (int state = 0; state < rectangleModel.getStateCount(); state++) {
+                rectangleModel.successors(state);
+            }
+
+            long elapsedTime = System.nanoTime() - startTime;
+            double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+            times[i] = elapsedTimeMs;
         }
 
-        long elapsedTime = System.nanoTime() - startTime;
-
-        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
-        System.out.println("Test benchmark");
-        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+        System.out.println("Kotlin improved benchmark");
+        System.out.println("Average time: " + getAverage(times) + "ms");
     }
 
-    private static void dynamicParamsOdeBenchmark(OdeModel model) {
-        long startTime = System.nanoTime();
-        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
-        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
-            rectangleModel.successors(state, true);
+    private static void dynamicParamsOdeBenchmark(OdeModel model, int numOfRuns) {
+        double[] times = new double[numOfRuns];
+
+        for (int i = 0; i < numOfRuns; i++) {
+            long startTime = System.nanoTime();
+            DynamicParamsOdeTransitionSystem rectangleModel = new DynamicParamsOdeTransitionSystem(model, "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar");
+            for (int state = 0; state < rectangleModel.stateCount; state++) {
+                rectangleModel.successors(state);
+            }
+
+            long elapsedTime = System.nanoTime() - startTime;
+            double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+            times[i] = elapsedTimeMs;
         }
 
-        long elapsedTime = System.nanoTime() - startTime;
 
-        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
         System.out.println("Dynamic benchmark");
-        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+        System.out.println("Average time: " + getAverage(times) + " ms");
     }
 
-    private static void kotlinDynamicParamsOdeBenchmark(OdeModel model) {
-        long startTime = System.nanoTime();
+    private static void kotlinDynamicParamsOdeBenchmark(OdeModel model, int numOfRuns) {
+        double[] times = new double[numOfRuns];
 
-        RectangleOdeModel rectangleModel = new RectangleOdeModel(model, true);
-        for (int state = 0; state < rectangleModel.getStateCount(); state++) {
-            rectangleModel.successors(state, true);
+        for (int i = 0; i < numOfRuns; i++) {
+            long startTime = System.nanoTime();
+            KotlinDynamicParamsOdeTransitionSystem rectangleModel = new KotlinDynamicParamsOdeTransitionSystem(model, true, "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar");
+            for (int state = 0; state < rectangleModel.getStateCount(); state++) {
+                rectangleModel.successors(state);
+            }
+
+            long elapsedTime = System.nanoTime() - startTime;
+            double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
+            times[i] = elapsedTimeMs;
         }
 
-        long elapsedTime = System.nanoTime() - startTime;
 
-        double elapsedTimeMs = TimeUnit.MILLISECONDS.convert(elapsedTime, TimeUnit.NANOSECONDS);
-        System.out.println("Test benchmark");
-        System.out.println("Elapsed time: " + elapsedTimeMs + " ms");
+        System.out.println("Kotlin dynamic benchmark");
+        System.out.println("Average time: " + getAverage(times) + " ms");
+    }
+
+    private static double getAverage(double[] times) {
+        double sum = 0;
+        for (int i = 0; i < times.length; i++) {
+            if (i == 0) continue; // skipping first measured time due to JVM reasons
+            sum += times[i];
+        }
+        return sum / (times.length - 1);
     }
 
 }
