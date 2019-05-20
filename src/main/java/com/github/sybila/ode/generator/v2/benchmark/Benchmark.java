@@ -17,10 +17,10 @@ public class Benchmark {
         Parser modelParser = new Parser();
         OdeModel model = modelParser.parse(new File("models/model_31_reduced.bio"));
         //originalBenchmark(model, 10);
-        //paramsOdeBenchmark(model, 1000);
+        //paramsOdeBenchmark(model, 10);
         //kotlinParamsOdeBenchmark(model, 10);
-        //dynamicParamsOdeBenchmark(model, 10);
-        kotlinDynamicParamsOdeBenchmark(model, 10);
+        //dynamicParamsOdeBenchmark(model, 1);
+        //kotlinDynamicParamsOdeBenchmark(model, 10);
     }
 
 
