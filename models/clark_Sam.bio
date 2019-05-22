@@ -1,0 +1,89 @@
+# New clark model. This one actually works...
+VARS: CO2_cyt, HCO3_cyt, CO2_carb, HCO3_carb
+
+# These are fixed constants which are safe to turn into parameters if needed.
+# But look out for dependent parameters - each constant has an associated set of equations where it appears.
+CONSTS: v1, 0.000000000000000001 		# HCO3_cyt
+# This is nice, maybe reduce bounds a little
+PARAMS: fast, 10,10000	 				# CO2_cyt, HCO3_cyt, CO2_carb, HCO3_carb
+CONSTS: Nsites, 13400					# CO2_carb
+CONSTS: factorCO2dehyd, 0.001			# CO2_carb, HCO3_carb
+CONSTS: factorHCO3dehyd, 11904.7619		# CO2_carb, HCO3_carb
+CONSTS: k7, 0.000000000000000000000019	# CO2_carb
+
+# These are transformed constants. To simplify the model, a transformation was applied so that the constant
+# can potentially be turned into a parameter. Also look out for dependent parameters.
+
+# Original value: 8.0, transformation: 10^pH_cyt
+CONSTS: pH_cyt_exp, 100000000			# CO2_cyt, HCO3_cyt
+
+# Original value: 8.0, transformation: 10^pH_cyt
+CONSTS: pH_carb_exp, 100000000			# CO2_carb, HCO3_carb
+
+# Original value: 1.7e-17, transformation: 1/Vcarb
+CONSTS: Vcarb_inv, 58823529410000000	# CO2_carb
+
+# Origina value: 5.2e-16, transformation: 1/Vcell
+CONSTS: Vcell_inv, 1923076923076920		# HCO3_cyt
+
+# The following constants are here for the sake of completeness, but DO NOT USE THEM AS PARAMETERS, because they
+# can be inlined in other non-linear terms which would have to be parametrised as well.
+CONSTS: PCO2, 0.0004
+CONSTS: Temperature, 38
+CONSTS: IonicStrength, 0.1
+CONSTS: pH_ext, 8.2
+CONSTS: kW, 0.00000000000001
+CONSTS: k1, 0.00022
+CONSTS: k4, 0.00019
+CONSTS: O2_carb, 0.0004
+CONSTS: k5, 0.0013
+
+# k2 = 12100 + 1156*(Temperature - 25)
+# k2 = 12100 + 1156*(38 - 25)
+CONSTS: k2, 27128
+
+# k3 = 0.00006 + 0.00006*(Temperature - 25)
+# k3 = 0.00006 + 0.00006*(38 - 25)
+CONSTS: k3, 0.00084
+
+# kH = 10.0^(-(1.5 + 0.01*(Temperature - 25) + 0.1*IonicStrength))
+# kH = 10.0^(-(1.5 + 0.01*(38 - 25) + 0.1*0.1))
+CONSTS: kH, 0.02290867653
+
+# CO2_ext = kH * PCO2
+# CO2_ext = 0.02290867653 * 0.0004
+CONSTS: CO2_ext, 0.000009163470612
+
+# OH_ext = kW * 10.0^pH_ext
+# OH_ext = 0.00000000000001 * 10.0^8.2
+CONSTS: OH_ext, 0.000001584893192
+
+# HCO3_ext = (k2 / k3) * CO2_ext * OH_ext
+# HCO3_ext = (27128 / 0.00084) * 0.000009163470612 * 0.000001584893192
+CONSTS: HCO3_ext, 0.0004690276889
+
+# HCO3_ext / (k1 + HCO3_ext)
+# 0.0004690276889 / (0.00022 + 0.0004690276889)
+CONSTS: term1, 0.6807094932
+
+# k4 * (1 + O2_carb/k5)
+# 0.00019 * (1 + 0.0004/0.0013)
+CONSTS: term2, 0.0002484615385
+
+
+# Other assignments taken from the original model are inlined into the equations:
+# OH_cyt = kW * 10^pH_cyt
+# OH_carb = kW * 10^pH_carb
+# v2 = k7 * Nsites * (1 / Vcarb)
+
+EQ: CO2_cyt   =  -1*k2*kW*pH_cyt_exp*CO2_cyt  +     k3*HCO3_cyt  +  fast*CO2_ext  +  -1*fast*CO2_cyt
+EQ: HCO3_cyt  =     k2*kW*pH_cyt_exp*CO2_cyt  +  -1*k3*HCO3_cyt  +  -1*fast*HCO3_cyt  +  fast*HCO3_carb  +  v1*Vcell_inv*term1
+EQ: CO2_carb  =  -1*k7*Nsites*Vcarb_inv*Hillp(CO2_carb, term2, 1, 0, 1)  +  -1*factorCO2dehyd*fast*k2*kW*pH_carb_exp*CO2_carb  +     factorHCO3dehyd*fast*k3*HCO3_carb
+EQ: HCO3_carb =     fast*HCO3_cyt  +  -1*fast*HCO3_carb                  +     factorCO2dehyd*fast*k2*kW*pH_carb_exp*CO2_carb  +  -1*factorHCO3dehyd*fast*k3*HCO3_carb
+
+VAR_POINTS: CO2_carb: 1500, 10
+
+THRES: CO2_cyt: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001
+THRES: HCO3_cyt: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001
+THRES: CO2_carb: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001
+THRES: HCO3_carb: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001

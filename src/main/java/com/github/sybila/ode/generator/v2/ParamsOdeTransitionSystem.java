@@ -28,9 +28,10 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     private final Integer dimensions;
     public Integer stateCount;
     private Boolean createSelfLoops;
-    private Map<Integer, Set<Rectangle>> facetColors;
-    private Map<Variable, List<Integer>> masks;
-    private Map<Variable, Integer> dependenceCheckMasks;
+    private List<Set<Rectangle>> facetColors;
+    // masks are indexed by variable index in the original model
+    private List<List<Integer>> masks;
+    private int[] dependenceCheckMasks;
     private Map<Integer, List<Integer>> successors;
     private Map<Integer, List<Integer>> predecessors;
 
@@ -50,25 +51,29 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         createSelfLoops = true;
 
 
-        facetColors = new HashMap<>(stateCount);
+        facetColors = new ArrayList<>(stateCount);
+        for (int i = 0; i < stateCount * dimensions * 4; i++) {
+            facetColors.add(null);
+        }
 
-        masks = new HashMap<>(dimensions);
-        dependenceCheckMasks = new HashMap<>(dimensions);
+        masks = new ArrayList<>(dimensions);
+        dependenceCheckMasks = new int[dimensions];
 
         successors = new HashMap<>(stateCount);
         predecessors = new HashMap<>(stateCount);
 
 
-        for (Variable var: model.getVariables()) {
-            masks.put(var, new ArrayList<>());
-            dependenceCheckMasks.put(var, getDependenceCheckMask(var));
+        for (int i=0; i < model.getVariables().size(); i++) {
+            Variable var = model.getVariables().get(i);
+            masks.add(new ArrayList<>());
+            dependenceCheckMasks[i] = getDependenceCheckMask(var);
         }
 
         //Iterates through all possible masks and all variables, filters out masks which are valid and saves them.
         for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
-            for (Variable var: model.getVariables()) {
-                if (checkMask(var, mask)) {
-                    masks.get(var).add(mask);
+            for (int i=0; i < model.getVariables().size(); i++) {
+                if (checkMask(i, mask)) {
+                    masks.get(i).add(mask);
                 }
             }
         }
@@ -124,8 +129,8 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
      * @param mask mask to be checked
      * @return true if mask is valid for the var, false otherwise
      */
-    private boolean checkMask(Variable var, int mask) {
-        return (dependenceCheckMasks.get(var) & mask) == 0;
+    private boolean checkMask(int var, int mask) {
+        return (dependenceCheckMasks[var] & mask) == 0;
     }
 
     private Integer getStateCount() {
@@ -237,11 +242,11 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         // Compute value
         Set<Rectangle> colors = solver.getFf();
 
-        int dependencyMask = dependenceCheckMasks.get(model.getVariables().get(dimension));
+        int dependencyMask = dependenceCheckMasks[dimension];
         // if self dependent, dependency mask has 0 at "dimension" position
         boolean selfDependent = ((dependencyMask >> dimension) & 1) == 0;
 
-        for (Integer mask: masks.get(model.getVariables().get(dimension))) {
+        for (int mask: masks.get(dimension)) {
             if (selfDependent && ((mask >> dimension) & 1) != positiveFacet) {
                 continue;
             }
@@ -255,38 +260,39 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
             //colors = colors | vertexColor;
         }
 
-        solver.minimize(colors);
-        facetColors.putIfAbsent(facetIndex, colors);
-        //facetColors.set(facetIndex, colors);
+        //solver.minimize(colors);
+        //facetColors.putIfAbsent(facetIndex, colors);
+        facetColors.set(facetIndex, colors);
 
         if (orientation == PositiveIn || orientation == PositiveOut) {
             Integer higherNode = encoder.higherNode(from, dimension);
             if (higherNode != null) {
                 int dual = orientation == PositiveIn ? NegativeOut : NegativeIn;
-                //facetColors.set(facetIndex(higherNode, dimension, dual), colors);
-                facetColors.putIfAbsent(facetIndex(higherNode, dimension, dual), colors);
+                facetColors.set(facetIndex(higherNode, dimension, dual), colors);
+                //facetColors.putIfAbsent(facetIndex(higherNode, dimension, dual), colors);
             }
         } else {
             Integer lowerNode = encoder.lowerNode(from, dimension);
             if (lowerNode != null) {
                 int dual = orientation == NegativeIn ? PositiveOut : PositiveIn;
-                //facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
-                facetColors.putIfAbsent(facetIndex(lowerNode, dimension, dual), colors);
+                facetColors.set(facetIndex(lowerNode, dimension, dual), colors);
+                //facetColors.putIfAbsent(facetIndex(lowerNode, dimension, dual), colors);
             }
         }
 
         return colors;
     }
 
-    private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>();
-    private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
+    //private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>();
+    //private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
 
 
     //TODO: finish caching
     private Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
-        return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
-            List<Set<Rectangle>> p = new ArrayList<>();
-            for (int dim = 0 ; dim < dimensions; dim++) {
+        //return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
+            //List<Set<Rectangle>> p = new ArrayList<>();
+            //for (int dim = 0 ; dim < dimensions; dim++) {
+                int dim = dimension;
                 Set<Rectangle> result = new HashSet<>();
                 double derivationValue = 0.0;
                 double denominator = 0.0;
@@ -336,12 +342,13 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                         result.add(new Rectangle(r));
                     }
                 }
-                p.add(result);
-            }
+                return result;
+                //p.add(result);
+            //}
 
-            return p;
+           // return p;
 
-        } ).get(dimension);
+        //} ).get(dimension);
     }
 
     @NotNull

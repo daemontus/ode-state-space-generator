@@ -36,8 +36,8 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
     public Integer stateCount;
     private Boolean createSelfLoops;
     private List<Set<Rectangle>> facetColors;
-    private Map<Variable, List<Integer>> masks = new HashMap<>();
-    private Map<Variable, Integer> dependenceCheckMasks = new HashMap<>();
+    private List<List<Integer>> masks = new ArrayList<>();
+    private int[] dependenceCheckMasks;
     private double[] boundsRect;
     public Solver<Set<Rectangle>> solver;
     private OnTheFlyColorComputer<Set<Rectangle>> colorComputer;
@@ -57,22 +57,24 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         createSelfLoops = true;
         FULL_CLASS_PATH = fullClassPath;
 
+        dependenceCheckMasks = new int[dimensions];
+
         facetColors = new ArrayList<>();
         for (int i = 0; i < stateCount * dimensions * 4; i++) {
             facetColors.add(null);
         }
 
-        //Initializes masks with empty lists and stores dependence-check masks for every variable.
-        for (Variable var: model.getVariables()) {
-            masks.put(var, new ArrayList<>());
-            dependenceCheckMasks.put(var, getDependenceCheckMask(var));
+        for (int i=0; i < model.getVariables().size(); i++) {
+            Variable var = model.getVariables().get(i);
+            masks.add(new ArrayList<>());
+            dependenceCheckMasks[i] = getDependenceCheckMask(var);
         }
 
         //Iterates through all possible masks and all variables, filters out masks which are valid and saves them.
         for (int mask = 0; mask < Math.pow(2, dimensions); mask++) {
-            for (Variable var: model.getVariables()) {
-                if (checkMask(var, mask)) {
-                    masks.get(var).add(mask);
+            for (int i=0; i < model.getVariables().size(); i++) {
+                if (checkMask(i, mask)) {
+                    masks.get(i).add(mask);
                 }
             }
         }
@@ -85,7 +87,9 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
 
         solver = new RectangleSolver(new Rectangle(boundsRect));
 
+        long startTime = System.currentTimeMillis();
         compileAndLoadClass(generateFullClassCode());
+        System.out.println("Compiled in "+(System.currentTimeMillis() - startTime));
     }
 
     /**
@@ -179,8 +183,8 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
      * @param mask mask to be checked
      * @return true if mask is valid for the var, false otherwise
      */
-    private boolean checkMask(Variable var, int mask) {
-        return (dependenceCheckMasks.get(var) & mask) == 0;
+    private boolean checkMask(int var, int mask) {
+        return (dependenceCheckMasks[var] & mask) == 0;
     }
 
     private Integer getStateCount() {
@@ -296,11 +300,11 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         // Compute value
         Set<Rectangle> colors = solver.getFf();
 
-        int dependencyMask = dependenceCheckMasks.get(model.getVariables().get(dimension));
+        int dependencyMask = dependenceCheckMasks[dimension];
         // if self dependent, dependency mask has 0 at "dimension" position
         boolean selfDependent = ((dependencyMask >> dimension) & 1) == 0;
 
-        for (Integer mask: masks.get(model.getVariables().get(dimension))) {
+        for (int mask: masks.get(dimension)) {
             if (selfDependent && ((mask >> dimension) & 1) != positiveFacet) {
                 continue;
             }
@@ -314,7 +318,7 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
             //colors = colors | vertexColor;
         }
 
-        solver.minimize(colors);
+        //solver.minimize(colors);
         facetColors.set(facetIndex, colors);
 
         if (orientation == PositiveIn || orientation == PositiveOut) {

@@ -76,13 +76,21 @@ class NodeEncoder(
     }
 
     fun nodeVertex(node: Int, vertexMask: Int): Int {
-        return (0 until dimensions).asSequence().map { dim ->
+        var acc = 0
+        var d = 0
+        while (d < dimensions) {
+            val newCoordinate = ((node / dimensionMultipliers[d]) % dimensionStateCounts[d]) + vertexMask.shr(d).and(1)
+            acc += thresholdMultipliers[d] + newCoordinate
+            d += 1
+        }
+        return acc
+        /*return (0 until dimensions).asSequence().map { dim ->
             //compute vertex coordinates
             coordinate(node, dim) + vertexMask.shr(dim).and(1)
         }.foldIndexed(0) { i, acc, e ->
             //transform to ID
             acc + thresholdMultipliers[i] * e
-        }
+        }*/
     }
 
     /**

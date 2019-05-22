@@ -30,23 +30,23 @@ class KotlinParamsOdeTransitionSystem(
     private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
     private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
 
-    private val masks = HashMap<Variable, MutableList<Int>>()
-    private val dependenceCheckMasks = HashMap<Variable, Int>()
+    private val masks = ArrayList<MutableList<Int>>()
+    private val dependenceCheckMasks = IntArray(dimensions)
 
     val stateCount: Int = model.variables.fold(1) { a, v ->
         a * (v.thresholds.size - 1)
     }
 
     init {
-        for (v in model.variables) {
-            masks[v] = mutableListOf()
-            dependenceCheckMasks[v] = getDependenceCheckMask(v)
+        for (v in model.variables.indices) {
+            masks.add(mutableListOf())
+            dependenceCheckMasks[v] = getDependenceCheckMask(model.variables[v])
         }
 
         for (mask in 0 until 2.toDouble().pow(dimensions).toInt()) {
-            for (v in model.variables) {
+            for (v in model.variables.indices) {
                 if (checkMask(v, mask)) {
-                    masks[v]?.add(mask)
+                    masks[v].add(mask)
                 }
             }
         }
@@ -77,8 +77,8 @@ class KotlinParamsOdeTransitionSystem(
         return intResult
     }
 
-    private fun checkMask(v: Variable, mask: Int) : Boolean {
-        return (dependenceCheckMasks[v]?.and(mask)) == 0
+    private fun checkMask(v: Int, mask: Int) : Boolean {
+        return (dependenceCheckMasks[v].and(mask)) == 0
     }
 
     private val facetColors = arrayOfNulls<Any>(stateCount * dimensions * 4)
@@ -99,10 +99,10 @@ class KotlinParamsOdeTransitionSystem(
             val positiveFacet = if (orientation == PositiveIn || orientation == PositiveOut) 1 else 0
             val positiveDerivation = orientation == PositiveOut || orientation == NegativeIn
 
-            val dependencyMask = dependenceCheckMasks[model.variables[dimension]]
+            val dependencyMask = dependenceCheckMasks[dimension]
             val selfDependent = ((dependencyMask?.shr(dimension))?.and(1)) == 0
 
-            val vertexMasks = masks[model.variables[dimension]]
+            val vertexMasks = masks[dimension]
 
 
             val colors = vertexMasks
