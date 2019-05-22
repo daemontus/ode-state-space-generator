@@ -33,10 +33,10 @@ KotlinImproved
 tcbb.bio (2.26M states):
 
 Without caching:
-Original 8,8s
-Improved 9,4s
-KotlinImproved 9,6s
-Dynamic 9,8s
+Original 20,4s
+Improved 23,4s
+KotlinImproved
+Dynamic 22,7s
 
 With caching:
 Original 18,2s
