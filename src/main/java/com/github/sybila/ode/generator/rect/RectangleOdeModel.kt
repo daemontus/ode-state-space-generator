@@ -13,13 +13,13 @@ class RectangleOdeModel(
 
     private val boundsRect = model.parameters.flatMap { listOf(it.range.first, it.range.second) }.toDoubleArray()
 
-    //private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
-    //private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
+    private val positiveVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
+    private val negativeVertexCache = HashMap<Int, List<MutableSet<Rectangle>?>>()
 
     override fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): MutableSet<Rectangle>? {
-        //return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
-            //val p: List<MutableSet<Rectangle>?> = (0 until dimensions).map { dim ->
-                val dim = dimension
+        return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
+            val p: List<MutableSet<Rectangle>?> = (0 until dimensions).map { dim ->
+                //val dim = dimension
                 var derivationValue = 0.0
                 var denominator = 0.0
                 var parameterIndex = -1
@@ -63,12 +63,11 @@ class RectangleOdeModel(
                         mutableSetOf(Rectangle(r))
                     }
                 }
-                return bounds
-            //}
+                bounds
+            }
             //save also dual values. THIS DOES NOT WORK WHEN DERIVATION IS ZERO!
             //(if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
-            //p
-        //}[dimension]
+            p
+        }[dimension]
     }
-
 }

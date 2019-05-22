@@ -283,16 +283,16 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return colors;
     }
 
-    //private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>();
-    //private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
+    private Map<Integer, List<Set<Rectangle>>> positiveVertexCache = new HashMap<>();
+    private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
 
 
-    //TODO: finish caching
+
     private Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
-        //return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
-            //List<Set<Rectangle>> p = new ArrayList<>();
-            //for (int dim = 0 ; dim < dimensions; dim++) {
-                int dim = dimension;
+        return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
+            List<Set<Rectangle>> p = new ArrayList<>();
+            for (int dim = 0 ; dim < dimensions; dim++) {
+                //int dim = dimension;
                 Set<Rectangle> result = new HashSet<>();
                 double derivationValue = 0.0;
                 double denominator = 0.0;
@@ -342,13 +342,13 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
                         result.add(new Rectangle(r));
                     }
                 }
-                return result;
-                //p.add(result);
-            //}
+                //return result;
+                p.add(result);
+            }
 
-           // return p;
+            return p;
 
-        //} ).get(dimension);
+        } ).get(dimension);
     }
 
     @NotNull

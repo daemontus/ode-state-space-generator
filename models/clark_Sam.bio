@@ -81,7 +81,7 @@ EQ: HCO3_cyt  =     k2*kW*pH_cyt_exp*CO2_cyt  +  -1*k3*HCO3_cyt  +  -1*fast*HCO3
 EQ: CO2_carb  =  -1*k7*Nsites*Vcarb_inv*Hillp(CO2_carb, term2, 1, 0, 1)  +  -1*factorCO2dehyd*fast*k2*kW*pH_carb_exp*CO2_carb  +     factorHCO3dehyd*fast*k3*HCO3_carb
 EQ: HCO3_carb =     fast*HCO3_cyt  +  -1*fast*HCO3_carb                  +     factorCO2dehyd*fast*k2*kW*pH_carb_exp*CO2_carb  +  -1*factorHCO3dehyd*fast*k3*HCO3_carb
 
-VAR_POINTS: CO2_carb: 1500, 10
+VAR_POINTS: CO2_carb: 1500, 150
 
 THRES: CO2_cyt: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001
 THRES: HCO3_cyt: 0.00000001, 0.00000002, 0.00000004, 0.00000006, 0.00000008, 0.0000001, 0.0000002, 0.0000004, 0.0000006, 0.0000008, 0.000001, 0.000002, 0.000004, 0.000006, 0.000008, 0.00001, 0.00002, 0.00004, 0.00006, 0.00008, 0.0001

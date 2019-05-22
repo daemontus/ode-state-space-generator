@@ -1,0 +1,133 @@
+model_31_reduced (0.8M states):
+
+Without caching:
+Original 44,2s
+Improved 17,4s
+KotlinImproved 17,5s
+Dynamic 16,8s
+
+
+With caching:
+Original 15,3s
+Improved 6,3s
+KotlinImproved 8,1s
+
+
+model_31_reduced (1.2M states):
+
+Without caching:
+Original 68,2s
+Improved 25,5s
+KotlinImproved 28,5s
+Dynamic 24,6s
+
+
+With caching: 
+Original 43,9s
+Improved 20,6s
+KotlinImproved 
+
+
+
+
+tcbb.bio (2.26M states):
+
+Without caching:
+Original 8,8s
+Improved 9,4s
+KotlinImproved 9,6s
+Dynamic 9,8s
+
+With caching:
+Original 18,2s
+Improved 19,3s
+KotlinImproved 21,4s
+
+
+triStableRep_1kR.bio (5M states):
+
+Without caching:
+Original 26,8s
+Improved 34,2s
+KotlinImproved 26,9s
+Dynamic 27s
+
+With caching:
+Original 
+Improved 
+KotlinImproved 
+
+triStableRep_1kR.bio (1M states, 6dim):
+
+Without caching:
+Original 54,1s
+Improved 12,3s
+KotlinImproved 
+Dynamic 12s
+
+
+With caching:
+Original 29,3s
+Improved 7,4s
+KotlinImproved 8,4s
+
+
+muller_with_param.bio (4M states, 7dim)
+
+Without caching:
+Original 1090s
+Improved 
+KotlinImproved 
+Dynamic 
+
+
+With caching:
+Original 
+Improved 
+KotlinImproved
+
+muller.bio (4M states, 7dim)
+
+Without caching: 
+Original 1041s
+Improved 330,2s
+KotlinImproved 
+Dynamic 196,3s
+
+
+With caching:
+Original 340s
+Improved 120,6s
+KotlinImproved 130s
+
+
+grimaud_param_r2.bio (0,5M states, 5dim)
+
+Without caching: 
+Original 16,8s 
+Improved 13,4s
+KotlinImproved 
+Dynamic 10,3s
+
+With caching:
+Original 6,5s
+Improved 4,9s
+KotlinImproved 4,5s
+
+
+
+clark_Sam.bio (1,3M states, 4dim)
+
+Without caching: 
+Original 24,3s
+Improved 15,7s
+KotlinImproved 
+Dynamic 14,6s
+
+With caching: 
+Original 16s
+Improved 10,7s
+KotlinImproved 
+
+
+

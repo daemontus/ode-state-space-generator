@@ -1,13 +1,19 @@
-VARS: x,y,z
-CONSTS: k1,1; k2,1; k3,1; deg_x,0.1; deg_y,0.1; deg_z,0.1
+VARS: x,y,z,a,b,c
+CONSTS: k1,1; k2,1; k3,1; k4,1; k5,1; k6,1; deg_x,0.1; deg_y,0.1; deg_z,0.1; deg_a,0.1; deg_b,0.1; deg_c,0.1
 
 
 EQ: x = k1*hillm(y,5,5,1,0)*hillm(z,5,5,1,0) - deg_x*x
-EQ: y = k2*hillm(z,5,5,1,0)*hillm(x,5,5,1,0) - deg_y*y
-EQ: z = k3*hillm(x,5,5,1,0)*hillm(y,5,5,1,0) - deg_z*z
+EQ: y = k2*hillm(z,5,5,1,0)*hillm(a,5,5,1,0) - deg_y*y
+EQ: z = k3*hillm(a,5,5,1,0)*hillm(b,5,5,1,0) - deg_z*z
+EQ: a = k4*hillm(b,5,5,1,0)*hillm(c,5,5,1,0) - deg_a*a
+EQ: b = k5*hillm(c,5,5,1,0)*hillm(x,5,5,1,0) - deg_b*b
+EQ: c = k6*hillm(x,5,5,1,0)*hillm(y,5,5,1,0) - deg_c*c
 
-VAR_POINTS: x: 2500, 10; y: 2500, 10; z: 2500, 10
+VAR_POINTS: x: 2500, 10; y: 2500, 10; z: 2500, 10; a: 2500, 10; b: 2500, 10; c: 2500, 10
 
 THRES: x: 0, 15
 THRES: y: 0, 15
 THRES: z: 0, 15
+THRES: a: 0, 15
+THRES: b: 0, 15
+THRES: c: 0, 15

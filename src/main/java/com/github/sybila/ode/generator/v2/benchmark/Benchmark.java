@@ -20,7 +20,7 @@ public class Benchmark {
 
     public static void main(String[] args) {
         Parser modelParser = new Parser();
-        OdeModel model = ModelApproximationKt.computeApproximation(modelParser.parse(new File("models/tcbb.bio")), false, false);
+        OdeModel model = ModelApproximationKt.computeApproximation(modelParser.parse(new File("models/clark_Sam.bio")), false, false);
         //originalBenchmark(model, 3);
         //paramsOdeBenchmark(model, 3);
         kotlinParamsOdeBenchmark(model, 3);
