@@ -144,8 +144,9 @@ class KotlinParamsOdeTransitionSystem(
 
 
     fun getVertexColor(vertex: Int, dimension: Int, positive: Boolean): MutableSet<Rectangle>? {
-        return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
-            val p: List<MutableSet<Rectangle>?> = (0 until dimensions).map { dim ->
+        //return (if (positive) positiveVertexCache else negativeVertexCache).computeIfAbsent(vertex) {
+            //val p: List<MutableSet<Rectangle>?> = (0 until dimensions).map { dim ->
+                val dim = dimension
                 var derivationValue = 0.0
                 var denominator = 0.0
                 var parameterIndex = -1
@@ -189,12 +190,12 @@ class KotlinParamsOdeTransitionSystem(
                         mutableSetOf(Rectangle(r))
                     }
                 }
-                bounds
-            }
+                return bounds
+            //}
             //save also dual values. THIS DOES NOT WORK WHEN DERIVATION IS ZERO!
             //(if (positive) negativeVertexCache else positiveVertexCache)[vertex] = p.map { it?.not() ?: tt }
-            p
-        }[dimension]
+            //p
+        //}[dimension]
     }
 
     private val successorCache = HashMap<Int, List<Int>>(stateCount)

@@ -16,15 +16,15 @@ import java.util.concurrent.TimeUnit;
 public class Benchmark {
 
     //private static final String CLASS_PATH = "C:\\Users\\Jakub\\Desktop\\ode-generator\\build\\libs\\ode-generator-1.3.3-2-all.jar";
-    private static final String CLASS_PATH = "/Users/daemontus/Projects/code/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
+    private static final String CLASS_PATH = "/home/xracek6/ode-generator/build/libs/ode-generator-1.3.3-2-all.jar";
 
     public static void main(String[] args) {
         Parser modelParser = new Parser();
-        OdeModel model = ModelApproximationKt.computeApproximation(modelParser.parse(new File("models/muller.bio")), false, false);
-        originalBenchmark(model, 10);
-        //paramsOdeBenchmark(model, 10);
-        //kotlinParamsOdeBenchmark(model, 10);
-        //dynamicParamsOdeBenchmark(model, 10);
+        OdeModel model = ModelApproximationKt.computeApproximation(modelParser.parse(new File("models/tcbb.bio")), false, false);
+        //originalBenchmark(model, 3);
+        //paramsOdeBenchmark(model, 3);
+        kotlinParamsOdeBenchmark(model, 3);
+        //dynamicParamsOdeBenchmark(model, 3);
         //kotlinDynamicParamsOdeBenchmark(model, 10);
     }
 
