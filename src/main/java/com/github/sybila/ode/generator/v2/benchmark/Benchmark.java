@@ -21,11 +21,11 @@ public class Benchmark {
     public static void main(String[] args) {
         Parser modelParser = new Parser();
         OdeModel model = ModelApproximationKt.computeApproximation(modelParser.parse(new File("models/grimaud_param_r2.bio")), false, false);
-        //originalBenchmark(model, 3);
-        paramsOdeBenchmark(model, 3);
-        //kotlinParamsOdeBenchmark(model, 3);
-        //dynamicParamsOdeBenchmark(model, 3);
-        //kotlinDynamicParamsOdeBenchmark(model, 10);
+        //originalBenchmark(model, 5);
+        //paramsOdeBenchmark(model, 5);
+        //kotlinParamsOdeBenchmark(model, 5);
+        //dynamicParamsOdeBenchmark(model, 5);
+        //kotlinDynamicParamsOdeBenchmark(model, 5);
     }
 
 

@@ -344,6 +344,11 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return edgeColours.getOrDefault(new Pair<>(source, target), solver.getFf());
     }
 
+    /**
+     * Generates full class code of the class implementing OnTheFlyColorComputer interface.
+     *
+     * @return source code as String
+     */
     private String generateFullClassCode() {
         return "import com.github.sybila.checker.Solver;\n" +
                 "import com.github.sybila.ode.generator.rect.Rectangle;\n" +
@@ -384,6 +389,10 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
                 "}";
     }
 
+    /**
+     * Generates the code of  "main" getVertexColor() method.
+     * @return source code as String
+     */
     private String generateMainGetVertexColor() {
         StringBuilder result = new StringBuilder();
         result.append("@Override\n")
@@ -401,6 +410,11 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
+    /**
+     * Generates the code of auxiliary getVertexColor() methods, one for each dimension. These methods are called
+     * by the "main" getVertexColor() method.
+     * @return source code as String
+     */
     private String generateGetVertexColor(){
         StringBuilder result = new StringBuilder();
 
@@ -423,6 +437,13 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
+
+    /**
+     * Generates the code of auxiliary generateGetResult() method, which is used to compute admissible parameters
+     * (Set<Rectangle> in this case).
+     *
+     * @return source code as String
+     */
     private static String generateGetResult() {
         StringBuilder result = new StringBuilder();
         result.append("private Set<Rectangle> getResult(double derivationValue, double denominator, int parameterIndex, boolean positive) {\n")
@@ -454,6 +475,12 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
+    /**
+     * Generates code which saves summands of the input equation into separate variables.
+     *
+     * @param equation list of summands
+     * @return source code as String
+     */
     private static String prepareSummands(List<Summand> equation) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i<equation.size(); i++) {
@@ -466,6 +493,13 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
+    /**
+     * Generates code which produces the value of the input summand.
+     *
+     * @param summand summand
+     * @param summandIndex index
+     * @return source code as String
+     */
     private static String compileSummand(Summand summand, int summandIndex) {
         StringBuilder result = new StringBuilder();
         for (int v : summand.getVariableIndices()) {
@@ -490,6 +524,12 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
+    /**
+     * Generates code which assigns the desired values into derivationValue and denominator variables.
+     *
+     * @param equation list of summands
+     * @return source code as String
+     */
     private static String compileDerivationValueAndDenominator(List<Summand> equation) {
         StringBuilder result = new StringBuilder();
         StringBuilder derivationValue = new StringBuilder();
@@ -528,7 +568,4 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result.toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println();
-    }
 }
