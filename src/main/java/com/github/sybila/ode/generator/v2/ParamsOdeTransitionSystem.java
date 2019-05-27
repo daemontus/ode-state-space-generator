@@ -223,6 +223,14 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
         return from + (stateCount * dimension) + (stateCount * dimensions * orientation);
     }
 
+    /**
+     * Computes and returns parameters for the given facet.
+     *
+     * @param from state
+     * @param dimension dimension
+     * @param orientation orientation
+     * @return parameters as Set<Rectangle>
+     */
     private Set<Rectangle> getFacetColors(int from, int dimension, int orientation) {
         int facetIndex = facetIndex(from, dimension, orientation);
         Set<Rectangle> currentValue = facetColors.get(facetIndex);
@@ -287,7 +295,14 @@ public class ParamsOdeTransitionSystem implements TransitionSystem<Integer, Set<
     //private Map<Integer, List<Set<Rectangle>>> negativeVertexCache = new HashMap<>();
 
 
-
+    /**
+     * Computes and returns parameters for which dimension the derivation is positive/negative at the
+     * given vertex.
+     * @param vertex vertex
+     * @param dimension dimension
+     * @param positive positive (true) or negative (false) derivation
+     * @return parameters (Set<Rectangle>)
+     */
     private Set<Rectangle> getVertexColor(int vertex, int dimension, boolean positive) {
         //return (positive ? positiveVertexCache : negativeVertexCache).computeIfAbsent(vertex, v -> {
             //List<Set<Rectangle>> p = new ArrayList<>();

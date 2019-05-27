@@ -269,18 +269,18 @@ public class DynamicParamsOdeTransitionSystem implements TransitionSystem<Intege
         return result;
     }
 
-    /**
-     * Calculates index of the facet corresponding to input node, dimension and orientation and returns it.
-     *
-     * @param from node
-     * @param dimension dimension
-     * @param orientation orientation
-     * @return index of the corresponding facet represented as int
-     */
     private int facetIndex(int from, int dimension, int orientation) {
         return from + (stateCount * dimension) + (stateCount * dimensions * orientation);
     }
 
+    /**
+     * Computes and returns parameters for the given facet.
+     *
+     * @param from state
+     * @param dimension dimension
+     * @param orientation orientation
+     * @return parameters as Set<Rectangle>
+     */
     private Set<Rectangle> getFacetColors(int from, int dimension, int orientation) {
         int facetIndex = facetIndex(from, dimension, orientation);
         Set<Rectangle> currentValue = facetColors.get(facetIndex);
